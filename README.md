@@ -15,7 +15,7 @@ This setup is intended for regular [Sway](https://swaywm.org/), no gurantees it 
 * `ii` -- A minimalist FIFO and filesystem-based IRC client, from [suckless](https://tools.suckless.org/ii/)
 * `kitty` -- A modern, hackable, featureful, OpenGL-based terminal emulator
 * `mako` -- A lightweight notification daemon for Wayland
-* `mpc` -- Client for `mpd`, responsible for telling lemonbar about the currently playing media.
+* `mpc` -- Minimalist command line interface to MPD
 * `mpd` -- Flexible, powerful, server-side application for playing music with `ncmpcpp` as client
 * `msmtp` -- A mini smtp client
 * `multitail` -- View one or multiple files like the original tail program | [aur link](https://aur.archlinux.org/packages/multitail)
