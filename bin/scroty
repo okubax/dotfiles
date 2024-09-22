@@ -1,2 +1,0 @@
-#!/bin/sh
-scrot -t 10 -d 5 -e 'mv *.png ~/screenshots'

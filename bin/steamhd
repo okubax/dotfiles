@@ -1,2 +1,0 @@
-#!/bin/sh
-GDK_SCALE=2 steam-runtime
