@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# Extras
+function command_exists {
+	type "$1" &> /dev/null
+	# fish not bash: type --quiet "$1"
+}
+function command_missing {
+	! command_exists "$1"
+}
+
+# Download a file
+alias download='down'
+function down {
+	# do not use the continue flags as they will prefer the local file over the remote file if the local exists
+	if command_exists aria2c; then
+		aria2c --allow-overwrite=true --auto-file-renaming=false "$1"
+	elif command_exists wget; then
+		wget -N "$1"
+	elif command_exists curl; then
+		curl -OL "$1"
+	elif command_exists http; then
+		http -d "$1"
+	fi
+}
+
+# XPS to PDF
+cwd=$(pwd)
+bin=gxps
+if command_missing $bin; then
+	bin=$HOME/bin/ghostpdl-9.20/bin/gxps
+	if command_missing $bin; then
+		echo "downloading and compiling gxps dependency to $bin"
+		mkdir -p $HOME/bin
+		cd $HOME/bin
+		down https://github.com/ArtifexSoftware/ghostpdl-downloads/releases/download/gs920/ghostpdl-9.20.tar.gz
+		tar -zxvf ghostpdl-9.20.tar.gz
+		rm ghostpdl-9.20.tar.gz
+		cd ./ghostpdl-9.20
+		./configure
+		make
+		cd $cwd
+	fi
+fi
+
+echo "converting $# files"
+for xps in "$@"
+do
+	file=$(echo "$xps" | sed 's/...$//')
+	pdf=${file}pdf
+
+	echo "converting $xps to $pdf"
+	$bin -sDEVICE=pdfwrite -sOutputFile="$pdf" -dNOPAUSE "$xps"
+
+	if command_exists GetFileInfo && command_exists SetFile; then
+		echo "setting creation time"
+		local ctime=$(GetFileInfo -m "$xps")
+		SetFile -d "$ctime" "$pdf"
+	fi
+done
+

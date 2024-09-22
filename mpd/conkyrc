@@ -1,0 +1,27 @@
+conky.config = {
+    alignment = 'bottom_left',
+    background = true,
+    border_width = 5,
+    double_buffer = true,
+    font = 'cascadia code:size=7',
+    gap_x = 50,
+    gap_y = 70,
+    minimum_height = 5,
+    minimum_width = 5,
+    own_window = true,
+    own_window_class = 'Conky',
+    own_window_colour = 'd8dee9',
+    own_window_argb_visual = true,
+    own_window_argb_value = 255,
+    own_window_type = 'override',
+    draw_shades = false,
+    draw_outline = false,
+    draw_borders = false,
+    text_buffer_size = 1024,
+    update_interval = 10.0,
+    use_xft = true
+}
+
+conky.text = [[
+${if_match "${mpd_status}" =="Playing"}${color #4C566A}${font Font Awesome 5 Free:style=Regular:pixelsize=21}${font} $mpd_smart$endif${if_match "$mpd_status" == "Paused"}${color #4C566A}${font Font Awesome 5 Free:style=Regular:pixelsize=21}${font}  $mpd_smart$endif${if_match "$mpd_status" == "Stopped"}$endif\
+]]

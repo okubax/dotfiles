@@ -1,0 +1,12 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =6
+let g:netrw_dirhist_6='/home/ajibola/.vim'
+let g:netrw_dirhist_5='/home/ajibola/.config/fontconfig'
+let g:netrw_dirhist_4='/home/ajibola/Projects/sites/ncircular/remote/content/news'
+let g:netrw_dirhist_3='/home/ajibola/Dropbox/dots/Xresources.d/colors/nord'
+let g:netrw_dirhist_2='/home/ajibola/irc/fn/127.0.0.1'
+let g:netrw_dirhist_1='/home/ajibola/irc/fn/127.0.0.1/#archlinux'
+let g:netrw_dirhist_0='/home/ajibola/irc/fn/127.0.0.1'
+let g:netrw_dirhist_9='/home/ajibola/irc/fn/127.0.0.1/#archlinux'
+let g:netrw_dirhist_8='/home/ajibola/irc/fn/127.0.0.1'
+let g:netrw_dirhist_7='/home/ajibola/irc/fn/127.0.0.1/#archlinux'

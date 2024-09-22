@@ -1,0 +1,48 @@
+HISTFILE=~/.zsh_history
+HISTSIZE=10000000
+SAVEHIST=10000000
+setopt BANG_HIST                 # Treat the '!' character specially during expansion.
+setopt EXTENDED_HISTORY          # Write the history file in the ":start:elapsed;command" format.
+setopt INC_APPEND_HISTORY        # Write to the history file immediately, not when the shell exits.
+setopt SHARE_HISTORY             # Share history between all sessions.
+setopt HIST_EXPIRE_DUPS_FIRST    # Expire duplicate entries first when trimming history.
+setopt HIST_IGNORE_DUPS          # Don't record an entry that was just recorded again.
+setopt HIST_IGNORE_ALL_DUPS      # Delete old recorded entry if new entry is a duplicate.
+setopt HIST_FIND_NO_DUPS         # Do not display a line previously found.
+setopt HIST_IGNORE_SPACE         # Don't record an entry starting with a space.
+setopt HIST_SAVE_NO_DUPS         # Don't write duplicate entries in the history file.
+setopt HIST_REDUCE_BLANKS        # Remove superfluous blanks before recording entry.
+setopt HIST_VERIFY               # Don't execute immediately upon history expansion.
+setopt HIST_BEEP                 # Beep when accessing nonexistent history.
+
+# Lines configured by zsh-newuser-install
+#HISTFILE=~/.zsh_history
+#HISTSIZE=1000000000
+#SAVEHIST=1000000000
+unsetopt autocd
+bindkey -e
+# End of lines configured by zsh-newuser-install
+# The following lines were added by compinstall
+zstyle :compinstall filename '/home/ajibola/.zshrc'
+
+autoload -Uz compinit promptinit
+compinit
+promptinit
+prompt suse
+# End of lines added by compinstall
+PROMPT='%n@%m %~ %# '
+
+
+# immediate append
+#setopt INC_APPEND_HISTORY
+# add timestamp
+#setopt EXTENDED_HISTORY
+# do not write duplicates to history
+#setopt HIST_IGNORE_ALL_DUPS
+
+# aliases
+source $HOME/.aliases
+
+source ~/.zsh/catppuccin_macchiato-zsh-syntax-highlighting.zsh
+source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

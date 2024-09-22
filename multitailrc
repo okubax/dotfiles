@@ -1,0 +1,19 @@
+# ii - irc client
+colorscheme:ii:ii IRC client http://www.suckless.org/wiki/tools/irc
+cs_re_s:cyan:(^....-..-.. ..:..)
+cs_re_s:magenta:^....-..-.. ..:.. <([[:alnum:]_\^\|`-]+)>
+cs_re_s:green:^....-..-.. ..:.. <([[:alnum:]_\^\|`-]+)> (nion[ ,:].*)$
+cs_re_s:yellow:(((http|https|ftp|gopher)|mailto):(//)?[^ <>\"[:blank:]]*|(www|ftp)[0-9]?\.[-a-z0-9.]+)
+cs_re:blue:....-..-.. ..:...*has joined \#.*
+cs_re:blue:....-..-.. ..:.. .*changed mode.*
+
+titlebar:%m %u@%h %f (%t) [%l]
+
+statusline_ts_format:%d/%m %H:%M
+
+line_ts_format:%H:%M:%S
+
+check_mail:0
+
+# Pick default screen
+defaultcscheme:ii

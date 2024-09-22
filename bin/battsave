@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Battery saving script to stop dropbox, offlineimap and unload the bar
+
+stop_offlineimap(){
+        systemctl --user stop offlineimap
+        sleep 30
+        systemctl --user stop offlineimap.timer
+}
+
+stop_bluetooth(){
+        sudo systemctl stop bluetooth
+}
+
+stop_dropbox(){
+        dropbox-cli stop
+}
+
+main() {
+    stop_offlineimap &
+    stop_bluetooth
+    stop_dropbox &
+}
+
+main

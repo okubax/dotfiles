@@ -1,0 +1,4 @@
+#!/bin/bash
+
+#todo
+sleep 10 && conky -c $HOME/.todo/conkyrc ;

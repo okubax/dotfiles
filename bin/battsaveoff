@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#
+# Script to start offlineimap, drop and start lemonbar
+
+
+start_offlineimap() {
+        systemctl --user start offlineimap
+}
+        
+start_bluetooth() {
+        sudo systemctl start bluetooth
+}
+
+start_dropbox() {
+        dropbox-cli start
+}
+
+main() {
+    start_offlineimap &
+    start_bluetooth
+    start_dropbox &
+}
+
+main
