@@ -1,0 +1,633 @@
+#!/bin/bash
+# ~/.aliases_scripts - shortcuts for personal scripts
+
+# ============================================================================
+# ii IRC aliases
+# ============================================================================
+# ii IRC aliases
+alias ii-start='~/bin/ii-start start'
+alias ii-stop='~/bin/ii-start stop'
+alias ii-restart='~/bin/ii-start restart'
+
+# ii-chat function using the script's quiet output
+ii-chat() {
+    local cmd=$(~/bin/ii-start multitail-quiet)
+    if [ $? -eq 0 ] && [ -n "$cmd" ]; then
+        kitty -e sh -c "$cmd"
+    else
+        echo "Error: Could not generate multitail command. Make sure ii is running."
+        return 1
+    fi
+}
+
+# Version with error suppression (if you want to hide D-Bus errors)
+ii-chat-quiet() {
+    local cmd=$(~/bin/ii-start multitail-quiet)
+    if [ $? -eq 0 ] && [ -n "$cmd" ]; then
+        kitty 2>/dev/null -e sh -c "$cmd"
+    else
+        echo "Error: Could not generate multitail command. Make sure ii is running."
+        return 1
+    fi
+}
+
+# Static version that works like your manual command
+ii-chat-static() {
+    kitty --config NONE -o notify_on_cmd_finish=never 2>/dev/null -e multitail -CS ii -s 2 \
+        "$HOME/irc/lb/127.0.0.1/#archlinux/out" \
+        "$HOME/irc/lb/127.0.0.1/#sway/out" \
+        "$HOME/irc/lb/127.0.0.1/#bash/out" \
+        "$HOME/irc/sn/127.0.0.1/#f1/out" \
+        "$HOME/irc/of/127.0.0.1/#wayland/out"
+}
+
+# Dynamic version that finds all active channels automatically  
+ii-chat-all() {
+    local cmd="multitail -CS ii -s 2"
+    for out_file in "$HOME"/irc/*/127.0.0.1/*/out; do
+        if [ -f "$out_file" ] && [[ "$out_file" != *"/nickserv/out" ]]; then
+            cmd="$cmd $out_file"
+        fi
+    done
+    kitty --config NONE -o notify_on_cmd_finish=never 2>/dev/null -e sh -c "$cmd"
+}
+
+# Individual channel aliases
+alias ii-arch='tail -f ~/irc/lb/127.0.0.1/#archlinux/out'
+alias ii-sway='tail -f ~/irc/lb/127.0.0.1/#sway/out'
+alias ii-bash='tail -f ~/irc/lb/127.0.0.1/#bash/out'
+alias ii-wayland='tail -f ~/irc/of/127.0.0.1/#wayland/out'
+alias ii-f1='tail -f ~/irc/sn/127.0.0.1/#f1/out'
+
+# Quick message functions
+ii-msg() {
+    local server="$1"
+    local channel="$2"
+    shift 2
+    local message="$*"
+    echo "$message" > "$HOME/irc/$server/127.0.0.1/$channel/in"
+}
+
+ii-arch-msg() { ii-msg lb "#archlinux" "$@"; }
+ii-sway-msg() { ii-msg lb "#sway" "$@"; }
+ii-bash-msg() { ii-msg lb "#bash" "$@"; }
+ii-wayland-msg() { ii-msg of "#wayland" "$@"; }
+ii-f1-msg() { ii-msg sn "#f1" "$@"; }
+
+# Status check
+ii-status() {
+    echo "ii processes:"
+    pgrep -fl "ii -i" || echo "No ii processes running"
+    echo
+    echo "stunnel status:"
+    pgrep -fl stunnel || echo "stunnel not running"
+}
+
+# Setup directories
+ii-setup() {
+    mkdir -p ~/.config/ii
+    mkdir -p ~/bin
+    mkdir -p ~/irc/{lb,sn,of}
+    chmod 600 ~/.config/ii/credentials 2>/dev/null || true
+    echo "ii directories created. Don't forget to:"
+    echo "1. Edit ~/.config/ii/credentials with your passwords"
+    echo "2. Make sure /etc/stunnel/stunnel.conf is configured"
+    echo "3. Copy ii-start script to ~/bin/ and make executable"
+    echo "4. Enable stunnel service if needed: sudo systemctl enable stunnel"
+}
+
+
+# ============================================================================
+# Personal Notes Management Aliases
+# ============================================================================
+# Base notes directory
+
+export NOTES_DIR="$HOME/jb01/Notes/General"
+
+# Quick aliases for notes management
+alias n="$NOTES_DIR/notes.sh"                    # Main notes command
+alias ne="$NOTES_DIR/notes.sh edit"              # Edit notes
+alias nv="$NOTES_DIR/notes.sh view"              # View notes
+alias nh="$NOTES_DIR/notes.sh html"              # Generate HTML
+alias no="$NOTES_DIR/notes.sh open"              # Open HTML in browser
+alias nb="$NOTES_DIR/notes.sh backup"            # Create backup
+alias ns="$NOTES_DIR/notes.sh search"            # Search notes
+alias na="$NOTES_DIR/notes.sh add"               # Add quick note
+alias nt="$NOTES_DIR/notes.sh todo"              # Show TODOs
+alias nsync="$NOTES_DIR/notes.sh sync"           # Sync with git
+
+# Quick note functions
+note() {
+    $NOTES_DIR/notes.sh add "$*"
+}
+
+find_note() {
+    $NOTES_DIR/notes.sh search "$1"
+}
+
+# Quick access to specific sections (customize these based on your content)
+alias nfinance="grep -A 10 -B 2 'Financial\|Banking\|Investment' $NOTES_DIR/personal_notes.md"
+alias ntech="grep -A 10 -B 2 'Technical\|Development\|Commands' $NOTES_DIR/personal_notes.md"
+alias nwork="grep -A 10 -B 2 'Work\|Professional\|Employment' $NOTES_DIR/personal_notes.md"
+alias npersonal="grep -A 10 -B 2 'Personal\|Family\|Important' $NOTES_DIR/personal_notes.md"
+
+# Setup function - run once to initialize everything
+setup_notes() {
+    echo "Setting up Personal Notes Management System..."
+    
+    # Create directory structure
+    mkdir -p "$NOTES_DIR/backups"
+    
+    # Copy the organized notes template (you'll need to save it manually)
+    if [ ! -f "$NOTES_DIR/personal_notes.md" ]; then
+        echo "# Personal Knowledge Base" > "$NOTES_DIR/personal_notes.md"
+        echo "" >> "$NOTES_DIR/personal_notes.md"
+        echo "## 📝 Getting Started" >> "$NOTES_DIR/personal_notes.md"
+        echo "" >> "$NOTES_DIR/personal_notes.md"
+        echo "Welcome to your organized notes system!" >> "$NOTES_DIR/personal_notes.md"
+        echo "Use 'ne' to edit, 'nv' to view, 'nh' to generate HTML." >> "$NOTES_DIR/personal_notes.md"
+        echo "Notes file created: $NOTES_DIR/personal_notes.md"
+    fi
+    
+    # Initialize git if requested (compatible with both bash and zsh)
+    echo -n "Initialize git repository for version control? (y/N): "
+    read REPLY
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        cd "$NOTES_DIR"
+        if ! git status >/dev/null 2>&1; then
+            git init
+            git add .
+            git commit -m "Initial notes setup"
+            echo "Git repository initialized"
+        else
+            echo "Git repository already exists"
+        fi
+    fi
+    
+    # Create cron job for automatic backups
+    echo -n "Set up automatic daily backups? (y/N): "
+    read REPLY
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        # Add to crontab: daily backup at 2 AM
+        backup_job="0 2 * * * $NOTES_DIR/notes.sh backup"
+        if ! crontab -l 2>/dev/null | grep -q "$NOTES_DIR/notes.sh backup"; then
+            (crontab -l 2>/dev/null; echo "$backup_job") | crontab -
+            echo "Daily backup scheduled for 2 AM"
+        else
+            echo "Backup job already exists in crontab"
+        fi
+    fi
+    
+    echo "Setup complete! Use 'n help' to see available commands."
+    echo "Next steps:"
+    echo "1. Edit your notes: ne"
+    echo "2. Save the management scripts in $NOTES_DIR/"
+    echo "3. Make notes.sh executable: chmod +x $NOTES_DIR/notes.sh"
+}
+
+# Productivity aliases
+alias today="note 'Today: $(date +%Y-%m-%d)'"
+alias meeting="note 'Meeting: '"
+alias idea="note 'Idea: '"
+alias reminder="note 'Reminder: '"
+
+# Quick search aliases
+alias passnote="ns password | head -20"  # Find password-related notes (reminder to use password manager!)
+alias confnote="ns config"               # Find configuration notes
+alias cmdnote="ns command"               # Find command notes
+
+# Note: Functions are automatically available in bash/zsh
+# If using a different shell, you may need to source this file in subshells
+
+
+# ============================================================================
+# System Information Script Aliases
+# ============================================================================
+
+# System Information Script Aliases
+alias sysinfo='~/bin/fixed_sysinfo_script.sh'
+alias sysinfo-html='~/bin/fixed_sysinfo_script.sh --html'
+alias sysinfo-json='~/bin/fixed_sysinfo_script.sh --json'
+alias sysinfo-brief='~/bin/fixed_sysinfo_script.sh --brief'
+alias sysinfo-health='~/bin/fixed_sysinfo_script.sh --health'
+alias sysinfo-benchmark='~/bin/fixed_sysinfo_script.sh --benchmark'
+alias sysinfo-save='~/bin/fixed_sysinfo_script.sh --save'
+alias sysinfo-compare='~/bin/fixed_sysinfo_script.sh --compare'
+alias sysinfo-verbose='~/bin/fixed_sysinfo_script.sh --verbose'
+
+# Quick system overview
+alias sysstatus='~/bin/fixed_sysinfo_script.sh --health && echo && ~/bin/fixed_sysinfo_script.sh --brief'
+
+# Generate HTML report and open in browser  
+alias sysreport='~/bin/fixed_sysinfo_script.sh --html --save && firefox ~/.config/sysinfo/sysinfo_$(hostname)_*.html 2>/dev/null || echo "Report saved to ~/.config/sysinfo/"'
+
+# ============================================================================
+# Disk Usage Analyzer Aliases
+# ============================================================================
+
+# Adjust the path to where you saved the script
+DISK_ANALYZER_PATH="$HOME/bin/disk_analyzer.sh"
+
+# Basic disk usage analysis (interactive compact mode by default)
+alias du-tree="$DISK_ANALYZER_PATH"
+alias dus="$DISK_ANALYZER_PATH"
+alias disk="$DISK_ANALYZER_PATH"
+alias du-compact="$DISK_ANALYZER_PATH"                     # Explicit compact mode
+
+# Quick analysis of common directories (interactive compact)
+alias du-home="$DISK_ANALYZER_PATH $HOME"
+alias du-root="$DISK_ANALYZER_PATH -s /"
+alias du-var="$DISK_ANALYZER_PATH -s /var"
+alias du-usr="$DISK_ANALYZER_PATH -s /usr"
+alias du-opt="$DISK_ANALYZER_PATH -s /opt"
+alias du-tmp="$DISK_ANALYZER_PATH /tmp"
+alias du-downloads="$DISK_ANALYZER_PATH $HOME/Downloads"
+alias du-documents="$DISK_ANALYZER_PATH $HOME/Documents"
+
+# Advanced analysis modes
+alias du-sudo="$DISK_ANALYZER_PATH -s"                     # With sudo access
+alias du-sudo-full="$DISK_ANALYZER_PATH -s -f"             # Sudo + full tree mode
+alias du-deep="$DISK_ANALYZER_PATH -D 5"                   # Deep analysis (5 levels)
+alias du-shallow="$DISK_ANALYZER_PATH -D 2"                # Shallow analysis (2 levels)
+alias du-big="$DISK_ANALYZER_PATH -m 10485760"             # Only files >= 10MB
+alias du-huge="$DISK_ANALYZER_PATH -m 104857600"           # Only files >= 100MB
+alias du-analysis="$DISK_ANALYZER_PATH -s -d"              # Full analysis with sudo and duplicates
+
+# Duplicate and cleanup focused
+alias du-dupes="$DISK_ANALYZER_PATH -d"                    # Find duplicates
+alias du-clean="$DISK_ANALYZER_PATH -c"                    # Clean cache interactively
+alias du-clean-report="$DISK_ANALYZER_PATH -c -n"          # Clean cache + generate report
+alias du-maintenance="$DISK_ANALYZER_PATH -s -d -c"        # Full maintenance: sudo + duplicates + clean
+
+# System analysis shortcuts
+alias du-logs="$DISK_ANALYZER_PATH -s /var/log"
+alias du-cache="$DISK_ANALYZER_PATH -s /var/cache"
+alias du-lib="$DISK_ANALYZER_PATH -s /var/lib"
+alias du-boot="$DISK_ANALYZER_PATH -s /boot"
+
+# Package and system specific (Arch Linux)
+alias du-pacman="$DISK_ANALYZER_PATH -s /var/cache/pacman/pkg"
+alias du-systemd="$DISK_ANALYZER_PATH -s /var/lib/systemd"
+alias du-docker="$DISK_ANALYZER_PATH -s /var/lib/docker"  # If using Docker
+
+# Quick current directory analysis
+alias du-here="$DISK_ANALYZER_PATH ."
+alias du-here-compact="$DISK_ANALYZER_PATH -t 5 ."         # Very compact current dir
+alias du-here-report="$DISK_ANALYZER_PATH -n ."            # Non-interactive current dir
+alias du-here-big="$DISK_ANALYZER_PATH -m 1048576 ."       # Current dir, files >= 1MB
+alias du-here-explore="$DISK_ANALYZER_PATH -t 15 ."        # Interactive with more detail
+
+# Combination aliases for common workflows
+alias du-audit="$DISK_ANALYZER_PATH -s -d -c"              # Full audit: sudo, duplicates, clean cache
+alias du-system-check="$DISK_ANALYZER_PATH -s -n /"        # Quick system overview
+alias du-user-space="$DISK_ANALYZER_PATH -c $HOME"         # User space with cache cleanup
+alias du-quick-scan="$DISK_ANALYZER_PATH -n -t 3"          # Ultra-fast overview
+alias du-detailed-scan="$DISK_ANALYZER_PATH -t 20 -D 4"    # Detailed interactive analysis
+
+# Development and project focused
+alias du-projects="$DISK_ANALYZER_PATH $HOME/projects"
+alias du-git="find . -name '.git' -type d -exec $DISK_ANALYZER_PATH {} \;"
+alias du-node="$DISK_ANALYZER_PATH -m 1024000 -D 3 ./node_modules"  # Node.js projects
+
+# Media and large file hunting
+alias du-media="$DISK_ANALYZER_PATH $HOME/Pictures $HOME/Videos $HOME/Music"
+alias du-iso="find / -name '*.iso' -type f -exec ls -lh {} \; 2>/dev/null"
+alias du-large="find . -type f -size +100M -exec ls -lh {} \; 2>/dev/null"
+
+# Disk space monitoring
+alias df-fancy="df -h | grep -E '^(/dev/|Filesystem)' | column -t"
+alias disk-usage="du -h --max-depth=1 | sort -hr"
+alias disk-free="df -h | awk 'NR==1 || /^\/dev\//' | column -t"
+
+# Quick helpers
+alias du-help="$DISK_ANALYZER_PATH --help"
+alias du-version="echo 'Disk Analyzer Script - Custom Arch Linux Tool'"
+
+# ============================================================================
+# Usage Examples for the Updated Interactive Script:
+# 
+# Interactive Compact Mode (Default):
+#   dus /home/user        # Interactive compact analysis
+#   du-home              # Interactive analysis of home directory
+#   du-explore           # Interactive with more items shown (15)
+#
+# Quick Reports (Non-Interactive):
+#   du-report /var       # Quick compact summary report
+#   du-summary           # Very brief summary (top 3 items)
+#   du-overview          # Ultra compact overview
+#
+# Interactive Controls Available:
+#   [ENTER/Number] - Expand/collapse directories  
+#   [b] - Back to compact overview (collapse all)
+#   [q] - Quit
+#   [r] - Refresh data
+#   [f] - Toggle full/compact tree mode
+#   [+/-] - Increase/decrease items shown
+#
+# Size and Detail Control:
+#   du-top3              # Show only top 3 items (very compact)
+#   du-top5              # Show only top 5 items  
+#   du-detailed          # Show top 20 items (more detail)
+#   du-big               # Only show files 10MB+
+#   du-huge              # Only show files 100MB+
+#
+# System Analysis:
+#   du-system-check      # Quick non-interactive system overview
+#   du-maintenance       # Full maintenance with sudo + duplicates + cleanup
+#   du-audit             # Interactive full audit
+#
+# Development Workflows:
+#   du-here-compact      # Very compact current directory view
+#   du-here-explore      # Detailed interactive current directory
+#   du-projects          # Analyze projects directory
+# ============================================================================
+
+
+# =============================================================================
+# BTRFS Backup Script ZSH Aliases
+# =============================================================================
+
+# Base script path - adjust this to match your installation
+BTRFS_BACKUP_SCRIPT="/opt/btrfs-backup/btrfs_backup.sh"
+
+# =============================================================================
+# Basic Backup Operations
+# =============================================================================
+
+# Daily backup operations
+alias bb-daily="sudo $BTRFS_BACKUP_SCRIPT daily"
+alias bb-daily-dry="sudo $BTRFS_BACKUP_SCRIPT daily --dry-run"
+
+# Weekly backup operations
+alias bb-weekly="sudo $BTRFS_BACKUP_SCRIPT weekly"
+alias bb-weekly-dry="sudo $BTRFS_BACKUP_SCRIPT weekly --dry-run"
+
+# Monthly backup operations
+alias bb-monthly="sudo $BTRFS_BACKUP_SCRIPT monthly"
+alias bb-monthly-dry="sudo $BTRFS_BACKUP_SCRIPT monthly --dry-run"
+
+# Cleanup operations
+alias bb-cleanup="sudo $BTRFS_BACKUP_SCRIPT cleanup"
+alias bb-cleanup-dry="sudo $BTRFS_BACKUP_SCRIPT cleanup --dry-run"
+
+# =============================================================================
+# Status and Information
+# =============================================================================
+
+# Show backup status
+alias bb-status="sudo $BTRFS_BACKUP_SCRIPT status"
+alias bb-help="sudo $BTRFS_BACKUP_SCRIPT help"
+
+# =============================================================================
+# Log Management
+# =============================================================================
+
+# View logs
+alias bb-log="sudo tail -f /var/log/btrfs_backup.log"
+alias bb-log-tail="sudo tail -n 50 /var/log/btrfs_backup.log"
+alias bb-log-errors="sudo grep -i error /var/log/btrfs_backup.log"
+alias bb-log-today="sudo grep \"$(date '+%Y-%m-%d')\" /var/log/btrfs_backup.log"
+alias bb-log-yesterday="sudo grep \"$(date -d yesterday '+%Y-%m-%d')\" /var/log/btrfs_backup.log"
+
+# =============================================================================
+# Systemd Timer Management
+# =============================================================================
+
+# Timer status and control
+alias bb-timers="systemctl list-timers | grep btrfs"
+alias bb-timer-status="sudo systemctl status btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+
+# Enable/disable timers
+alias bb-timers-enable="sudo systemctl enable btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+alias bb-timers-disable="sudo systemctl disable btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+
+# Start/stop timers
+alias bb-timers-start="sudo systemctl start btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+alias bb-timers-stop="sudo systemctl stop btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+
+# Restart timers
+alias bb-timers-restart="sudo systemctl restart btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer"
+
+# Individual timer management
+alias bb-daily-timer="sudo systemctl status btrfs-backup-daily.timer"
+alias bb-weekly-timer="sudo systemctl status btrfs-backup-weekly.timer"
+alias bb-monthly-timer="sudo systemctl status btrfs-backup-monthly.timer"
+
+# =============================================================================
+# Service Log Management
+# =============================================================================
+
+# View service logs
+alias bb-service-logs="sudo journalctl -u btrfs-backup-daily.service -u btrfs-backup-weekly.service -u btrfs-backup-monthly.service"
+alias bb-daily-logs="sudo journalctl -u btrfs-backup-daily.service"
+alias bb-weekly-logs="sudo journalctl -u btrfs-backup-weekly.service"
+alias bb-monthly-logs="sudo journalctl -u btrfs-backup-monthly.service"
+
+# Follow logs in real-time
+alias bb-daily-follow="sudo journalctl -u btrfs-backup-daily.service -f"
+alias bb-weekly-follow="sudo journalctl -u btrfs-backup-weekly.service -f"
+alias bb-monthly-follow="sudo journalctl -u btrfs-backup-monthly.service -f"
+
+# Recent logs
+alias bb-logs-today="sudo journalctl -u btrfs-backup-daily.service -u btrfs-backup-weekly.service -u btrfs-backup-monthly.service --since today"
+alias bb-logs-week="sudo journalctl -u btrfs-backup-daily.service -u btrfs-backup-weekly.service -u btrfs-backup-monthly.service --since '1 week ago'"
+
+# =============================================================================
+# BTRFS Filesystem Management
+# =============================================================================
+
+# Snapshot listing and management
+alias bb-list-snapshots="sudo find /.snapshots -name 'daily_*' -o -name 'weekly_*' -o -name 'monthly_*' | sort"
+alias bb-list-daily="sudo find /.snapshots -name 'daily_*' | sort"
+alias bb-list-weekly="sudo find /.snapshots -name 'weekly_*' | sort"
+
+# Disk usage for snapshots
+alias bb-snapshot-usage="sudo du -sh /.snapshots/*/"
+alias bb-total-usage="sudo du -sh /.snapshots"
+
+# BTRFS filesystem status
+alias bb-fs-show="sudo btrfs filesystem show"
+alias bb-fs-usage="sudo btrfs filesystem usage /"
+alias bb-subvol-list="sudo btrfs subvolume list /"
+
+# =============================================================================
+# External Drive Management
+# =============================================================================
+
+# Check external drive status
+alias bb-external-check="lsblk -f | grep -E '(sdb|sdc|sdd)' || echo 'No external drives detected'"
+alias bb-external-mount="mount | grep '/run/media' || echo 'No external drives mounted'"
+alias bb-external-space="df -h /run/media/*/ 2>/dev/null || echo 'No external drives accessible'"
+
+# =============================================================================
+# Quick Actions and Shortcuts
+# =============================================================================
+
+# Most commonly used commands
+alias bb="bb-status"  # Quick status check
+alias bbd="bb-daily"  # Quick daily backup
+alias bbw="bb-weekly" # Quick weekly backup
+alias bbm="bb-monthly" # Quick monthly backup
+
+# Dry-run shortcuts
+alias bbt="bb-daily-dry"   # Test daily backup
+alias bbwt="bb-weekly-dry" # Test weekly backup
+alias bbmt="bb-monthly-dry" # Test monthly backup
+
+# =============================================================================
+# Advanced Operations
+# =============================================================================
+
+# Manual snapshot operations (use with caution)
+alias bb-manual-snapshot='function _bb_manual_snapshot() { 
+    local name=${1:-manual_$(date +%Y%m%d_%H%M%S)}
+    echo "Creating manual snapshot: $name"
+    sudo btrfs subvolume snapshot -r / "/.snapshots/root/$name"
+    sudo btrfs subvolume snapshot -r /home "/.snapshots/home/$name"
+}; _bb_manual_snapshot'
+
+# Cleanup old manual snapshots
+alias bb-cleanup-manual='sudo find /.snapshots -name "manual_*" -type d -mtime +7 -exec echo "Would delete: {}" \;'
+
+# =============================================================================
+# System Health and Monitoring
+# =============================================================================
+
+# Check system health related to backups
+alias bb-health='function _bb_health() {
+    echo "=== BTRFS Backup System Health ==="
+    echo ""
+    echo "Filesystem Usage:"
+    df -h / | grep -v tmpfs
+    echo ""
+    echo "Timer Status:"
+    systemctl list-timers | grep btrfs
+    echo ""
+    echo "Recent Backup Activity:"
+    sudo grep "$(date -d "1 day ago" "+%Y-%m-%d")" /var/log/btrfs_backup.log | tail -5 || echo "No recent activity found"
+    echo ""
+    echo "External Drive Status:"
+    mount | grep "/run/media" || echo "No external drives mounted"
+}; _bb_health'
+
+# =============================================================================
+# Configuration and Editing
+# =============================================================================
+
+# Edit script configuration
+alias bb-config="sudo nano $BTRFS_BACKUP_SCRIPT"
+alias bb-edit="sudo nano $BTRFS_BACKUP_SCRIPT"
+
+# Edit systemd files
+alias bb-edit-daily-service="sudo nano /etc/systemd/system/btrfs-backup-daily.service"
+alias bb-edit-weekly-service="sudo nano /etc/systemd/system/btrfs-backup-weekly.service"
+alias bb-edit-monthly-service="sudo nano /etc/systemd/system/btrfs-backup-monthly.service"
+
+alias bb-edit-daily-timer="sudo nano /etc/systemd/system/btrfs-backup-daily.timer"
+alias bb-edit-weekly-timer="sudo nano /etc/systemd/system/btrfs-backup-weekly.timer"
+alias bb-edit-monthly-timer="sudo nano /etc/systemd/system/btrfs-backup-monthly.timer"
+
+# Reload systemd after editing
+alias bb-reload="sudo systemctl daemon-reload"
+
+# =============================================================================
+# Emergency and Recovery
+# =============================================================================
+
+# Emergency stop all backup operations
+alias bb-emergency-stop='function _bb_emergency_stop() {
+    echo "Stopping all BTRFS backup services and timers..."
+    sudo systemctl stop btrfs-backup-daily.service btrfs-backup-weekly.service btrfs-backup-monthly.service
+    sudo systemctl stop btrfs-backup-daily.timer btrfs-backup-weekly.timer btrfs-backup-monthly.timer
+    echo "All backup operations stopped."
+}; _bb_emergency_stop'
+
+# Emergency cleanup (removes snapshots older than 1 day)
+alias bb-emergency-cleanup='function _bb_emergency_cleanup() {
+    echo "WARNING: This will delete snapshots older than 1 day!"
+    echo "Press Ctrl+C to cancel, or Enter to continue..."
+    read
+    sudo find /.snapshots -name "daily_*" -type d -mtime +1 -exec sudo btrfs subvolume delete {} \;
+}; _bb_emergency_cleanup'
+
+# =============================================================================
+# Helpful Functions
+# =============================================================================
+
+# Count snapshots by type
+alias bb-count='function _bb_count() {
+    echo "Snapshot counts:"
+    echo "Daily:   $(sudo find /.snapshots -name "daily_*" -type d | wc -l)"
+    echo "Weekly:  $(sudo find /.snapshots -name "weekly_*" -type d | wc -l)"
+    echo "Monthly: $(sudo find /.snapshots -name "monthly_*" -type d | wc -l)"
+    echo "Manual:  $(sudo find /.snapshots -name "manual_*" -type d | wc -l)"
+}; _bb_count'
+
+# Show last backup times
+alias bb-last='function _bb_last() {
+    echo "Last backup times:"
+    echo "Daily:   $(sudo find /.snapshots -name "daily_*" -type d | sort | tail -1 | xargs basename 2>/dev/null || echo "None")"
+    echo "Weekly:  $(sudo find /.snapshots -name "weekly_*" -type d | sort | tail -1 | xargs basename 2>/dev/null || echo "None")"
+    echo "Monthly: $(sudo find /.snapshots -name "monthly_*" -type d | sort | tail -1 | xargs basename 2>/dev/null || echo "None")"
+}; _bb_last'
+
+# =============================================================================
+# Installation Help
+# =============================================================================
+
+# Display installation instructions for these aliases
+alias bb-install-aliases='cat << "EOF"
+To install these aliases, add the following to your ~/.zshrc:
+
+# Source BTRFS backup aliases
+if [ -f ~/.btrfs_backup_aliases ]; then
+    source ~/.btrfs_backup_aliases
+fi
+
+Then save this alias file as ~/.btrfs_backup_aliases and run:
+source ~/.zshrc
+
+Or add all aliases directly to your ~/.zshrc file.
+EOF'
+
+# =============================================================================
+# Usage Help
+# =============================================================================
+
+# Show all available aliases
+alias bb-aliases='function _bb_show_aliases() {
+    echo "=== BTRFS Backup Aliases ==="
+    echo ""
+    echo "Basic Operations:"
+    echo "  bb-daily      - Run daily backup"
+    echo "  bb-weekly     - Run weekly backup"
+    echo "  bb-monthly    - Run monthly backup"
+    echo "  bb-cleanup    - Run cleanup only"
+    echo "  bb-status     - Show backup status"
+    echo ""
+    echo "Dry-run Operations (add -dry suffix):"
+    echo "  bb-daily-dry  - Test daily backup"
+    echo "  bb-weekly-dry - Test weekly backup"
+    echo "  bb-monthly-dry- Test monthly backup"
+    echo ""
+    echo "Quick Shortcuts:"
+    echo "  bb            - Quick status"
+    echo "  bbd           - Quick daily backup"
+    echo "  bbw           - Quick weekly backup"
+    echo "  bbm           - Quick monthly backup"
+    echo "  bbt           - Test daily backup"
+    echo ""
+    echo "Logs and Monitoring:"
+    echo "  bb-log        - Follow live log"
+    echo "  bb-log-today  - Show today'\''s logs"
+    echo "  bb-health     - System health check"
+    echo "  bb-count      - Count snapshots"
+    echo "  bb-last       - Show last backup times"
+    echo ""
+    echo "Timer Management:"
+    echo "  bb-timers     - Show timer status"
+    echo "  bb-timers-start - Start all timers"
+    echo "  bb-timers-stop  - Stop all timers"
+    echo ""
+    echo "For complete list, see the alias file or type: grep \"^alias bb-\" ~/.zshrc"
+}; _bb_show_aliases'

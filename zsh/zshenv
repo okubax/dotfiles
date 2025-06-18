@@ -1,9 +1,9 @@
 #exported variables
 
-export PATH=${PATH}:$HOME/bin/:$HOME/development/android/sdk/tools/bin/:$HOME/.gem/ruby/3.0.0/bin/:$HOME/.gem/bin/:$HOME/.npm-global/bin/:$HOME/.firefox/:$HOME/.cargo/bin/
+export PATH=${PATH}:$HOME/bin/:$HOME/development/android/sdk/cmdline-tools/12.0/bin/:$HOME/.gem/ruby/3.4.0/bin/:$HOME/.gem/bin/:$HOME/.npm-global/bin/:$HOME/.firefox/:$HOME/.cargo/bin/
 export PATH=${PATH}:$HOME/git/ii/:$HOME/git/nettop/:$HOME/git/2048.c/:$HOME/git/tuxi/:$HOME/git/pass2csv/
-export PATH=${PATH}:$HOME/development/android/sdk/platform-tools/:$HOME/development/android/sdk/tools/:$HOME/machines/qemu-scripts/
-export PATH=${PATH}:$HOME/venv/pelican/bin/:$HOME/venv/vizex/bin/
+export PATH=${PATH}:$HOME/development/android/sdk/platform-tools/:$HOME/development/android/sdk/cmdline-tools/12.0/:$HOME/machines/qemu-scripts/
+export PATH=${PATH}:$HOME/venv/pelican/bin/:$HOME/venv/vizex/bin/:$HOME/venv/emailproxy/bin/
 export ANDROID_HOME=$HOME/development/android/sdk
 export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Djdk.gtk.version=3'
 _SILENT_JAVA_OPTIONS="$_JAVA_OPTIONS"
@@ -22,6 +22,8 @@ export BROWSER=firefox
 export EDITOR=vim
 export GOPATH=$HOME/gocode
 export PATH=$PATH:$GOPATH/bin
+export ELECTRON_OZONE_PLATFORM_HINT=wayland
+export VK_DRIVER_FILES=
 
 #XDG Base Directory Specifications
 export XDG_DATA_HOME=$HOME/.local/share

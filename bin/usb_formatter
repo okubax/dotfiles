@@ -1,0 +1,790 @@
+#!/bin/bash
+
+# USB Drive Formatter Script
+# Supports multiple filesystems and encryption options
+# Author: Interactive USB Formatter
+# Version: 1.1 - Fixed
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
+print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Function to check if running as root
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        print_error "This script must be run as root (use sudo)"
+        exit 1
+    fi
+}
+
+# Function to check required tools
+check_dependencies() {
+    local missing_tools=()
+    
+    # Basic tools - separated mkfs tools for better checking
+    local basic_tools=(lsblk fdisk parted wipefs)
+    local mkfs_tools=(mkfs.ext4 mkfs.btrfs mkfs.vfat mkfs.ntfs mkfs.exfat)
+    
+    for tool in "${basic_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing_tools+=("$tool")
+        fi
+    done
+    
+    # Check mkfs tools individually
+    for tool in "${mkfs_tools[@]}"; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing_tools+=("$tool")
+        fi
+    done
+    
+    # Encryption tools
+    if ! command -v cryptsetup &> /dev/null; then
+        missing_tools+=("cryptsetup")
+    fi
+    
+    if [[ ${#missing_tools[@]} -gt 0 ]]; then
+        print_error "Missing required tools: ${missing_tools[*]}"
+        print_info "Install them with:"
+        print_info "Ubuntu/Debian: sudo apt install util-linux btrfs-progs dosfstools ntfs-3g exfat-utils parted cryptsetup"
+        print_info "RHEL/CentOS/Fedora: sudo dnf install util-linux btrfs-progs dosfstools ntfs-3g exfat-utils parted cryptsetup"
+        print_info "Arch: sudo pacman -S util-linux btrfs-progs dosfstools ntfs-3g exfat-utils parted cryptsetup"
+        exit 1
+    fi
+}
+
+# Function to detect USB drives
+detect_usb_drives() {
+    print_info "Detecting USB drives..." >&2
+    
+    local temp_file="/tmp/usb_devices_$$"
+    
+    # Get all block devices with more specific filtering
+    while IFS= read -r line; do
+        # Skip empty lines or lines without proper format
+        [[ -z "$line" ]] && continue
+        
+        # Parse lsblk output
+        local name size type mountpoint
+        read -r name size type mountpoint <<< "$line"
+        
+        # Skip if not a block device or if it's a partition
+        [[ ! -b "$name" ]] && continue
+        [[ "$type" != "disk" ]] && continue
+        
+        # Get device name without /dev/
+        local device_name
+        device_name=$(basename "$name")
+        
+        # Check if removable - handle case where file doesn't exist
+        local removable_file="/sys/block/${device_name}/removable"
+        if [[ -f "$removable_file" ]]; then
+            local removable
+            removable=$(cat "$removable_file" 2>/dev/null || echo "0")
+            if [[ "$removable" == "1" ]]; then
+                echo "$name:${size:-Unknown}:${type:-disk}:${mountpoint:-Not mounted}"
+            fi
+        fi
+    done < <(lsblk -dpno NAME,SIZE,TYPE,MOUNTPOINT 2>/dev/null) > "$temp_file"
+    
+    # Also check USB devices by ID path
+    if [[ -d /dev/disk/by-id ]]; then
+        while IFS= read -r link; do
+            [[ -z "$link" ]] && continue
+            
+            local device
+            device=$(readlink -f "$link" 2>/dev/null || echo "")
+            [[ -z "$device" || ! -b "$device" ]] && continue
+            
+            # Only add if it's a disk (not partition) and not already listed
+            local device_type
+            device_type=$(lsblk -no TYPE "$device" 2>/dev/null | head -1 || echo "")
+            [[ "$device_type" != "disk" ]] && continue
+            
+            if ! grep -q "^$device:" "$temp_file" 2>/dev/null; then
+                local size mountpoint
+                size=$(lsblk -no SIZE "$device" 2>/dev/null | head -1 || echo "Unknown")
+                mountpoint=$(lsblk -no MOUNTPOINT "$device" 2>/dev/null | head -1 || echo "Not mounted")
+                echo "$device:$size:disk:$mountpoint"
+            fi
+        done < <(find /dev/disk/by-id -name "*usb*" -type l 2>/dev/null) >> "$temp_file"
+    fi
+    
+    # Check if any devices found
+    if [[ ! -s "$temp_file" ]]; then
+        rm -f "$temp_file"
+        print_error "No removable drives detected!" >&2
+        print_info "Please ensure your USB drive is connected and detected by the system." >&2
+        print_info "You can check with: lsblk" >&2
+        exit 1
+    fi
+    
+    # Remove duplicates and output results
+    sort -u "$temp_file"
+    rm -f "$temp_file"
+}
+
+# Function to display available drives
+display_drives() {
+    local drives=("$@")
+    
+    print_info "Available drives:"
+    echo
+    
+    local i=1
+    for drive in "${drives[@]}"; do
+        local device size type mountpoint
+        IFS=':' read -r device size type mountpoint <<< "$drive"
+        echo "$i) $device ($size, $type, $mountpoint)"
+        ((i++))
+    done
+    echo
+}
+
+# Function to check if drive looks like a system drive
+check_system_drive_warning() {
+    local device="$1"
+    local device_name
+    device_name=$(basename "$device")
+    local warnings=()
+    
+    # Check for common system drive patterns
+    case "$device_name" in
+        sda|sdb|nvme0n1|mmcblk0)
+            warnings+=("Device name '$device_name' is commonly used for system drives")
+            ;;
+    esac
+    
+    # Check if device is not marked as removable
+    local removable_file="/sys/block/${device_name}/removable"
+    if [[ -f "$removable_file" ]]; then
+        local removable
+        removable=$(cat "$removable_file" 2>/dev/null || echo "0")
+        [[ "$removable" == "0" ]] && warnings+=("Device is not marked as removable")
+    fi
+    
+    # Check for system partitions
+    local system_partitions
+    system_partitions=$(lsblk -rno MOUNTPOINT "$device" 2>/dev/null | grep -E "^(/|/boot|/home|/usr|/var)$" || echo "")
+    [[ -n "$system_partitions" ]] && warnings+=("Contains system mount points: $system_partitions")
+    
+    # Check for large size (> 128GB)
+    local size_bytes
+    size_bytes=$(lsblk -rno SIZE -b "$device" 2>/dev/null | head -1 || echo "0")
+    if (( size_bytes > 137438953472 )); then
+        local size_gb=$((size_bytes / 1073741824))
+        warnings+=("Large capacity (${size_gb}GB) - unusual for typical USB drives")
+    fi
+    
+    # Show warnings if any
+    if (( ${#warnings[@]} > 0 )); then
+        print_warning "POTENTIAL SYSTEM DRIVE DETECTED: $device"
+        for warning in "${warnings[@]}"; do
+            print_warning "  - $warning"
+        done
+        echo
+        return 0
+    fi
+    
+    return 1
+}
+
+# Function to select filesystem
+select_filesystem() {
+    echo >&2
+    print_info "Select filesystem type:" >&2
+    echo "1) ext4      - Linux native, journaling, good performance" >&2
+    echo "2) btrfs     - Linux advanced, snapshots, compression" >&2
+    echo "3) fat32     - Universal compatibility (Windows/Mac/Linux)" >&2
+    echo "4) exfat     - Large files, Windows/Mac/Linux compatible" >&2
+    echo "5) ntfs      - Windows native, large files" >&2
+    echo "6) ext3      - Linux native, older journaling" >&2
+    echo "7) ext2      - Linux native, no journaling" >&2
+    echo >&2
+    
+    while true; do
+        read -p "Enter choice (1-7): " fs_choice >&2
+        case $fs_choice in
+            1) echo "ext4"; return;;
+            2) echo "btrfs"; return;;
+            3) echo "fat32"; return;;
+            4) echo "exfat"; return;;
+            5) echo "ntfs"; return;;
+            6) echo "ext3"; return;;
+            7) echo "ext2"; return;;
+            *) print_error "Invalid choice. Please enter 1-7." >&2;;
+        esac
+    done
+}
+
+# Function to ask about encryption
+ask_encryption() {
+    local filesystem="$1"
+    
+    # Only offer encryption for supported filesystems
+    case "$filesystem" in
+        ext2|ext3|ext4|btrfs)
+            echo >&2
+            read -p "Do you want to encrypt the drive? (y/N): " encrypt_choice >&2
+            case $encrypt_choice in
+                [Yy]|[Yy][Ee][Ss]) echo "yes";;
+                *) echo "no";;
+            esac
+            ;;
+        *)
+            echo "no"
+            ;;
+    esac
+}
+
+# Function to unmount device
+unmount_device() {
+    local device="$1"
+    
+    print_info "Unmounting any mounted partitions on $device..."
+    
+    # Find all partitions of the device and unmount them
+    while IFS= read -r partition; do
+        [[ -z "$partition" ]] && continue
+        
+        local full_partition="/dev/$partition"
+        if mountpoint -q "$full_partition" 2>/dev/null; then
+            print_info "Unmounting $full_partition"
+            if ! umount "$full_partition" 2>/dev/null; then
+                print_warning "Failed to unmount $full_partition, trying force unmount"
+                umount -f "$full_partition" 2>/dev/null || true
+            fi
+        fi
+    done < <(lsblk -rno NAME "$device" 2>/dev/null | tail -n +2)
+    
+    # Wait a moment for unmounts to complete
+    sleep 1
+}
+
+# Function to create partition table
+create_partition_table() {
+    local device="$1"
+    local filesystem="$2"
+    
+    print_info "Creating new partition table on $device..." >&2
+    
+    # Ensure device is not busy
+    sync
+    sleep 1
+    
+    # Wipe existing signatures first
+    wipefs -a "$device" >/dev/null 2>&1 || true
+    sync
+    sleep 1
+    
+    # Choose partition table type based on filesystem
+    case "$filesystem" in
+        fat32)
+            # Use MBR for maximum compatibility with FAT32
+            parted -s "$device" mklabel msdos >/dev/null 2>&1
+            sync
+            sleep 1
+            parted -s "$device" mkpart primary fat32 1MiB 100% >/dev/null 2>&1
+            sync
+            sleep 1
+            parted -s "$device" set 1 boot on >/dev/null 2>&1
+            ;;
+        *)
+            # Use GPT for modern filesystems
+            parted -s "$device" mklabel gpt >/dev/null 2>&1
+            sync
+            sleep 1
+            parted -s "$device" mkpart primary 1MiB 100% >/dev/null 2>&1
+            ;;
+    esac
+    
+    # Force kernel to re-read partition table
+    sync
+    sleep 2
+    partprobe "$device" >/dev/null 2>&1 || true
+    if command -v udevadm &> /dev/null; then
+        udevadm settle --timeout=10 >/dev/null 2>&1 || sleep 3
+    else
+        sleep 3
+    fi
+    
+    # Additional kernel notification
+    blockdev --rereadpt "$device" >/dev/null 2>&1 || true
+    sleep 2
+    
+    # Find the partition - handle different naming schemes
+    local partition
+    if [[ "$device" == *"nvme"* || "$device" == *"mmcblk"* ]]; then
+        partition="${device}p1"
+    else
+        partition="${device}1"
+    fi
+    
+    # Wait for partition to exist with better error reporting
+    local attempts=0
+    while [[ ! -b "$partition" && $attempts -lt 15 ]]; do
+        print_info "Waiting for partition $partition to be recognized... (attempt $((attempts+1))/15)" >&2
+        sleep 1
+        ((attempts++))
+        
+        # Try to force recognition every few attempts
+        if (( attempts % 3 == 0 )); then
+            partprobe "$device" >/dev/null 2>&1 || true
+            blockdev --rereadpt "$device" >/dev/null 2>&1 || true
+        fi
+    done
+    
+    if [[ ! -b "$partition" ]]; then
+        print_error "Partition $partition was not created successfully after 15 seconds" >&2
+        print_error "Available partitions on $device:" >&2
+        lsblk "$device" >&2 2>/dev/null || true
+        print_error "Contents of /proc/partitions:" >&2
+        grep "$(basename "$device")" /proc/partitions >&2 2>/dev/null || true
+        exit 1
+    fi
+    
+    print_info "Partition $partition created and recognized successfully" >&2
+    
+    # Return the partition device
+    echo "$partition"
+}
+
+# Function to setup encryption
+setup_encryption() {
+    local partition="$1"
+    local label="$2"
+    
+    print_info "Setting up LUKS encryption on $partition..." >&2
+    
+    # Verify partition exists before proceeding
+    if [[ ! -b "$partition" ]]; then
+        print_error "Partition $partition does not exist!" >&2
+        return 1
+    fi
+    
+    # Ensure the partition is not mounted
+    umount "$partition" >/dev/null 2>&1 || true
+    
+    # Wait for any pending operations
+    sync
+    sleep 2
+    
+    # Clear existing filesystem signatures
+    print_info "Clearing existing filesystem signatures..." >&2
+    wipefs -a "$partition" >/dev/null 2>&1 || true
+    
+    # Zero out the beginning of the partition
+    print_info "Zeroing partition header..." >&2
+    dd if=/dev/zero of="$partition" bs=1M count=10 conv=fsync >/dev/null 2>&1 || {
+        print_warning "Failed to zero partition header, continuing anyway..." >&2
+    }
+    
+    # Wait for operations to complete
+    sync
+    sleep 2
+    
+    # Create LUKS container
+    print_warning "LUKS Encryption Setup Process:" >&2
+    print_warning "You will be prompted to:" >&2
+    print_warning "1. Type 'YES' (all capitals) to confirm the format" >&2
+    print_warning "2. Enter a strong passphrase (won't be visible)" >&2
+    print_warning "3. Re-enter the same passphrase to confirm" >&2
+    print_warning "4. Enter the passphrase again to open the encrypted drive" >&2
+    print_warning "" >&2
+    print_warning "Press Enter to continue..." >&2
+    read -r >&2
+    
+    # Verify partition is still accessible
+    if [[ ! -b "$partition" ]]; then
+        print_error "Partition $partition is no longer accessible!" >&2
+        return 1
+    fi
+    
+    # Create LUKS container - use basic format to avoid double confirmation
+    print_info "Starting LUKS format on $partition..." >&2
+    print_warning "TYPE 'YES' NOW (all capitals) and press Enter:" >&2
+    
+    if ! cryptsetup luksFormat "$partition"; then
+        print_error "LUKS encryption setup failed!" >&2
+        print_error "Common causes:" >&2
+        print_error "  - Did not type 'YES' exactly (must be all capital letters)" >&2
+        print_error "  - Passphrases didn't match during setup" >&2
+        print_error "  - Passphrase too weak (try a longer, stronger passphrase)" >&2
+        print_error "  - Device is busy (try unplugging and reconnecting the USB drive)" >&2
+        print_error "  - Partition not properly created" >&2
+        return 1
+    fi
+    
+    # Wait for the LUKS container to be ready
+    sync
+    sleep 3
+    
+    # Open the encrypted container
+    print_info "LUKS container created successfully!" >&2
+    print_info "Now opening the encrypted container..." >&2
+    print_info "Please enter your passphrase to open the encrypted drive:" >&2
+    
+    local crypt_name="${label}_crypt"
+    local max_attempts=3
+    local attempt=1
+    
+    while (( attempt <= max_attempts )); do
+        if cryptsetup luksOpen "$partition" "$crypt_name"; then
+            break
+        else
+            if (( attempt < max_attempts )); then
+                print_warning "Incorrect passphrase. Attempt $attempt of $max_attempts. Please try again:" >&2
+                ((attempt++))
+            else
+                print_error "Failed to open encrypted container after $max_attempts attempts!" >&2
+                print_error "Please verify you entered the correct passphrase." >&2
+                return 1
+            fi
+        fi
+    done
+    
+    # Wait for the mapper device to be available
+    sync
+    sleep 3
+    
+    # Verify the encrypted device exists
+    local encrypted_device="/dev/mapper/$crypt_name"
+    local attempts=0
+    while [[ ! -b "$encrypted_device" && $attempts -lt 15 ]]; do
+        print_info "Waiting for encrypted device to be available... (attempt $((attempts+1))/15)" >&2
+        sleep 1
+        ((attempts++))
+    done
+    
+    if [[ ! -b "$encrypted_device" ]]; then
+        print_error "Encrypted device $encrypted_device not available after 15 seconds!" >&2
+        print_error "Available mapper devices:" >&2
+        ls -la /dev/mapper/ >&2 || true
+        return 1
+    fi
+    
+    print_success "Encrypted device $encrypted_device is ready" >&2
+    
+    # Return ONLY the decrypted device path, nothing else
+    echo "$encrypted_device"
+}
+
+# Function to format filesystem
+format_filesystem() {
+    local device="$1"
+    local filesystem="$2"
+    local label="$3"
+    
+    print_info "Formatting $device with $filesystem filesystem..." >&2
+    
+    # Verify device exists and is accessible
+    if [[ ! -b "$device" ]]; then
+        print_error "Device $device does not exist or is not accessible!" >&2
+        return 1
+    fi
+    
+    # Truncate label if too long for filesystem limits
+    local fs_label="$label"
+    case $filesystem in
+        fat32)
+            # FAT32 labels are limited to 11 characters
+            fs_label="${label:0:11}"
+            if ! mkfs.vfat -F 32 -n "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with FAT32" >&2
+                return 1
+            fi
+            ;;
+        exfat)
+            # exFAT labels are limited to 15 characters  
+            fs_label="${label:0:15}"
+            if ! mkfs.exfat -n "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with exFAT" >&2
+                return 1
+            fi
+            ;;
+        ntfs)
+            # NTFS labels are limited to 32 characters
+            fs_label="${label:0:32}"
+            if ! mkfs.ntfs -Q -L "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with NTFS" >&2
+                return 1
+            fi
+            ;;
+        ext4)
+            # ext4 labels are limited to 16 characters
+            fs_label="${label:0:16}"
+            if ! mkfs.ext4 -F -L "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with ext4" >&2
+                return 1
+            fi
+            ;;
+        ext3)
+            # ext3 labels are limited to 16 characters
+            fs_label="${label:0:16}"
+            if ! mkfs.ext3 -F -L "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with ext3" >&2
+                return 1
+            fi
+            ;;
+        ext2)
+            # ext2 labels are limited to 16 characters
+            fs_label="${label:0:16}"
+            if ! mkfs.ext2 -F -L "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with ext2" >&2
+                return 1
+            fi
+            ;;
+        btrfs)
+            # btrfs labels are limited to 256 characters (rarely an issue)
+            if ! mkfs.btrfs -f -L "$fs_label" "$device" >&2; then
+                print_error "Failed to format $device with btrfs" >&2
+                return 1
+            fi
+            ;;
+        *)
+            print_error "Unsupported filesystem: $filesystem" >&2
+            return 1
+            ;;
+    esac
+    
+    # Sync to ensure formatting is complete
+    sync
+    sleep 1
+    
+    return 0
+}
+
+# Function to get drive label
+get_drive_label() {
+    local default_label="USB_DRIVE"
+    
+    echo >&2
+    read -p "Enter a label for the drive [$default_label]: " label >&2
+    
+    [[ -z "$label" ]] && label="$default_label"
+    
+    # Clean label for filesystem compatibility - allow alphanumeric and underscores
+    label=$(echo "$label" | tr '[:lower:]' '[:upper:]' | sed 's/[^A-Z0-9_]/_/g' | sed 's/^_\+\|_\+$//g')
+    
+    # Ensure label is not empty after cleaning
+    [[ -z "$label" ]] && label="$default_label"
+    
+    echo "$label"
+}
+
+# Main function
+main() {
+    echo "=================================================="
+    echo "          USB Drive Formatter Script"
+    echo "=================================================="
+    echo
+    
+    # Check prerequisites
+    check_root
+    check_dependencies
+    
+    # Detect USB drives
+    local usb_drives_output
+    usb_drives_output=$(detect_usb_drives)
+    
+    # Convert to array - handle empty results
+    local usb_drives=()
+    while IFS= read -r line; do
+        [[ -n "$line" ]] && usb_drives+=("$line")
+    done <<< "$usb_drives_output"
+    
+    # Verify we have drives
+    if (( ${#usb_drives[@]} == 0 )); then
+        print_error "No USB drives detected!"
+        exit 1
+    fi
+    
+    # Display available drives
+    display_drives "${usb_drives[@]}"
+    
+    # Select drive
+    local selected_device
+    while true; do
+        read -p "Select drive number (1-${#usb_drives[@]}): " drive_num
+        if [[ "$drive_num" =~ ^[0-9]+$ ]] && (( drive_num >= 1 && drive_num <= ${#usb_drives[@]} )); then
+            local selected_drive_info="${usb_drives[$((drive_num-1))]}"
+            selected_device=$(echo "$selected_drive_info" | cut -d: -f1)
+            break
+        else
+            print_error "Invalid selection. Please enter a number between 1 and ${#usb_drives[@]}."
+        fi
+    done
+    
+    print_info "Selected device: $selected_device"
+    
+    # Check for system drive warnings
+    if check_system_drive_warning "$selected_device"; then
+        print_warning "This device shows characteristics of a system drive!"
+        print_warning "Please verify this is the correct USB drive before proceeding."
+        echo
+        read -p "Are you sure this is a USB drive you want to format? (y/N): " drive_confirm
+        case "$drive_confirm" in
+            [Yy]|[Yy][Ee][Ss])
+                ;;
+            *)
+                print_info "Operation cancelled for safety."
+                exit 1
+                ;;
+        esac
+    fi
+    
+    # Select filesystem
+    local filesystem
+    filesystem=$(select_filesystem)
+    print_info "Selected filesystem: $filesystem"
+    
+    # Ask about encryption
+    local encrypt
+    encrypt=$(ask_encryption "$filesystem")
+    
+    case "$encrypt" in
+        yes)
+            print_info "Encryption: Enabled"
+            ;;
+        *)
+            print_info "Encryption: Disabled"
+            ;;
+    esac
+    
+    # Get drive label
+    local label
+    label=$(get_drive_label)
+    print_info "Drive label: $label"
+    
+    # Final confirmation
+    echo
+    print_warning "FINAL CONFIRMATION"
+    print_warning "===================="
+    print_warning "Device: $selected_device"
+    print_warning "Filesystem: $filesystem"
+    print_warning "Encryption: $encrypt"
+    print_warning "Label: $label"
+    echo
+    print_warning "This will PERMANENTLY DESTROY all data on $selected_device"
+    echo
+    read -p "Continue? (y/N): " final_confirm
+    
+    case "$final_confirm" in
+        [Yy]|[Yy][Ee][Ss])
+            ;;
+        *)
+            print_info "Operation cancelled."
+            exit 0
+            ;;
+    esac
+    
+    # Start formatting process
+    echo
+    print_info "Starting format process..."
+    
+    # Unmount device
+    unmount_device "$selected_device"
+    
+    # Create partition table and get partition
+    local partition
+    partition=$(create_partition_table "$selected_device" "$filesystem")
+    print_success "Created partition: $partition"
+    
+    # Verify partition was created successfully
+    if [[ ! -b "$partition" ]]; then
+        print_error "Failed to create partition $partition"
+        exit 1
+    fi
+    
+    # Setup encryption if requested
+    local format_device
+    case "$encrypt" in
+        yes)
+            # Setup encryption and capture only the device path
+            print_info "Setting up encryption..." >&2
+            
+            # Run the encryption setup
+            setup_encryption "$partition" "$label" >/dev/null
+            local encryption_result=$?
+            
+            if [[ $encryption_result -ne 0 ]]; then
+                print_error "Encryption setup failed. Aborting."
+                exit 1
+            fi
+            
+            # The encrypted device should now exist
+            format_device="/dev/mapper/${label}_crypt"
+            
+            if [[ ! -b "$format_device" ]]; then
+                print_error "Encrypted device $format_device not available. Aborting."
+                print_error "Available devices in /dev/mapper/:"
+                ls -la /dev/mapper/ || true
+                exit 1
+            fi
+            print_success "Encryption setup complete"
+            ;;
+        *)
+            format_device="$partition"
+            ;;
+    esac
+    
+    # Format filesystem
+    if format_filesystem "$format_device" "$filesystem" "$label"; then
+        print_success "Filesystem formatting complete"
+    else
+        print_error "Filesystem formatting failed!"
+        print_error "Encrypted device may still be accessible at: $format_device"
+        print_error "You can try formatting manually with: mkfs.ext4 -F -L \"$label\" \"$format_device\""
+        
+        # Attempt cleanup
+        case "$encrypt" in
+            yes)
+                print_info "Attempting to close encrypted container..."
+                cryptsetup luksClose "${label}_crypt" 2>/dev/null || true
+                ;;
+        esac
+        exit 1
+    fi
+    
+    # Close encrypted container if used
+    case "$encrypt" in
+        yes)
+            cryptsetup luksClose "${label}_crypt"
+            print_info "Encrypted container closed"
+            ;;
+    esac
+    
+    # Final success message
+    echo
+    print_success "USB drive formatting completed successfully!"
+    print_info "Device: $selected_device"
+    print_info "Filesystem: $filesystem"
+    print_info "Label: $label"
+    
+    case "$encrypt" in
+        yes)
+            print_info "Encryption: Enabled (remember your passphrase!)"
+            print_info "To mount: cryptsetup luksOpen $partition ${label}_crypt && mount /dev/mapper/${label}_crypt /mnt"
+            ;;
+        *)
+            print_info "The drive is ready to use"
+            ;;
+    esac
+    
+    echo
+    print_info "You can now safely remove and use your USB drive."
+}
+
+# Run main function
+main "$@"

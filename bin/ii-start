@@ -1,0 +1,394 @@
+#!/bin/bash
+# ii-start - Improved ii IRC client startup script
+
+# Configuration
+IRC_HOME="$HOME/irc"
+CREDENTIALS_FILE="$HOME/.config/ii/credentials"
+
+# Server configurations
+declare -A SERVERS=(
+    ["net1"]="127.0.0.1:6698:user1"
+    ["net2"]="127.0.0.1:6697:user2" 
+    ["net3"]="127.0.0.1:6699:user3"
+)
+
+# Channel configurations
+declare -A CHANNELS=(
+    ["net1"]="#channel1 #channel2 #channel3"
+    ["net2"]="#channel4"
+    ["net3"]="#channel5"
+)
+
+# Network-specific credentials (network:nick:password)
+# NOTE: Remove these and use credentials file instead for security
+declare -A NETWORK_CREDENTIALS=(
+    # ["net1:user1"]="password1"
+    # ["net2:user2"]="password2"
+    # ["net3:user3"]="password3"
+)
+
+# Functions
+check_stunnel() {
+    if ! systemctl is-active --quiet stunnel; then
+        echo "Starting stunnel via systemd..."
+        sudo systemctl start stunnel || {
+            echo "Failed to start stunnel service"
+            echo "Make sure /etc/stunnel/stunnel.conf is configured correctly"
+            exit 1
+        }
+        
+        # Wait for stunnel to be ready
+        local count=0
+        while [ $count -lt 10 ]; do
+            if systemctl is-active --quiet stunnel; then
+                echo "✓ stunnel service started"
+                sleep 2  # Give it a moment to bind ports
+                return 0
+            fi
+            sleep 1
+            ((count++))
+        done
+        
+        echo "✗ stunnel service failed to start properly"
+        return 1
+    else
+        echo "✓ stunnel service already running"
+    fi
+}
+
+wait_for_connection() {
+    local server_dir="$1"
+    local timeout=30
+    local count=0
+    
+    while [ $count -lt $timeout ]; do
+        if [ -p "$server_dir/in" ] && [ -f "$server_dir/out" ]; then
+            return 0
+        fi
+        sleep 1
+        ((count++))
+    done
+    return 1
+}
+
+start_ii_instance() {
+    local name="$1"
+    local server_info="${SERVERS[$name]}"
+    local host=$(echo "$server_info" | cut -d: -f1)
+    local port=$(echo "$server_info" | cut -d: -f2)
+    local nick=$(echo "$server_info" | cut -d: -f3)
+    
+    echo "Starting ii instance: $name ($nick@$host:$port)"
+    
+    # Create directory if it doesn't exist
+    mkdir -p "$IRC_HOME/$name"
+    
+    ii -i "$IRC_HOME/$name/" -n "$nick" -s "$host" -p "$port" &
+    
+    # Wait for connection
+    if wait_for_connection "$IRC_HOME/$name/$host"; then
+        echo "✓ $name connected"
+    else
+        echo "✗ $name connection timeout"
+        return 1
+    fi
+}
+
+authenticate() {
+    local name="$1"
+    local server_info="${SERVERS[$name]}"
+    local host=$(echo "$server_info" | cut -d: -f1)
+    local nick=$(echo "$server_info" | cut -d: -f3)
+    
+    # First try network-specific credentials (built-in)
+    local password="${NETWORK_CREDENTIALS[$name:$nick]}"
+    
+    # Fall back to credentials file if no built-in password
+    if [ -z "$password" ] && [ -f "$CREDENTIALS_FILE" ]; then
+        # Look for network-specific entry first (network:nick:password)
+        password=$(grep "^$name:$nick:" "$CREDENTIALS_FILE" | cut -d: -f3-)
+        
+        # Fall back to generic nick entry
+        if [ -z "$password" ]; then
+            password=$(grep "^$nick:" "$CREDENTIALS_FILE" | cut -d: -f2-)
+        fi
+    fi
+    
+    if [ -n "$password" ]; then
+        echo "Authenticating $nick on $name..."
+        
+        # Different networks use different IDENTIFY syntax
+        case "$name" in
+            "net3")
+                # OFTC uses: IDENTIFY password (no nickname)
+                echo "/j NickServ IDENTIFY $password" > "$IRC_HOME/$name/$host/in"
+                ;;
+            *)
+                # Most networks use: IDENTIFY nickname password  
+                echo "/j NickServ IDENTIFY $nick $password" > "$IRC_HOME/$name/$host/in"
+                ;;
+        esac
+        
+        # Wait and check for successful authentication
+        local auth_wait=0
+        while [ $auth_wait -lt 20 ]; do
+            # Check for various success messages from different networks
+            # Look in both the main server out file and the nickserv out file
+            local server_out="$IRC_HOME/$name/$host/out"
+            local nickserv_out="$IRC_HOME/$name/$host/nickserv/out"
+            
+            # Check main server file
+            if [ -f "$server_out" ] && tail -n 10 "$server_out" 2>/dev/null | grep -q "You are now identified\|Password accepted\|You are now logged in\|now recognized\|900.*You are now logged in\|Password correct\|successfully identified"; then
+                echo "✓ $nick authenticated successfully on $name"
+                return 0
+            fi
+            
+            # Check nickserv file
+            if [ -f "$nickserv_out" ] && tail -n 10 "$nickserv_out" 2>/dev/null | grep -q "You are now identified\|Password accepted\|You are now logged in\|now recognized\|900.*You are now logged in\|Password correct\|successfully identified"; then
+                echo "✓ $nick authenticated successfully on $name"
+                return 0
+            fi
+            
+            # Check for actual authentication failures
+            if ([ -f "$server_out" ] && tail -n 5 "$server_out" 2>/dev/null | grep -q "nickname is now being changed\|Invalid password\|Password incorrect\|Authentication failed\|Access denied") || \
+               ([ -f "$nickserv_out" ] && tail -n 5 "$nickserv_out" 2>/dev/null | grep -q "nickname is now being changed\|Invalid password\|Password incorrect\|Authentication failed\|Access denied"); then
+                echo "✗ $nick authentication failed on $name - check credentials and registration"
+                return 1
+            fi
+            sleep 2
+            ((auth_wait += 2))
+            echo "  Waiting for $nick authentication... (${auth_wait}s)"
+        done
+        
+        # For networks that don't give clear success messages,
+        # assume authentication worked if we can still use the nick after timeout
+        echo "⚠ $nick authentication timeout on $name (may still be working)"
+    else
+        echo "⚠ No password found for $nick on $name"
+        echo "  Add to credentials file as: $name:$nick:password OR $nick:password"
+    fi
+}
+
+join_channels() {
+    local name="$1"
+    local server_info="${SERVERS[$name]}"
+    local host=$(echo "$server_info" | cut -d: -f1)
+    local channels="${CHANNELS[$name]}"
+    
+    if [ -n "$channels" ]; then
+        echo "Joining channels for $name: $channels"
+        for channel in $channels; do
+            echo "  Joining $channel..."
+            # Use ii's /j command format like in your original script
+            echo "/j $channel" > "$IRC_HOME/$name/$host/in"
+            
+            # Wait a bit longer between channel joins
+            sleep 4
+            
+            # Check if we actually joined (look for various success indicators)
+            if tail -n 5 "$IRC_HOME/$name/$host/out" 2>/dev/null | grep -q "JOIN.*$channel\|353.*$channel\|366.*$channel"; then
+                echo "    ✓ Joined $channel"
+            elif tail -n 3 "$IRC_HOME/$name/$host/out" 2>/dev/null | grep -q "Cannot join channel\|You need to be logged\|Channel is invite only"; then
+                echo "    ✗ Failed to join $channel - check authentication or channel requirements"
+            else
+                echo "    ⚠ May not have joined $channel (check manually)"
+            fi
+        done
+    fi
+}
+
+start_all() {
+    echo "Starting ii IRC setup..."
+    
+    # Check and start stunnel
+    check_stunnel || exit 1
+    
+    # Start ii instances
+    local started_instances=()
+    for server in "${!SERVERS[@]}"; do
+        if start_ii_instance "$server"; then
+            started_instances+=("$server")
+        fi
+    done
+    
+    if [ ${#started_instances[@]} -eq 0 ]; then
+        echo "✗ No ii instances started successfully"
+        exit 1
+    fi
+    
+    # Wait longer for connections to stabilize
+    echo "Waiting for connections to stabilize..."
+    sleep 8
+    
+    # Authenticate each instance and wait for completion
+    echo "=== Authentication Phase ==="
+    for server in "${started_instances[@]}"; do
+        authenticate "$server"
+    done
+    
+    # Wait longer for authentication to complete
+    echo "Waiting for authentication to complete..."
+    sleep 15
+    
+    # Join channels with longer delays
+    echo "=== Channel Joining Phase ==="
+    for server in "${started_instances[@]}"; do
+        join_channels "$server"
+        # Extra delay between servers
+        sleep 5
+    done
+    
+    echo "✓ ii setup complete (${#started_instances[@]} instances started)"
+    echo "Active instances: ${started_instances[*]}"
+    echo ""
+    echo "You can check status with: $0 status"
+    echo "View channels with: $0 multitail"
+}
+
+stop_all() {
+    echo "Stopping ii instances..."
+    
+    local stopped=0
+    for server in "${!SERVERS[@]}"; do
+        local server_info="${SERVERS[$server]}"
+        local host=$(echo "$server_info" | cut -d: -f1)
+        local server_dir="$IRC_HOME/$server/$host"
+        
+        if [ -p "$server_dir/in" ]; then
+            echo "Sending quit to $server..."
+            echo "/quit" > "$server_dir/in"
+            ((stopped++))
+        fi
+    done
+    
+    # Wait for graceful quit
+    if [ $stopped -gt 0 ]; then
+        sleep 3
+    fi
+    
+    # Force kill any remaining ii processes
+    if pgrep -f "ii -i" >/dev/null; then
+        echo "Force killing remaining ii processes..."
+        pkill -f "ii -i"
+    fi
+    
+    echo "✓ ii instances stopped"
+}
+
+show_multitail_command() {
+    local cmd="multitail -CS ii -s 2"
+    local files_found=0
+    local quiet_mode=false
+    
+    # Check if we want quiet output (just the command, no extra text)
+    if [ "$1" = "--quiet" ]; then
+        quiet_mode=true
+    fi
+    
+    for server in "${!SERVERS[@]}"; do
+        local server_info="${SERVERS[$server]}"
+        local host=$(echo "$server_info" | cut -d: -f1)
+        local channels="${CHANNELS[$server]}"
+        
+        for channel in $channels; do
+            local out_file="$IRC_HOME/$server/$host/$channel/out"
+            if [ -f "$out_file" ]; then
+                cmd="$cmd $out_file"
+                ((files_found++))
+            fi
+        done
+    done
+    
+    if [ $files_found -eq 0 ]; then
+        if [ "$quiet_mode" = false ]; then
+            echo "No active IRC channels found. Start ii first with: $0 start"
+        fi
+        return 1
+    fi
+    
+    if [ "$quiet_mode" = true ]; then
+        echo "$cmd"
+    else
+        echo "Multitail command ($files_found channels):"
+        echo "$cmd"
+    fi
+}
+
+show_status() {
+    echo "=== ii IRC Status ==="
+    echo
+    
+    echo "stunnel service:"
+    if systemctl is-active --quiet stunnel; then
+        echo "✓ Running"
+    else
+        echo "✗ Not running"
+    fi
+    
+    echo
+    echo "ii processes:"
+    local ii_procs=$(pgrep -f "ii -i" | wc -l)
+    if [ $ii_procs -gt 0 ]; then
+        echo "✓ $ii_procs instances running"
+        pgrep -fl "ii -i"
+    else
+        echo "✗ No ii processes running"
+    fi
+    
+    echo
+    echo "Active channels:"
+    local channel_count=0
+    for server in "${!SERVERS[@]}"; do
+        local server_info="${SERVERS[$server]}"
+        local host=$(echo "$server_info" | cut -d: -f1)
+        local channels="${CHANNELS[$server]}"
+        
+        for channel in $channels; do
+            local out_file="$IRC_HOME/$server/$host/$channel/out"
+            if [ -f "$out_file" ]; then
+                echo "✓ $server/$channel"
+                ((channel_count++))
+            fi
+        done
+    done
+    
+    if [ $channel_count -eq 0 ]; then
+        echo "✗ No active channels found"
+    fi
+}
+
+# Main script logic
+case "${1:-start}" in
+    start)
+        start_all
+        ;;
+    stop)
+        stop_all
+        ;;
+    restart)
+        stop_all
+        sleep 3
+        start_all
+        ;;
+    status)
+        show_status
+        ;;
+    multitail)
+        show_multitail_command
+        ;;
+    multitail-quiet)
+        show_multitail_command --quiet
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status|multitail|multitail-quiet}"
+        echo
+        echo "Commands:"
+        echo "  start          - Start stunnel and ii instances"
+        echo "  stop           - Stop all ii instances" 
+        echo "  restart        - Stop and restart everything"
+        echo "  status         - Show current status"
+        echo "  multitail      - Show multitail command for active channels"
+        echo "  multitail-quiet - Output just the multitail command (for scripts)"
+        exit 1
+        ;;
+esac

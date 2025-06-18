@@ -1,0 +1,90 @@
+#!/bin/bash
+# ~/.aliases_personal - Personal shortcuts and config file editing
+
+## Quick Config File Editing ##
+alias vxres="vim ~/.Xresources"           # Edit X resources
+alias valias="vim ~/.aliases"              # Edit main aliases file
+alias vsystem="vim ~/.aliases_system"      # Edit system aliases
+alias vdev="vim ~/.aliases_dev"           # Edit development aliases
+alias vpersonal="vim ~/.aliases_personal" # Edit personal aliases
+alias vsway="vim ~/.config/sway/config"   # Edit Sway config
+alias vbar="vim ~/.config/waybar/config"  # Edit Waybar config
+alias vbars="vim ~/.config/waybar/style.css" # Edit Waybar styles
+alias vmutt="vim ~/.mutt/muttrc"          # Edit Mutt config
+
+## Personal Documents & Notes ##
+alias vuni="vim ~/documents/Private/Jibo/Notes/uni_notes.txt"
+alias vmisc="vim ~/documents/Private/Jibo/Notes/misc.txt"
+alias vgrace="vim ~/documents/Private/Jibo/Notes/gracenotes.txt"
+alias vpass="vim ~/documents/Private/Jibo/Notes/f.txt"
+alias vtodo="vim ~/documents/Private/Jibo/ToDo/todo.txt"
+alias vdot="vim ~/Dropbox/dots"
+
+## System Logs & Monitoring ##
+alias vpaclog="vim /var/log/pacman.log"   # View Pacman log
+
+# System log with filtering
+getlog() { 
+    local file=~/logs/system/log-$(date +%Y%m%d-%H:%M).txt
+    sudo journalctl -b | grep --line-buffered -v "offimap" > "$file" && vim "$file"
+}
+
+## Chat & Communication ##
+alias chatfn="cd $HOME/irc/lb/127.0.0.1 && exec vim"
+alias chatsn="cd $HOME/irc/sn/127.0.0.1 && exec vim"
+
+## Application Shortcuts ##
+alias spotify="spotify --force-device-scale-factor=2"  # Spotify with scaling
+alias appid="swaymsg -t get_tree | grep \"app_id\""   # Get Sway app IDs
+
+## BTRFS Filesystem Management ##
+alias subvoll="sudo btrfs subvolume list /mnt"        # List subvolumes
+alias subvoldel="sudo btrfs subvolume delete"         # Delete subvolume
+
+## Service Management Shortcuts ##
+alias startsamba="systemctl start smb"                # Start Samba
+alias stopsamba="systemctl stop smb"                  # Stop Samba
+alias emailstatus="systemctl --user status offlineimap" # Check email sync
+alias startprint="systemctl start cups.service"       # Start printing
+alias stopprint="systemctl stop org.cups.cupsd.service" # Stop printing
+
+## Personal Backup & Sync ##
+# Website backup (from server to local) - creates backup directory if needed
+webb() {
+    local backup_dir="$HOME/Projects/sites/backup/$(date +%Y%m%d)"
+    echo "Creating backup directory: $backup_dir"
+    mkdir -p "$backup_dir"
+    
+    if [ ! -d "$backup_dir" ]; then
+        echo "Error: Could not create backup directory $backup_dir"
+        return 1
+    fi
+    
+    echo "Starting backup to $backup_dir"
+    rsync -av username@serevr:public_html/ "$backup_dir/"
+}
+
+# SSH connection to website server
+alias sshweb="username@server"
+
+# Quick deployment aliases (skip connection test since it hangs)
+alias deployfast="deploy --skip-test"
+alias deploy-dry-fast="deploy --dry-run --skip-test"
+
+# Organize files by extension into categorized folders
+alias organize="organize_files.sh -r"
+alias organize-preview="organize_files.sh -r -d"
+
+# Comprehensive Home Workout Tracker
+alias gym="home_gym.sh"
+
+## Todo.txt Integration ##
+# Uncomment if you use todo.txt
+source ~/bin/todo_completion
+export TODOTXT_DEFAULT_ACTION=ls
+alias t='todo.sh -d ~/.todo/todo.cfg'
+
+## Testing Section ##
+# Add new personal aliases here for testing
+# Example format:
+# alias newcmd="some command"  # Description of what it does

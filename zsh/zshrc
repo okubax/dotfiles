@@ -32,6 +32,7 @@ prompt suse
 # End of lines added by compinstall
 PROMPT='%n@%m %~ %# '
 
+#neofetch
 
 # immediate append
 #setopt INC_APPEND_HISTORY
@@ -41,8 +42,13 @@ PROMPT='%n@%m %~ %# '
 #setopt HIST_IGNORE_ALL_DUPS
 
 # aliases
-source $HOME/.aliases
-
+#for file in ~/.alias_*; do
+#    source "$file"
+#done
+# Load organized aliases
+if [ -f ~/.aliases ]; then
+    source ~/.aliases
+fi
 source ~/.zsh/catppuccin_macchiato-zsh-syntax-highlighting.zsh
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh

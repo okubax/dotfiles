@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import pyalpm
+from pycman import config
+from json import loads
+from subprocess import check_output
+from urllib.request import urlopen
+
+aur='https://aur.archlinux.org/rpc/?v=5&'
+newer_fmt = '\033[34m:: \033[0;1m{Name} \033[0;31m{Old}\033[0m -> \033[32m{New}\033[0m'
+older_fmt = '\033[34m:: \033[0;1m{Name} \033[0m{Old} != {New}'
+
+handle = config.init_with_config("/etc/pacman.conf")
+
+syncpkgs = set(p.name for db in handle.get_syncdbs() for p in db.pkgcache)
+
+foreign_vers = { p.name: p.version for p in handle.get_localdb().pkgcache if not p.name in syncpkgs }
+
+params = '&arg[]=' + '&arg[]='.join(foreign_vers.keys())
+
+with urlopen(aur + 'type=info' + params) as url:
+   info  = loads(url.read().decode())['results']
+
+for pkg in info:
+    params = {'Name': pkg['Name'], 'Old': foreign_vers[pkg['Name']], 'New': pkg['Version']}
+    newer = pyalpm.vercmp(pkg['Version'], foreign_vers[pkg['Name']])
+    if newer > 0:
+        print(newer_fmt.format(**params))
+    elif newer < 0:
+        print(older_fmt.format(**params))
+
+
