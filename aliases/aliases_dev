@@ -1,0 +1,55 @@
+#!/bin/bash
+# ~/.aliases_dev - Development and programming aliases
+
+## Python Development ##
+alias pyserv="python -m http.server 6677"  # Quick HTTP server
+alias pipl="pip list --format=columns"     # List installed packages
+alias pipi="pip install"                   # Install package
+alias pipo="pip list --outdated"           # Show outdated packages  
+alias pipup="pip install --upgrade"        # Upgrade package
+alias pipun="pip-autoremove -y"           # Remove unused packages
+alias pips="pip search"                    # Search packages
+
+## Node.js/NPM ##
+alias npml="npm -g list --depth=0"        # List global packages
+alias npmi="npm -g install"               # Install global package
+alias npmo="npm outdated -g"              # Show outdated global packages
+alias npmup="npm update -g"               # Update global packages
+alias npmun="npm -g uninstall"            # Uninstall global package
+alias npms="npm search"                   # Search packages
+
+## Media & Content ##
+alias ytd="yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4'"  # Download best quality video
+alias ytdm="yt-dlp -x --audio-format mp3"  # Download as MP3
+alias play="mplayer -msgcolor -msgmodule"   # Play media with colored output
+
+## Jekyll (Static Site Generator) ##
+alias j="bundle exec jekyll"               # Jekyll command shortcut
+
+## Web Development Server ##
+alias starth="sudo /opt/lampp/lampp start"  # Start XAMPP
+alias stoph="sudo /opt/lampp/lampp stop"    # Stop XAMPP
+
+## Development Utilities ##
+# Quick calculator for shell
+calc() {
+    echo "scale=3;$@" | bc -l
+}
+
+# Generate random passwords
+alias genpass="cat /dev/urandom | tr -dc 'a-zA-Z0-9-_!@#$%^&*()_+{}|:<>?=' | fold -w 15 | grep -i '[!@#$%^&*()_+{}|:<>?=]' | head -n 1"
+alias genpass6="cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 6 | head -n 1"
+
+# Git shortcuts (add your most used git commands)
+alias gith="cd $HOME/git"                 # Navigate to git directory
+
+
+## Development Environment Variables ##
+export USE_CCACHE=1                       # Enable ccache for faster compilation
+
+## Testing Section ##
+# Add new aliases here for testing before moving to permanent sections
+# Remove after testing period
+
+
+

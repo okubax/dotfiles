@@ -1,0 +1,73 @@
+* {
+  border-radius: 0;
+  font-family: "Ubuntu Mono", "Font Awesome 6 Free";
+  font-size: 11pt;
+  min-height: 0;
+}
+
+window#waybar {
+  background: transparent;
+  color: #DADAE8;
+}
+
+tooltip {
+  background: #BAC2DE;
+  border-width: 30px;
+  border-style: solid;
+  border-color: #BAC2DE;
+}
+
+#workspaces {
+  border-radius: 15px 0px 0px 15px;
+}
+
+#workspaces button {
+  padding-left: 10px;
+  padding-right: 10px;
+  min-width: 0;
+  color: #f2cdcd;
+}
+
+#workspaces button.focused {
+  color: #96cdfb;
+}
+
+#workspaces button.urgent {
+  color: #89dceb;
+}
+
+#workspaces button:hover {
+  color: #96cdfb;
+}
+
+#clock, #battery, #custom-wifi, #custom-mail,
+#pulseaudio, #custom-mpd, #workspaces, #idle_inhibitor {
+  padding: 2px 5px;
+  background: #494D64;
+  margin-top: 9px;
+  margin-bottom: 3px;
+}
+
+#custom-wifi {
+  color: #f8bd96;
+}
+
+#pulseaudio { color: #94E2D5; }
+#custom-mail { color: #94E2D5; }
+#custom-mpd { color: #96cdfb; }
+#idle_inhibitor { color:#7a887a; }
+
+
+#battery {
+  color: #f2cdcd;
+}
+
+#idle_inhibitor {
+  color: #96cdfb;
+}
+
+#clock {
+  color: #96cdfb;
+      border-radius: 0px 15px 15px 0px;
+      padding-right: 10px;
+}

@@ -1,0 +1,184 @@
+#!/bin/bash
+# ~/.aliases_system - System administration and core utilities
+
+## Core Utilities ##
+alias cls='echo -ne "\033c"'       # Clear screen completely
+alias ls='ls --color=auto'         # Colorized ls output
+alias grep='grep --color=always'   # Colorized grep output
+alias lsblk='lsblk -f'            # Show filesystem info with lsblk
+alias find="fd"                    # Use fd instead of find
+alias du="gdu"                     # Use gdu for disk usage
+alias ps="ps auxf"                 # Show processes in tree format
+
+## Package Management ##
+# Pacman essentials
+alias pac="sudo pacman -S"         # Install packages
+alias pacy="sudo pacman -Syy"      # Sync 
+alias pacu="sudo pacman -Syu"      # Update all packages
+alias pacr="sudo pacman -Rns"      # Remove packages with dependencies
+alias pacs="pacman -Ss"            # Search packages
+alias paci="pacman -Si"            # Package info
+alias pacc="sudo pacman -Sc"       # Clean package cache
+alias paclo="pacman -Qdt"          # List orphaned packages
+alias paclf="pacman -Ql"           # List files in package
+alias pacof="pacman -Qo"           # Find package that owns file
+
+# AUR management
+alias aurs="rua search"            # Search AUR packages
+alias auri="rua install"           # Install AUR packages
+alias aurl="pacman -Qm"            # List installed AUR packages
+
+# Flatpak management
+alias flati="flatpak install"      # Install flatpak
+alias flatu="flatpak uninstall"    # Uninstall flatpak
+alias flatl="flatpak list"         # List installed flatpaks
+alias flats="flatpak search"       # Search flatpaks
+alias flatup="flatpak update"      # Update all flatpaks
+
+## Systemctl Functions ##
+# System level services
+start() { sudo systemctl start "$1"; }
+stop() { sudo systemctl stop "$1"; }
+restart() { sudo systemctl restart "$1"; }
+status() { sudo systemctl status "$1"; }
+enable() { sudo systemctl enable "$1"; }
+disable() { sudo systemctl disable "$1"; }
+
+# User level services
+ustart() { systemctl --user start "$1"; }
+ustop() { systemctl --user stop "$1"; }
+urestart() { systemctl --user restart "$1"; }
+ustatus() { systemctl --user status "$1"; }
+uenable() { systemctl --user enable "$1"; }
+udisable() { systemctl --user disable "$1"; }
+
+## System Monitoring ##
+alias bat="upower --show-info /org/freedesktop/UPower/devices/battery_BAT0"
+alias dfu="vizex --details"         # Disk usage with vizex
+alias whichport="sudo netstat -tulpn"  # Show listening ports
+alias bandw="sudo bandwhich"        # Bandwidth monitor
+alias myip="curl http://ipecho.net/plain; echo"  # External IP
+alias myipl="ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1'"  # Local IP
+alias errors="sudo journalctl -b -p4"  # High priority system errors
+alias watchlog="journalctl -f -b"   # Follow system logs
+alias dmesg="journalctl -ko short-monotonic --no-hostname"  # Kernel messages
+
+## Dynamic Device Management ##
+# Usage: mountdev sda1, umountdev sda1
+mountdev() { 
+    if [[ -b "/dev/$1" ]]; then
+        udisksctl mount -b "/dev/$1"
+    else
+        echo "Device /dev/$1 not found"
+        lsblk
+    fi
+}
+
+umountdev() { 
+    if [[ -b "/dev/$1" ]]; then
+        udisksctl unmount -b "/dev/$1"
+    else
+        echo "Device /dev/$1 not found"
+        lsblk
+    fi
+}
+
+# Encrypted device management
+# Usage: unlockdev sda2, lockdev sda2
+unlockdev() {
+    if [[ -b "/dev/$1" ]]; then
+        udisksctl unlock -b "/dev/$1"
+    else
+        echo "Device /dev/$1 not found"
+        lsblk
+    fi
+}
+
+lockdev() {
+    local mapper_path="/dev/mapper/luks-*"
+    echo "Available encrypted devices to lock:"
+    ls -la /dev/mapper/luks-* 2>/dev/null || echo "No encrypted devices found"
+    if [[ -b "/dev/$1" ]]; then
+        udisksctl lock -b "/dev/$1"
+    else
+        echo "Device /dev/$1 not found"
+    fi
+}
+
+# Show available devices
+showdevs() {
+    echo "=== Available Block Devices ==="
+    lsblk -f
+    echo -e "\n=== Mounted Filesystems ==="
+    df -h
+}
+
+## Network Management ##
+alias wifiscan="sudo wpa_cli -i wlan0 scan && sleep 3 && sudo wpa_cli -i wlan0 scan_results"
+alias rnetw="sudo systemctl restart wpa_supplicant@wlan0"
+alias rnetn="sudo systemctl restart systemd-networkd"
+alias rnetr="sudo systemctl restart systemd-resolved"
+
+## File Permissions & Archive Management ##
+# Fix directory permissions (755 for dirs, 644 for files)
+fix() {
+    [[ -d "$1" ]] &&
+    find "$1" -type d -print0 | xargs -0 chmod 755 && 
+    find "$1" -type f -print0 | xargs -0 chmod 644 ||
+    echo "$1 is not a directory."
+}
+
+# Make file executable
+alias makex="chmod +x"
+
+# Extract various archive formats
+extract() {
+    if [ -z "$1" ]; then
+        echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
+        echo "       extract <path/file_name_1.ext> [path/file_name_2.ext] [path/file_name_3.ext]"
+    else
+        for n in "$@"
+        do
+            if [ -f "$n" ] ; then
+                case "${n%,}" in
+                    *.cbt|*.tar.bz2|*.tar.gz|*.tar.xz|*.tbz2|*.tgz|*.txz|*.tar) 
+                                tar xvf "$n"       ;;
+                    *.lzma)      unlzma ./"$n"      ;;
+                    *.bz2)       bunzip2 ./"$n"     ;;
+                    *.cbr|*.rar) unrar x -ad ./"$n" ;;
+                    *.gz)        gunzip ./"$n"      ;;
+                    *.cbz|*.epub|*.zip) unzip ./"$n" ;;
+                    *.z)         uncompress ./"$n"  ;;
+                    *.7z|*.apk|*.arj|*.cab|*.cb7|*.chm|*.deb|*.dmg|*.iso|*.lzh|*.msi|*.pkg|*.rpm|*.udf|*.wim|*.xar)
+                                7z x ./"$n"        ;;
+                    *.xz)        unxz ./"$n"        ;;
+                    *.exe)       cabextract ./"$n"  ;;
+                    *.cpio)      cpio -id < ./"$n"  ;;
+                    *.cba|*.ace) unace x ./"$n"     ;;
+                    *.zpaq)      zpaq x ./"$n"      ;;
+                    *.arc)       arc e ./"$n"       ;;
+                    *.cso)       ciso 0 ./"$n" ./"$n.iso" && \
+                                      extract $n.iso && \rm -f $n ;;
+                    *)
+                                echo "extract: '$n' - unknown archive method"
+                                return 1
+                                ;;
+                esac
+            else
+                echo "'$n' - file does not exist"
+                return 1
+            fi
+        done
+    fi
+}
+
+# Create 7z archive with maximum compression
+alias 7zmax='7z a -r -t7z -m0=lzma2 -mx=9 -myx=9 -mqs=on -ms=on'
+
+## Elevated Commands ##
+alias nanos="sudo nano"
+alias vims="sudo vim"
+alias cats="sudo cat"
+
+## History Search ##
+alias histg="cat ~/.zsh_history | grep"

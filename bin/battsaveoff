@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Script to start offlineimap, drop and start lemonbar
+# Script to start offlineimap, nextcloud and bluetooth
 
 
 start_offlineimap() {
@@ -12,12 +12,12 @@ start_bluetooth() {
 }
 
 start_dropbox() {
-        dropbox-cli start
+        nextcloud start
 }
 
 main() {
     start_offlineimap &
-    start_bluetooth
+    start_nextcloud
     start_dropbox &
 }
 

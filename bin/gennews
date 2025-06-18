@@ -1,7 +1,0 @@
-#!/bin/sh
-
-cd ~/Projects/sites/ncircular/remote/output/news
-
-
-python ./parsefeeds.py
-
