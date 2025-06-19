@@ -68,11 +68,8 @@ declare -A DOTFILES_MAP=(
     ["bin"]="$HOME/bin"
     
     # Application configs
-    ["electrum"]="$HOME/.electrum"
-    ["emailproxy.config"]="$HOME/.emailproxy.config"
     ["fontconfig"]="$HOME/.config/fontconfig"
     ["gitconfig"]="$HOME/.gitconfig"
-    ["gnupg"]="$HOME/.gnupg"
     ["ii"]="$HOME/.config/ii"
     ["img"]="$HOME/.img"
     ["kitty"]="$HOME/.config/kitty"
@@ -91,18 +88,10 @@ declare -A DOTFILES_MAP=(
     ["urlview"]="$HOME/.urlview"
     ["vim"]="$HOME/.vim"
     ["vimrc"]="$HOME/.vimrc"
-    ["yams"]="$HOME/.config/yams"
     
     # MSMTP configs
     ["msmtprc"]="$HOME/.msmtprc"
-    ["msmtp-gmail.gpg"]="$HOME/.msmtp-gmail.gpg"
-    ["msmtp-gmail2.gpg"]="$HOME/.msmtp-gmail2.gpg"
-    ["msmtp-gmail3.gpg"]="$HOME/.msmtp-gmail3.gpg"
-    ["msmtp-okubax.gpg"]="$HOME/.msmtp-okubax.gpg"
-    ["msmtp-outlook.gpg"]="$HOME/.msmtp-outlook.gpg"
-    ["msmtp-yahoo.gpg"]="$HOME/.msmtp-yahoo.gpg"
-    ["msmtp-yahoo2.gpg"]="$HOME/.msmtp-yahoo2.gpg"
-    
+
     # SwayWM configs
     ["swaywm/mako"]="$HOME/.config/mako"
     ["swaywm/swaylock"]="$HOME/.config/swaylock"
