@@ -1,62 +1,28 @@
 #!/bin/bash
-# dotfiles.sh - Robust Dotfiles Management System
-# Manages symlinks for configuration files across systems
+# Public Dotfiles Management Script
+# Creates symlinks from dotfiles repository to home directory
+# Designed for community sharing - handles missing files gracefully
 
-set -euo pipefail  # Exit on error, undefined vars, pipe failures
-
-# Configuration
+# Auto-detect dotfiles directory (where this script is located)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTFILES_DIR="${SCRIPT_DIR}"
+DOTFILES_DIR="${DOTFILES_DIR:-$SCRIPT_DIR}"
 BACKUP_DIR="$HOME/.dotfiles_backup_$(date +%Y%m%d_%H%M%S)"
-LOG_FILE="$HOME/.dotfiles.log"
-CONFIG_FILE="$SCRIPT_DIR/dotfiles.conf"
 
-# Colors for output
-readonly RED='\033[0;31m'
-readonly GREEN='\033[0;32m'
-readonly YELLOW='\033[1;33m'
-readonly BLUE='\033[0;34m'
-readonly PURPLE='\033[0;35m'
-readonly CYAN='\033[0;36m'
-readonly WHITE='\033[1;37m'
-readonly NC='\033[0m' # No Color
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
 
-# Flags
+# Options
 DRY_RUN=false
-VERBOSE=false
 FORCE=false
-SKIP_BACKUPS=false
-INTERACTIVE=true
+VERBOSE=false
 
-# Logging functions
-log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
-}
-
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1" | tee -a "$LOG_FILE"
-}
-
-log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1" | tee -a "$LOG_FILE"
-}
-
-log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1" | tee -a "$LOG_FILE"
-}
-
-log_error() {
-    echo -e "${RED}[ERROR]${NC} $1" | tee -a "$LOG_FILE"
-}
-
-log_verbose() {
-    if [[ "$VERBOSE" == true ]]; then
-        echo -e "${CYAN}[VERBOSE]${NC} $1" | tee -a "$LOG_FILE"
-    fi
-}
-
-# Configuration structure - source:destination pairs
-declare -A DOTFILES_MAP=(
+# File mappings: source -> destination
+# Note: Some files may not exist in the public repo - this is normal
+declare -A FILES=(
     # Shell and aliases
     ["aliases/aliases"]="$HOME/.aliases"
     ["aliases/aliases_dev"]="$HOME/.aliases_dev"
@@ -67,31 +33,29 @@ declare -A DOTFILES_MAP=(
     # Binaries and scripts
     ["bin"]="$HOME/bin"
     
-    # Application configs
+    # Application configs (basic)
     ["fontconfig"]="$HOME/.config/fontconfig"
     ["gitconfig"]="$HOME/.gitconfig"
     ["ii"]="$HOME/.config/ii"
     ["img"]="$HOME/.img"
     ["kitty"]="$HOME/.config/kitty"
-    ["mpd"]="$HOME/.mpd"
     ["mplayer"]="$HOME/.mplayer"
     ["multitailrc"]="$HOME/.multitailrc"
     ["mutt"]="$HOME/.mutt"
     ["ncmpcpp"]="$HOME/.ncmpcpp"
+    ["neofetch"]="$HOME/.config/neofetch"
     ["offlineimap.py"]="$HOME/.offlineimap.py"
     ["offlineimaprc"]="$HOME/.offlineimaprc"
-    ["pass"]="$HOME/.password-store"
     ["ranger"]="$HOME/.config/ranger"
-    ["ssh"]="$HOME/.ssh"
     ["startpage"]="$HOME/.startpage"
     ["todo"]="$HOME/.todo"
     ["urlview"]="$HOME/.urlview"
     ["vim"]="$HOME/.vim"
     ["vimrc"]="$HOME/.vimrc"
     
-    # MSMTP configs
+    # MSMTP config (basic template)
     ["msmtprc"]="$HOME/.msmtprc"
-
+    
     # SwayWM configs
     ["swaywm/mako"]="$HOME/.config/mako"
     ["swaywm/swaylock"]="$HOME/.config/swaylock"
@@ -104,160 +68,91 @@ declare -A DOTFILES_MAP=(
     ["zsh/zprofile"]="$HOME/.zprofile"
     ["zsh/zshenv"]="$HOME/.zshenv"
     ["zsh/zshrc"]="$HOME/.zshrc"
+    
+    # ZSH modular configs
+    ["zsh/config/history.zsh"]="$HOME/.config/zsh/history.zsh"
+    ["zsh/config/options.zsh"]="$HOME/.config/zsh/options.zsh"
+    ["zsh/config/completion.zsh"]="$HOME/.config/zsh/completion.zsh"
+    ["zsh/config/prompt.zsh"]="$HOME/.config/zsh/prompt.zsh"
+    ["zsh/config/aliases.zsh"]="$HOME/.config/zsh/aliases.zsh"
+    ["zsh/config/plugins.zsh"]="$HOME/.config/zsh/plugins.zsh"
+
+    # ZSH plugins
+    ["zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh"
+    ["zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh"
+    ["zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh"
+    ["zsh/plugins/catppuccin_mocha-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_mocha-zsh-syntax-highlighting.zsh"
 )
 
-# Load external config if it exists
-load_config() {
-    if [[ -f "$CONFIG_FILE" ]]; then
-        log_verbose "Loading configuration from $CONFIG_FILE"
-        source "$CONFIG_FILE"
+# Logging functions
+info() {
+    echo -e "${BLUE}[INFO]${NC} $1"
+}
+
+success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1"
+}
+
+warning() {
+    echo -e "${YELLOW}[WARNING]${NC} $1"
+}
+
+error() {
+    echo -e "${RED}[ERROR]${NC} $1"
+}
+
+verbose() {
+    if [[ "$VERBOSE" == true ]]; then
+        echo -e "${NC}[VERBOSE] $1"
     fi
 }
 
-# Show usage information
-show_usage() {
+# Show usage
+usage() {
     cat << EOF
 Usage: $0 [COMMAND] [OPTIONS]
 
 COMMANDS:
-    install         Install/link all dotfiles (default)
-    uninstall       Remove all dotfiles symlinks
-    status          Show status of all dotfiles
-    backup          Create backup of existing files
-    restore         Restore from backup
-    validate        Validate dotfiles configuration
-    list            List all managed dotfiles
-    update          Update existing symlinks
-    clean           Remove broken symlinks
+    install     Install/link all available dotfiles (default)
+    uninstall   Remove all symlinks created by this script
+    status      Show status of all dotfiles
+    help        Show this help
 
 OPTIONS:
-    -d, --dry-run       Show what would be done without executing
-    -v, --verbose       Enable verbose output
-    -f, --force         Force operations (overwrite existing files)
-    -b, --skip-backup   Skip creating backups
-    -y, --yes           Non-interactive mode (yes to all prompts)
-    -h, --help          Show this help message
+    -d, --dry-run       Show what would be done
+    -f, --force         Overwrite existing files
+    -v, --verbose       Verbose output
+    -p, --path PATH     Specify dotfiles directory (default: script location)
+    -h, --help          Show help
 
 EXAMPLES:
-    $0                      # Install all dotfiles with prompts
-    $0 install -d           # Preview installation without changes
-    $0 status              # Check current symlink status
-    $0 backup              # Create backup of existing configs
-    $0 uninstall -f        # Force remove all symlinks
-    $0 validate            # Check for missing source files
+    $0                                # Install available dotfiles
+    $0 install -d                     # Preview installation
+    $0 status                         # Check current status
+    $0 uninstall -f                   # Force remove all symlinks
 
-CONFIGURATION:
-    Edit $CONFIG_FILE to customize file mappings
-    Logs are written to $LOG_FILE
+NOTES:
+    - This is a public dotfiles repository
+    - Some files may not be included for privacy/system-specific reasons
+    - Missing files will show warnings but won't cause installation to fail
+    - Private configs (GPG keys, credentials) are not included
+
+SETUP ON NEW SYSTEM:
+    1. Clone repository: git clone https://github.com/okubax/dotfiles.git ~/dotfiles
+    2. Install dependencies (see README.md)
+    3. Run installer: ~/dotfiles/dotfiles.sh install
 
 EOF
 }
 
-# Validate dotfiles configuration
-validate_dotfiles() {
-    log_info "Validating dotfiles configuration..."
-    local errors=0
-    
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local full_source_path="$DOTFILES_DIR/$source_path"
-        
-        if [[ ! -e "$full_source_path" ]]; then
-            log_error "Source file/directory not found: $full_source_path"
-            ((errors++))
-        else
-            log_verbose "✓ Found: $source_path"
-        fi
-    done
-    
-    if [[ $errors -eq 0 ]]; then
-        log_success "All source files validated successfully"
-        return 0
-    else
-        log_error "Validation failed: $errors missing files"
-        return 1
-    fi
-}
-
-# Create backup of existing files
-create_backup() {
-    if [[ "$SKIP_BACKUPS" == true ]]; then
-        log_info "Skipping backups as requested"
-        return 0
-    fi
-    
-    log_info "Creating backup directory: $BACKUP_DIR"
-    mkdir -p "$BACKUP_DIR"
-    
-    local backed_up=0
-    
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        
-        if [[ -e "$dest_path" ]] && [[ ! -L "$dest_path" ]]; then
-            local backup_path="$BACKUP_DIR/$(basename "$dest_path")"
-            log_verbose "Backing up: $dest_path → $backup_path"
-            
-            if [[ "$DRY_RUN" == false ]]; then
-                cp -r "$dest_path" "$backup_path"
-                ((backed_up++))
-            fi
-        fi
-    done
-    
-    if [[ $backed_up -gt 0 ]]; then
-        log_success "Backed up $backed_up files to $BACKUP_DIR"
-        echo "$BACKUP_DIR" > "$HOME/.dotfiles_last_backup"
-    else
-        log_info "No files needed backing up"
-        rmdir "$BACKUP_DIR" 2>/dev/null || true
-    fi
-}
-
-# Restore from backup
-restore_backup() {
-    local backup_dir="$1"
-    
-    if [[ -z "$backup_dir" ]]; then
-        if [[ -f "$HOME/.dotfiles_last_backup" ]]; then
-            backup_dir=$(cat "$HOME/.dotfiles_last_backup")
-        else
-            log_error "No backup directory specified and no last backup found"
-            return 1
-        fi
-    fi
-    
-    if [[ ! -d "$backup_dir" ]]; then
-        log_error "Backup directory not found: $backup_dir"
-        return 1
-    fi
-    
-    log_info "Restoring from backup: $backup_dir"
-    
-    for backup_file in "$backup_dir"/*; do
-        if [[ -e "$backup_file" ]]; then
-            local filename=$(basename "$backup_file")
-            local restore_path="$HOME/.$filename"
-            
-            log_verbose "Restoring: $backup_file → $restore_path"
-            
-            if [[ "$DRY_RUN" == false ]]; then
-                # Remove symlink if it exists
-                [[ -L "$restore_path" ]] && rm "$restore_path"
-                cp -r "$backup_file" "$restore_path"
-            fi
-        fi
-    done
-    
-    log_success "Backup restored successfully"
-}
-
-# Create directory structure
-ensure_directories() {
+# Create necessary directories
+create_directories() {
     local dest_path="$1"
-    local dest_dir=$(dirname "$dest_path")
+    local dest_dir
+    dest_dir=$(dirname "$dest_path")
     
     if [[ ! -d "$dest_dir" ]]; then
-        log_verbose "Creating directory: $dest_dir"
+        verbose "Creating directory: $dest_dir"
         if [[ "$DRY_RUN" == false ]]; then
             mkdir -p "$dest_dir"
         fi
@@ -265,23 +160,21 @@ ensure_directories() {
 }
 
 # Check if file should be processed
-should_process_file() {
-    local source_path="$1"
-    local dest_path="$2"
+should_link() {
+    local source="$1"
+    local dest="$2"
     
-    # Skip if source doesn't exist
-    if [[ ! -e "$DOTFILES_DIR/$source_path" ]]; then
-        log_warning "Source not found: $source_path"
+    # Source must exist (but we handle this gracefully)
+    if [[ ! -e "$source" ]]; then
         return 1
     fi
     
-    # Skip if destination is already correctly linked
-    if [[ -L "$dest_path" ]]; then
-        local current_target=$(readlink "$dest_path")
-        local expected_target="$DOTFILES_DIR/$source_path"
-        
-        if [[ "$current_target" == "$expected_target" ]]; then
-            log_verbose "Already linked correctly: $dest_path"
+    # If destination is already correctly linked, skip
+    if [[ -L "$dest" ]]; then
+        local current_target
+        current_target=$(readlink "$dest")
+        if [[ "$current_target" == "$source" ]]; then
+            verbose "Already linked correctly: $dest"
             return 1
         fi
     fi
@@ -289,282 +182,247 @@ should_process_file() {
     return 0
 }
 
-# Handle existing files/directories
+# Handle existing files
 handle_existing() {
-    local dest_path="$1"
-    local source_path="$2"
+    local dest="$1"
+    local source="$2"
     
-    if [[ ! -e "$dest_path" ]]; then
+    if [[ ! -e "$dest" ]]; then
         return 0  # Nothing exists, proceed
     fi
     
-    if [[ -L "$dest_path" ]]; then
-        log_verbose "Removing existing symlink: $dest_path"
+    if [[ -L "$dest" ]]; then
+        verbose "Removing existing symlink: $dest"
         if [[ "$DRY_RUN" == false ]]; then
-            rm "$dest_path"
+            rm "$dest"
         fi
         return 0
     fi
     
     if [[ "$FORCE" == true ]]; then
-        log_warning "Force removing existing file: $dest_path"
+        warning "Force removing existing file: $dest"
         if [[ "$DRY_RUN" == false ]]; then
-            rm -rf "$dest_path"
+            rm -rf "$dest"
         fi
         return 0
     fi
     
-    if [[ "$INTERACTIVE" == true ]]; then
-        echo -e "${YELLOW}File exists: $dest_path${NC}"
-        echo -e "${CYAN}Options:${NC}"
-        echo -e "  ${GREEN}o${NC}verwrite"
-        echo -e "  ${GREEN}s${NC}kip"
-        echo -e "  ${GREEN}b${NC}ackup and overwrite"
-        echo -e "  ${GREEN}q${NC}uit"
-        echo -n "Choice [o/s/b/q]: "
-        
-        local choice
-        read choice
-        
-        case $choice in
-            o|O)
-                if [[ "$DRY_RUN" == false ]]; then
-                    rm -rf "$dest_path"
-                fi
-                return 0
-                ;;
-            s|S)
-                log_info "Skipping: $dest_path"
-                return 1
-                ;;
-            b|B)
-                local backup_name="${dest_path}.bak.$(date +%s)"
-                log_info "Backing up to: $backup_name"
-                if [[ "$DRY_RUN" == false ]]; then
-                    mv "$dest_path" "$backup_name"
-                fi
-                return 0
-                ;;
-            q|Q)
-                log_info "Quitting as requested"
-                exit 0
-                ;;
-            *)
-                log_warning "Invalid choice, skipping file"
-                return 1
-                ;;
-        esac
-    else
-        log_warning "File exists, skipping (use -f to force): $dest_path"
-        return 1
-    fi
+    # Interactive mode
+    echo -e "${YELLOW}File exists: $dest${NC}"
+    echo "What would you like to do?"
+    echo "  [o]verwrite"
+    echo "  [s]kip"
+    echo "  [b]ackup and overwrite"
+    echo "  [q]uit"
+    read -p "Choice [o/s/b/q]: " choice
+    
+    case $choice in
+        o|O)
+            if [[ "$DRY_RUN" == false ]]; then
+                rm -rf "$dest"
+            fi
+            return 0
+            ;;
+        s|S)
+            info "Skipping: $dest"
+            return 1
+            ;;
+        b|B)
+            local backup_name="${dest}.bak.$(date +%s)"
+            info "Backing up to: $backup_name"
+            if [[ "$DRY_RUN" == false ]]; then
+                mv "$dest" "$backup_name"
+            fi
+            return 0
+            ;;
+        q|Q)
+            info "Quitting"
+            exit 0
+            ;;
+        *)
+            warning "Invalid choice, skipping"
+            return 1
+            ;;
+    esac
 }
 
 # Create a single symlink
-create_symlink() {
-    local source_path="$1"
-    local dest_path="$2"
-    local full_source_path="$DOTFILES_DIR/$source_path"
+link_file() {
+    local source_rel="$1"
+    local dest="$2"
+    local source="$DOTFILES_DIR/$source_rel"
     
-    if ! should_process_file "$source_path" "$dest_path"; then
-        return 0
-    fi
+    verbose "Processing: $source_rel"
     
-    ensure_directories "$dest_path"
-    
-    if ! handle_existing "$dest_path" "$source_path"; then
-        return 0
-    fi
-    
-    log_verbose "Linking: $source_path → $dest_path"
-    
-    if [[ "$DRY_RUN" == false ]]; then
-        ln -s "$full_source_path" "$dest_path"
-        log_success "✓ Linked: $(basename "$dest_path")"
-    else
-        echo -e "${CYAN}Would link:${NC} $source_path → $dest_path"
-    fi
-}
-
-# Install all dotfiles
-install_dotfiles() {
-    log_info "Installing dotfiles from $DOTFILES_DIR"
-    
-    if [[ "$DRY_RUN" == true ]]; then
-        log_warning "DRY RUN MODE - No changes will be made"
-    fi
-    
-    # Validate first
-    if ! validate_dotfiles; then
-        log_error "Validation failed, aborting installation"
+    # Check if source exists - warn but don't fail
+    if [[ ! -e "$source" ]]; then
+        warning "Source not found (skipping): $source_rel"
+        verbose "  This file may be system-specific or private"
         return 1
     fi
     
-    # Create backup
-    create_backup
+    if ! should_link "$source" "$dest"; then
+        return 1
+    fi
+    
+    create_directories "$dest"
+    
+    if ! handle_existing "$dest" "$source"; then
+        return 1
+    fi
+    
+    info "Linking: $source_rel -> $dest"
+    
+    if [[ "$DRY_RUN" == false ]]; then
+        ln -s "$source" "$dest"
+        success "✓ Linked: $(basename "$dest")"
+    else
+        echo "  Would link: $source -> $dest"
+    fi
+    
+    return 0
+}
+
+# Install all dotfiles
+install() {
+    info "Installing dotfiles from $DOTFILES_DIR"
+    info "This is a public dotfiles repository - some files may not be included"
+    echo ""
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        warning "DRY RUN MODE - No changes will be made"
+    fi
     
     local success_count=0
     local skip_count=0
-    local error_count=0
+    local missing_count=0
     
-    # Process each dotfile
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
+    # Process each file
+    for source_rel in "${!FILES[@]}"; do
+        local dest="${FILES[$source_rel]}"
+        local source="$DOTFILES_DIR/$source_rel"
         
-        if create_symlink "$source_path" "$dest_path"; then
+        if [[ ! -e "$source" ]]; then
+            ((missing_count++))
+            verbose "Missing: $source_rel (this is normal for public repos)"
+            continue
+        fi
+        
+        if link_file "$source_rel" "$dest"; then
             ((success_count++))
         else
             ((skip_count++))
         fi
     done
     
-    # Summary
     echo ""
-    log_success "Installation complete!"
-    log_info "Successfully linked: $success_count"
-    log_info "Skipped: $skip_count"
+    success "Installation complete!"
+    info "Successfully linked: $success_count"
+    info "Skipped: $skip_count"
     
-    if [[ $error_count -gt 0 ]]; then
-        log_warning "Errors: $error_count"
+    if [[ $missing_count -gt 0 ]]; then
+        warning "Missing files: $missing_count (normal for public repo)"
+        verbose "Missing files are typically private configs, credentials, or system-specific"
     fi
+    
+    echo ""
+    info "Next steps:"
+    info "1. Install required packages (see README.md)"
+    info "2. Configure private settings (email, GPG, etc.)"
+    info "3. Restart your shell or log out/in to apply changes"
 }
 
 # Uninstall all dotfiles
-uninstall_dotfiles() {
-    log_info "Uninstalling dotfiles..."
+uninstall() {
+    info "Uninstalling dotfiles..."
     
     if [[ "$DRY_RUN" == true ]]; then
-        log_warning "DRY RUN MODE - No changes will be made"
+        warning "DRY RUN MODE - No changes will be made"
     fi
     
     local removed_count=0
     
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        local full_source_path="$DOTFILES_DIR/$source_path"
+    for source_rel in "${!FILES[@]}"; do
+        local dest="${FILES[$source_rel]}"
+        local source="$DOTFILES_DIR/$source_rel"
         
-        if [[ -L "$dest_path" ]]; then
-            local current_target=$(readlink "$dest_path")
+        if [[ -L "$dest" ]]; then
+            local current_target
+            current_target=$(readlink "$dest")
             
-            if [[ "$current_target" == "$full_source_path" ]]; then
-                log_verbose "Removing symlink: $dest_path"
+            if [[ "$current_target" == "$source" ]]; then
+                verbose "Removing symlink: $dest"
                 
                 if [[ "$DRY_RUN" == false ]]; then
-                    rm "$dest_path"
+                    rm "$dest"
                     ((removed_count++))
                 else
-                    echo -e "${CYAN}Would remove:${NC} $dest_path"
+                    echo "  Would remove: $dest"
                 fi
             else
-                log_verbose "Skipping (not our symlink): $dest_path"
+                verbose "Skipping (not our symlink): $dest"
             fi
         else
-            log_verbose "Not a symlink, skipping: $dest_path"
+            verbose "Not a symlink, skipping: $dest"
         fi
     done
     
-    log_success "Removed $removed_count symlinks"
+    success "Removed $removed_count symlinks"
 }
 
 # Show status of all dotfiles
-show_status() {
-    log_info "Dotfiles status:"
+status() {
+    info "Dotfiles status (from: $DOTFILES_DIR):"
     echo ""
     
-    printf "%-40s %-15s %s\n" "FILE" "STATUS" "TARGET"
-    printf "%-40s %-15s %s\n" "----" "------" "------"
+    printf "%-50s %-15s %s\n" "FILE" "STATUS" "TARGET/NOTE"
+    printf "%-50s %-15s %s\n" "----" "------" "----------"
     
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        local full_source_path="$DOTFILES_DIR/$source_path"
-        local status="MISSING"
-        local target=""
+    local available=0
+    local linked=0
+    local missing=0
+    
+    for source_rel in "${!FILES[@]}"; do
+        local dest="${FILES[$source_rel]}"
+        local source="$DOTFILES_DIR/$source_rel"
+        local status_text="MISSING"
+        local note=""
         
-        if [[ -L "$dest_path" ]]; then
-            target=$(readlink "$dest_path")
-            if [[ "$target" == "$full_source_path" ]]; then
-                status="LINKED"
-                printf "%-40s ${GREEN}%-15s${NC} %s\n" "$(basename "$dest_path")" "$status" "$target"
+        if [[ ! -e "$source" ]]; then
+            status_text="NOT_IN_REPO"
+            note="(private/system-specific)"
+            printf "%-50s ${YELLOW}%-15s${NC} %s\n" "$dest" "$status_text" "$note"
+            ((missing++))
+            continue
+        fi
+        
+        ((available++))
+        
+        if [[ -L "$dest" ]]; then
+            local target
+            target=$(readlink "$dest")
+            if [[ "$target" == "$source" ]]; then
+                status_text="LINKED"
+                printf "%-50s ${GREEN}%-15s${NC} %s\n" "$dest" "$status_text" "$target"
+                ((linked++))
             else
-                status="WRONG_LINK"
-                printf "%-40s ${YELLOW}%-15s${NC} %s\n" "$(basename "$dest_path")" "$status" "$target"
+                status_text="WRONG_LINK"
+                printf "%-50s ${YELLOW}%-15s${NC} %s\n" "$dest" "$status_text" "$target"
             fi
-        elif [[ -e "$dest_path" ]]; then
-            status="EXISTS"
-            printf "%-40s ${RED}%-15s${NC} %s\n" "$(basename "$dest_path")" "$status" "$target"
+        elif [[ -e "$dest" ]]; then
+            status_text="EXISTS"
+            printf "%-50s ${RED}%-15s${NC} %s\n" "$dest" "$status_text" "(file exists, not symlinked)"
         else
-            status="MISSING"
-            printf "%-40s ${BLUE}%-15s${NC} %s\n" "$(basename "$dest_path")" "$status" "$target"
+            status_text="AVAILABLE"
+            printf "%-50s ${BLUE}%-15s${NC} %s\n" "$dest" "$status_text" "(ready to link)"
         fi
     done
-}
-
-# List all managed dotfiles
-list_dotfiles() {
-    log_info "Managed dotfiles:"
+    
     echo ""
-    
-    printf "%-40s %s\n" "DESTINATION" "SOURCE"
-    printf "%-40s %s\n" "-----------" "------"
-    
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        printf "%-40s %s\n" "$dest_path" "$source_path"
-    done
-}
-
-# Clean broken symlinks
-clean_symlinks() {
-    log_info "Cleaning broken symlinks..."
-    
-    local cleaned=0
-    
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        
-        if [[ -L "$dest_path" ]] && [[ ! -e "$dest_path" ]]; then
-            log_verbose "Removing broken symlink: $dest_path"
-            
-            if [[ "$DRY_RUN" == false ]]; then
-                rm "$dest_path"
-                ((cleaned++))
-            else
-                echo -e "${CYAN}Would remove broken symlink:${NC} $dest_path"
-            fi
-        fi
-    done
-    
-    log_success "Cleaned $cleaned broken symlinks"
-}
-
-# Update existing symlinks
-update_symlinks() {
-    log_info "Updating existing symlinks..."
-    
-    local updated=0
-    
-    for source_path in "${!DOTFILES_MAP[@]}"; do
-        local dest_path="${DOTFILES_MAP[$source_path]}"
-        local full_source_path="$DOTFILES_DIR/$source_path"
-        
-        if [[ -L "$dest_path" ]]; then
-            local current_target=$(readlink "$dest_path")
-            
-            if [[ "$current_target" != "$full_source_path" ]]; then
-                log_verbose "Updating symlink: $dest_path"
-                
-                if [[ "$DRY_RUN" == false ]]; then
-                    rm "$dest_path"
-                    ln -s "$full_source_path" "$dest_path"
-                    ((updated++))
-                else
-                    echo -e "${CYAN}Would update:${NC} $dest_path"
-                fi
-            fi
-        fi
-    done
-    
-    log_success "Updated $updated symlinks"
+    info "Summary:"
+    info "  Available in repo: $available"
+    info "  Currently linked: $linked"
+    info "  Not in public repo: $missing"
 }
 
 # Parse command line arguments
@@ -573,7 +431,7 @@ parse_args() {
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            install|uninstall|status|backup|restore|validate|list|update|clean)
+            install|uninstall|status|help)
                 command="$1"
                 shift
                 ;;
@@ -589,21 +447,17 @@ parse_args() {
                 FORCE=true
                 shift
                 ;;
-            -b|--skip-backup)
-                SKIP_BACKUPS=true
-                shift
-                ;;
-            -y|--yes)
-                INTERACTIVE=false
-                shift
+            -p|--path)
+                DOTFILES_DIR="$2"
+                shift 2
                 ;;
             -h|--help)
-                show_usage
+                usage
                 exit 0
                 ;;
             *)
-                log_error "Unknown option: $1"
-                show_usage
+                error "Unknown option: $1"
+                usage
                 exit 1
                 ;;
         esac
@@ -614,63 +468,42 @@ parse_args() {
 
 # Main function
 main() {
-    # Initialize logging
-    log "Dotfiles manager started"
+    # Parse arguments first (may override DOTFILES_DIR)
+    local command
+    command=$(parse_args "$@")
     
-    # Load configuration
-    load_config
+    # Resolve absolute path
+    DOTFILES_DIR=$(cd "$DOTFILES_DIR" && pwd)
     
-    # Parse arguments
-    local command=$(parse_args "$@")
-    
-    # Show configuration
-    if [[ "$VERBOSE" == true ]]; then
-        log_verbose "Dotfiles directory: $DOTFILES_DIR"
-        log_verbose "Backup directory: $BACKUP_DIR"
-        log_verbose "Command: $command"
-        log_verbose "Dry run: $DRY_RUN"
-        log_verbose "Force: $FORCE"
-        log_verbose "Interactive: $INTERACTIVE"
+    # Check if dotfiles directory exists
+    if [[ ! -d "$DOTFILES_DIR" ]]; then
+        error "Dotfiles directory not found: $DOTFILES_DIR"
+        exit 1
     fi
+    
+    verbose "Using dotfiles directory: $DOTFILES_DIR"
     
     # Execute command
     case $command in
         install)
-            install_dotfiles
+            install
             ;;
         uninstall)
-            uninstall_dotfiles
+            uninstall
             ;;
         status)
-            show_status
+            status
             ;;
-        backup)
-            create_backup
-            ;;
-        restore)
-            restore_backup "${2:-}"
-            ;;
-        validate)
-            validate_dotfiles
-            ;;
-        list)
-            list_dotfiles
-            ;;
-        update)
-            update_symlinks
-            ;;
-        clean)
-            clean_symlinks
+        help)
+            usage
             ;;
         *)
-            log_error "Unknown command: $command"
-            show_usage
+            error "Unknown command: $command"
+            usage
             exit 1
             ;;
     esac
-    
-    log "Dotfiles manager finished"
 }
 
-# Run main function with all arguments
+# Run main function
 main "$@"
