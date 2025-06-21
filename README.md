@@ -2,7 +2,7 @@
 
 > A complete, keyboard-driven desktop environment built for productivity and aesthetics
 
-This repository contains my personal dotfiles for a modern Linux desktop setup featuring **Sway** (Wayland compositor), **Waybar** (status bar), and carefully curated applications. Everything is designed to work harmoniously for a clean, efficient workflow.
+This repository contains dotfiles for a modern Linux desktop setup featuring **Sway** (Wayland compositor), **Waybar** (status bar), and carefully curated applications. Everything is designed to work harmoniously for a clean, efficient workflow.
 
 ## ✨ What You Get
 
@@ -10,11 +10,12 @@ This repository contains my personal dotfiles for a modern Linux desktop setup f
 - **📊 Status Bar**: Waybar with custom modules
 - **🖥️ Terminal**: Kitty with optimized configuration  
 - **🎨 Notifications**: Mako notification daemon
-- **🔒 Security**: Swaylock + pass password manager
-- **📧 Email**: Complete mutt + offlineimap setup
+- **🔒 Security**: Swaylock configuration
+- **📧 Email**: Basic mutt + offlineimap templates
 - **🎵 Music**: MPD + ncmpcpp configuration
 - **📁 File Management**: Ranger terminal file manager
-- **⌨️ Shell**: ZSH with custom aliases and functions
+- **⌨️ Shell**: ZSH with modular configuration and custom aliases
+- **🛠️ Utilities**: Custom scripts and productivity tools
 
 ## 📸 Preview
 
@@ -27,155 +28,217 @@ This repository contains my personal dotfiles for a modern Linux desktop setup f
 
 ## 🚀 Quick Installation
 
-### 1. Prerequisites
+### Prerequisites
 
-**Recommended System**: Arch Linux (other distributions may work with modifications)
+**Recommended System**: Arch Linux (other distributions may work with package name adjustments)
 
-### 2. Clone and Install
+### One-Command Setup
 
 ```bash
-# Clone the repository
+# Clone and install in one go
+git clone https://github.com/okubax/dotfiles.git ~/dotfiles && ~/dotfiles/dotfiles.sh install
+```
+
+### Step-by-Step Installation
+
+```bash
+# 1. Clone the repository
 git clone https://github.com/okubax/dotfiles.git ~/dotfiles
 cd ~/dotfiles
 
-# Preview what will be installed (recommended first step)
+# 2. Preview what will be installed
 ./dotfiles.sh status
 
-# Install everything automatically
+# 3. Install everything
 ./dotfiles.sh install
 ```
 
-That's it! The script handles all the symlink creation and backups automatically.
-
 ---
 
-## 📋 Installation Options
+## 📋 Installation Commands
 
-The `dotfiles.sh` script provides several commands for different scenarios:
+The `dotfiles.sh` script handles everything automatically:
 
 ### Basic Commands
 ```bash
-./dotfiles.sh install          # Install all dotfiles (creates backups)
+./dotfiles.sh install          # Install all available dotfiles
 ./dotfiles.sh status           # Check current installation status
 ./dotfiles.sh uninstall        # Remove all symlinks safely
-./dotfiles.sh validate         # Check for missing files
 ```
 
 ### Advanced Options
 ```bash
 ./dotfiles.sh install --dry-run    # Preview installation without changes
 ./dotfiles.sh install --force      # Overwrite existing files
-./dotfiles.sh backup               # Create backup only
-./dotfiles.sh clean                # Remove broken symlinks
+./dotfiles.sh install --verbose    # Show detailed output
 ```
 
 ### Safety Features
-- **Automatic backups**: Existing files are backed up before replacement
-- **Dry-run mode**: See what will happen before making changes
+- **Graceful handling**: Missing files show warnings but don't stop installation
 - **Interactive prompts**: Choose what to do with existing files
-- **Validation**: Checks all source files exist before installation
+- **Dry-run mode**: See what will happen before making changes
+- **Selective installation**: Only available files are processed
 
 ---
 
 ## 📦 Required Packages
 
-### Install Core Dependencies
+### Core Desktop Environment
 
 **On Arch Linux:**
 ```bash
-# Essential packages
-sudo pacman -S sway waybar mako swaylock wofi kitty zsh
+# Essential Sway desktop
+sudo pacman -S sway waybar mako swaylock wofi wl-clipboard
 
-# File management and utilities  
-sudo pacman -S ranger vim wl-clipboard
+# Terminal and shell
+sudo pacman -S kitty zsh
 
+# File management
+sudo pacman -S ranger vim
+
+# Fonts (recommended)
+sudo pacman -S ttf-fira-code noto-fonts noto-fonts-emoji
+```
+
+### Optional Components
+
+```bash
 # Audio and media
 sudo pacman -S mpd ncmpcpp mpc pipewire pipewire-pulse
 
-# Email and communication (optional)
+# Email (if you want mail setup)
 sudo pacman -S mutt offlineimap msmtp
 
-# Security
-sudo pacman -S gnupg pass
+# Additional utilities
+sudo pacman -S neofetch git
 ```
 
-**AUR Packages** (using yay or your preferred AUR helper):
+### AUR Packages
 ```bash
-yay -S clipman multitail swayshot
+# Using yay or your preferred AUR helper
+yay -S multitail swayshot
 ```
-
-### For Other Distributions
-Package names may differ. Look for equivalent packages in your distribution's repositories.
 
 ---
 
 ## 🔧 Post-Installation Setup
-
-After running the installation script, you'll need to configure a few things:
 
 ### 1. Set ZSH as Default Shell
 ```bash
 chsh -s $(which zsh)
 ```
 
-### 2. Configure Email (Optional)
-If you want to use the email setup:
-- Edit `~/.offlineimaprc` with your email credentials
-- Configure `~/.msmtprc` for sending emails
-- Set up GPG keys for password encryption
+### 2. Configure Sway Session
+**Option A: Display Manager**
+- Log out of your current session
+- Choose "Sway" from your display manager
 
-### 3. Set Up Password Manager
+**Option B: Manual Start**
 ```bash
-# Initialize pass
+# From a TTY
+exec sway
+```
+
+### 3. Install Additional Fonts (Optional)
+```bash
+# For better Unicode support and aesthetics
+sudo pacman -S ttf-liberation ttf-dejavu
+```
+
+### 4. Set Up Private Configurations
+
+Some configurations are not included in this public repository for privacy/security:
+
+**Email Setup** (if desired):
+- Copy `msmtprc` and customize with your email settings
+- Set up `~/.offlineimaprc` with your email credentials
+- Configure GPG for password encryption
+
+**SSH Configuration**:
+- Add your SSH keys to `~/.ssh/`
+- Configure `~/.ssh/config` for your servers
+
+**Password Management**:
+```bash
+# If you want to use pass
+sudo pacman -S pass
 pass init "your-gpg-key-id"
 ```
 
-### 4. Configure Sway
-- Log out of your current session
-- Choose "Sway" from your display manager
-- Or start with: `exec sway` from a TTY
-
 ---
 
-## 🎨 Customization
-
-### Key Files to Customize
-
-| Component | Configuration File | Purpose |
-|-----------|-------------------|---------|
-| Window Manager | `swaywm/sway/config` | Keybindings, workspaces, appearance |
-| Status Bar | `swaywm/waybar/config` | Modules, styling, behavior |
-| Terminal | `kitty/kitty.conf` | Colors, fonts, key mappings |
-| Shell | `zsh/zshrc` | Aliases, functions, prompt |
-| File Manager | `ranger/rc.conf` | Key bindings, previews |
+## 🎨 Customization Guide
 
 ### Quick Customizations
-- **Colors**: Most apps inherit from the Sway color scheme
-- **Fonts**: Install your preferred fonts and update configs
-- **Keybindings**: Modify `swaywm/sway/config` for shortcuts
-- **Status Bar**: Enable/disable modules in `swaywm/waybar/config`
+
+| What to Change | Configuration File | Purpose |
+|----------------|-------------------|---------|
+| **Keybindings** | `swaywm/sway/config` | Window management shortcuts |
+| **Status Bar** | `swaywm/waybar/config` | Modules, styling, behavior |
+| **Terminal Colors** | `kitty/kitty.conf` | Colors, fonts, transparency |
+| **Shell Aliases** | `aliases/aliases*` | Command shortcuts |
+| **File Manager** | `ranger/rc.conf` | Key bindings, previews |
+
+### Color Schemes
+The setup includes several color schemes:
+- **Kitty**: Multiple themes in `kitty/colors/`
+- **Vim**: Catppuccin variants included
+- **ZSH**: Syntax highlighting themes
+
+### Adding Your Own Configs
+1. **Fork this repository**
+2. **Add your files** to the appropriate directories
+3. **Update the FILES array** in `dotfiles.sh` if needed
+4. **Test with dry-run**: `./dotfiles.sh install --dry-run`
 
 ---
 
-## 🗂️ What Gets Installed
+## 🗂️ Repository Structure
 
-The script creates symlinks for these configurations:
+```
+~/dotfiles/
+├── dotfiles.sh              # Installation script
+├── aliases/                 # Shell aliases and functions
+├── bin/                     # Custom scripts and utilities
+├── fontconfig/              # Font configuration
+├── kitty/                   # Terminal configuration
+├── mplayer/                 # Media player settings
+├── mutt/                    # Email client configuration
+├── ncmpcpp/                 # Music player interface
+├── ranger/                  # File manager configuration
+├── swaywm/                  # Window manager configs
+│   ├── sway/               # Sway WM settings
+│   ├── waybar/             # Status bar configuration
+│   ├── mako/               # Notification daemon
+│   └── wofi/               # Application launcher
+├── vim/                     # Text editor configuration
+├── zsh/                     # Shell configuration
+│   └── config/             # Modular ZSH configs
+└── README.md               # This file
+```
 
-### Shell & Aliases
-- `~/.aliases*` - Command shortcuts and functions
-- `~/.zshrc`, `~/.zshenv`, `~/.zprofile` - ZSH configuration
+---
 
-### Applications  
-- `~/.config/sway/` - Window manager settings
-- `~/.config/waybar/` - Status bar configuration
-- `~/.config/kitty/` - Terminal settings
-- `~/.config/ranger/` - File manager configuration
-- `~/.vimrc`, `~/.vim/` - Text editor setup
+## ⚠️ Important Notes
 
-### Utilities
-- `~/bin/` - Custom scripts and utilities
-- `~/.gitconfig` - Git configuration
-- Email, music, and other app configurations
+### What's NOT Included
+
+For privacy and security, these are **not** in the public repository:
+
+- **Private SSH keys** and server configurations
+- **Email credentials** and GPG keys
+- **Password manager** databases
+- **Personal scripts** with sensitive information
+- **System-specific** configurations
+
+### Missing File Handling
+
+The installation script handles missing files gracefully:
+- **Warnings** are shown for missing files
+- **Installation continues** for available files
+- **Status command** shows what's available vs. missing
+
+This is normal and expected for a public dotfiles repository!
 
 ---
 
@@ -183,63 +246,79 @@ The script creates symlinks for these configurations:
 
 ### Common Issues
 
-**"Source file not found" errors:**
+**"Source not found" warnings:**
 ```bash
-# Check what's missing
-./dotfiles.sh validate
+# This is normal! Check what's actually available:
+./dotfiles.sh status
 
-# Some files might be optional - check the dotfiles.sh script
+# Install only what's available:
+./dotfiles.sh install --verbose
 ```
 
-**Permission issues:**
+**Permission errors:**
 ```bash
-# Make sure the script is executable
+# Make script executable
 chmod +x ./dotfiles.sh
 ```
 
-**Existing files blocking installation:**
+**Sway won't start:**
 ```bash
-# Use interactive mode to choose what to do
-./dotfiles.sh install
+# Install core dependencies first
+sudo pacman -S sway waybar mako
 
-# Or force overwrite (careful!)
-./dotfiles.sh install --force
+# Check Sway logs
+journalctl --user -u sway
 ```
 
-**Want to undo everything:**
+**Fonts look weird:**
 ```bash
-# Remove all symlinks
-./dotfiles.sh uninstall
-
-# Restore from backup if needed
-./dotfiles.sh restore
+# Install recommended fonts
+sudo pacman -S ttf-fira-code noto-fonts
 ```
+
+### Getting Help
+
+1. **Check the status**: `./dotfiles.sh status`
+2. **Use verbose mode**: `./dotfiles.sh install --verbose`
+3. **Try dry-run first**: `./dotfiles.sh install --dry-run`
+4. **Open an issue** on GitHub for bugs or questions
 
 ---
 
-## 🤝 Contributing & Customization
-
-### Making It Yours
-1. **Fork this repository** to your own GitHub account
-2. **Modify configurations** to match your preferences
-3. **Update the dotfiles map** in `dotfiles.sh` if you add/remove files
-4. **Test thoroughly** with `--dry-run` before applying changes
+## 🤝 Contributing
 
 ### Sharing Improvements
-- Open issues for bugs or questions
-- Submit pull requests for enhancements
-- Share screenshots of your customizations!
+- **Fork the repository** and customize for your needs
+- **Open issues** for bugs or feature requests
+- **Submit pull requests** for improvements
+- **Share screenshots** of your customizations!
+
+### Making It Yours
+1. Fork this repository to your GitHub account
+2. Modify configurations to match your preferences  
+3. Add your own private configs (don't commit sensitive data!)
+4. Update the installation script if you add/remove files
 
 ---
 
-## 📄 License & Credits
+## 🎯 Similar Setups
 
-These dotfiles are provided freely for personal and educational use. Feel free to adapt, modify, and share.
+If you're looking for inspiration or alternatives:
+- **[r/unixporn](https://reddit.com/r/unixporn)** - Desktop customization showcase
+- **[Sway Wiki](https://github.com/swaywm/sway/wiki)** - Official documentation
+- **[ArchWiki Sway](https://wiki.archlinux.org/title/Sway)** - Comprehensive setup guide
+
+---
+
+## 📄 License
+
+These dotfiles are provided freely under the MIT License. Feel free to use, modify, and share!
 
 **Special thanks to:**
 - The [Sway](https://swaywm.org/) development team
 - The [Arch Linux](https://archlinux.org/) community  
-- All the open-source projects that make this setup possible
+- All open-source projects that make this setup possible
+- The dotfiles community for inspiration and ideas
 
 ---
 
@@ -248,7 +327,10 @@ These dotfiles are provided freely for personal and educational use. Feel free t
 - **[Sway Documentation](https://github.com/swaywm/sway/wiki)**
 - **[Waybar Configuration](https://github.com/Alexays/Waybar/wiki)**
 - **[Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)**
+- **[ZSH Configuration Guide](https://wiki.archlinux.org/title/Zsh)**
 
 ---
 
-*Happy customizing! 🎉*
+*Happy ricing! 🎉*
+
+> **Pro tip**: Start with the basic installation, then gradually customize each component to your liking. The modular structure makes it easy to modify individual parts without breaking the whole setup.

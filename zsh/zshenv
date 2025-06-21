@@ -1,33 +1,74 @@
-#exported variables
+# XDG Base Directory Specification
+export XDG_DATA_HOME="$HOME/.local/share"
+export XDG_CONFIG_HOME="$HOME/.config"
+export XDG_CACHE_HOME="$HOME/.cache"
+export XDG_STATE_HOME="$HOME/.local/state"
 
-export PATH=${PATH}:$HOME/bin/:$HOME/development/android/sdk/cmdline-tools/12.0/bin/:$HOME/.gem/ruby/3.4.0/bin/:$HOME/.gem/bin/:$HOME/.npm-global/bin/:$HOME/.firefox/:$HOME/.cargo/bin/
-export PATH=${PATH}:$HOME/git/ii/:$HOME/git/nettop/:$HOME/git/2048.c/:$HOME/git/tuxi/:$HOME/git/pass2csv/
-export PATH=${PATH}:$HOME/development/android/sdk/platform-tools/:$HOME/development/android/sdk/cmdline-tools/12.0/:$HOME/machines/qemu-scripts/
-export PATH=${PATH}:$HOME/venv/pelican/bin/:$HOME/venv/vizex/bin/:$HOME/venv/emailproxy/bin/
-export ANDROID_HOME=$HOME/development/android/sdk
-export _JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Djdk.gtk.version=3'
+# Application homes
+export ANDROID_HOME="$HOME/development/android/sdk"
+export GEM_HOME="$HOME/.gem"
+export GOPATH="$HOME/gocode"
+
+# Default applications
+export BROWSER="firefox"
+export EDITOR="vim"
+export TERMCMD="kitty"
+
+# GUI/Display settings
+export QT_QPA_PLATFORM="wayland;xcb"
+export QT_QPA_PLATFORMTHEME="qt5ct"
+export ELECTRON_OZONE_PLATFORM_HINT="wayland"
+# export MOZ_ENABLE_WAYLAND=1
+# export GDK_BACKEND=wayland
+# export QEMU_AUDIO_DRV=pa
+export VK_DRIVER_FILES=""
+
+# Application-specific settings
+export R_HISTFILE="$HOME/.Rhistory"
+
+# Java options (handled cleanly)
+_JAVA_OPTIONS='-Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel -Djdk.gtk.version=3'
 _SILENT_JAVA_OPTIONS="$_JAVA_OPTIONS"
 unset _JAVA_OPTIONS
-alias java='java -Dawt.useSystemAAFontSettings=on -Dswing.aatext=true -Dswing.defaultlaf=com.sun.java.swing.plaf.gtk.GTKLookAndFeel'
+alias java="java $_SILENT_JAVA_OPTIONS"
 
-export MOZ_ENABLE_WAYLAND=1
-export QT_QPA_PLATFORM="wayland;xcb"
-export GEM_HOME=$HOME/.gem
-export GDK_BACKEND=wayland
-export QEMU_AUDIO_DRV=pa
-export QT_QPA_PLATFORMTHEME="qt5ct"
-export TERMCMD="kitty"
-export R_HISTFILE=~/.Rhistory
-export BROWSER=firefox
-export EDITOR=vim
-export GOPATH=$HOME/gocode
-export PATH=$PATH:$GOPATH/bin
-export ELECTRON_OZONE_PLATFORM_HINT=wayland
-export VK_DRIVER_FILES=
+# PATH construction
+path_dirs=(
+    # User binaries
+    "$HOME/bin"
+    "$HOME/.cargo/bin"
+    "$HOME/.npm-global/bin"
+    
+    # Ruby gems
+    "$HOME/.gem/ruby/3.4.0/bin"
+    "$HOME/.gem/bin"
+    
+    # Android development
+    "$HOME/development/android/sdk/cmdline-tools/12.0/bin"
+    "$HOME/development/android/sdk/cmdline-tools/12.0"
+    "$HOME/development/android/sdk/platform-tools"
+    
+    # Personal projects
+    "$HOME/git/ii"
+    "$HOME/git/nettop"
+    "$HOME/git/2048.c"
+    "$HOME/git/tuxi"
+    "$HOME/git/pass2csv"
+    
+    # Virtual environments
+    "$HOME/venv/pelican/bin"
+    "$HOME/venv/vizex/bin"
+    "$HOME/venv/emailproxy/bin"
+    
+    # Other tools
+    "$HOME/.firefox"
+    "$HOME/machines/qemu-scripts"
+    "$GOPATH/bin"
+)
 
-#XDG Base Directory Specifications
-export XDG_DATA_HOME=$HOME/.local/share
-export XDG_CONFIG_HOME=$HOME/.config
-export XDG_CACHE_HOME=$HOME/.cache
-export XDG_STATE_HOME=$HOME/.local/state
+# Build PATH from array
+for dir in "${path_dirs[@]}"; do
+    [[ -d "$dir" ]] && PATH="$PATH:$dir"
+done
 
+export PATH
