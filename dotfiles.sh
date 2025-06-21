@@ -19,6 +19,7 @@ NC='\033[0m'
 DRY_RUN=false
 FORCE=false
 VERBOSE=false
+NO_BACKUP=false
 
 # File mappings: source -> destination
 # Note: Some files may not exist in the public repo - this is normal
@@ -68,6 +69,7 @@ declare -A FILES=(
     ["zsh/zprofile"]="$HOME/.zprofile"
     ["zsh/zshenv"]="$HOME/.zshenv"
     ["zsh/zshrc"]="$HOME/.zshrc"
+    ["zsh/zsh_history"]="$HOME/.zsh_history"
     
     # ZSH modular configs
     ["zsh/config/history.zsh"]="$HOME/.config/zsh/history.zsh"
@@ -76,8 +78,8 @@ declare -A FILES=(
     ["zsh/config/prompt.zsh"]="$HOME/.config/zsh/prompt.zsh"
     ["zsh/config/aliases.zsh"]="$HOME/.config/zsh/aliases.zsh"
     ["zsh/config/plugins.zsh"]="$HOME/.config/zsh/plugins.zsh"
-
-    # ZSH plugins
+    
+    # ZSH plugins (individual files)
     ["zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh"
     ["zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh"
     ["zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh"]="$HOME/.local/share/zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh"
@@ -116,6 +118,8 @@ COMMANDS:
     install     Install/link all available dotfiles (default)
     uninstall   Remove all symlinks created by this script
     status      Show status of all dotfiles
+    backup      Create backup of existing configs
+    restore     Restore from most recent backup
     help        Show this help
 
 OPTIONS:
@@ -123,11 +127,13 @@ OPTIONS:
     -f, --force         Overwrite existing files
     -v, --verbose       Verbose output
     -p, --path PATH     Specify dotfiles directory (default: script location)
+    -b, --no-backup     Skip automatic backup during install
     -h, --help          Show help
 
 EXAMPLES:
     $0                                # Install available dotfiles
     $0 install -d                     # Preview installation
+    $0 backup                         # Create backup manually
     $0 status                         # Check current status
     $0 uninstall -f                   # Force remove all symlinks
 
@@ -143,6 +149,168 @@ SETUP ON NEW SYSTEM:
     3. Run installer: ~/dotfiles/dotfiles.sh install
 
 EOF
+}
+
+# Create backup of existing configs
+create_backup() {
+    if [[ "$NO_BACKUP" == true ]]; then
+        verbose "Skipping backup as requested"
+        return 0
+    fi
+    
+    info "Creating backup directory: $BACKUP_DIR"
+    
+    if [[ "$DRY_RUN" == false ]]; then
+        mkdir -p "$BACKUP_DIR"
+    fi
+    
+    local backup_count=0
+    local backup_list=()
+    
+    # Check what needs backing up (only check files that exist in repo)
+    for source_rel in "${!FILES[@]}"; do
+        local dest="${FILES[$source_rel]}"
+        local source="$DOTFILES_DIR/$source_rel"
+        
+        # Skip if source doesn't exist in this public repo
+        if [[ ! -e "$source" ]]; then
+            continue
+        fi
+        
+        # Only backup if file/directory exists and is not already a symlink to our dotfiles
+        if [[ -e "$dest" ]] && [[ ! -L "$dest" || "$(readlink "$dest" 2>/dev/null)" != "$source" ]]; then
+            backup_list+=("$dest")
+        fi
+    done
+    
+    if [[ ${#backup_list[@]} -eq 0 ]]; then
+        info "No files need backing up"
+        if [[ "$DRY_RUN" == false ]]; then
+            rmdir "$BACKUP_DIR" 2>/dev/null || true
+        fi
+        return 0
+    fi
+    
+    info "Found ${#backup_list[@]} files/directories to backup"
+    
+    # Create backups
+    for dest in "${backup_list[@]}"; do
+        local backup_name="$(basename "$dest")"
+        local backup_path="$BACKUP_DIR/$backup_name"
+        
+        # Handle naming conflicts in backup directory
+        local counter=1
+        while [[ -e "$backup_path" ]]; do
+            backup_path="$BACKUP_DIR/${backup_name}.${counter}"
+            ((counter++))
+        done
+        
+        verbose "Backing up: $dest → $backup_path"
+        
+        if [[ "$DRY_RUN" == false ]]; then
+            if [[ -d "$dest" ]]; then
+                cp -r "$dest" "$backup_path"
+            else
+                cp "$dest" "$backup_path"
+            fi
+            ((backup_count++))
+        else
+            echo "  Would backup: $dest → $backup_path"
+        fi
+    done
+    
+    if [[ "$DRY_RUN" == false ]]; then
+        # Save backup location for easy restoration
+        echo "$BACKUP_DIR" > "$HOME/.dotfiles_last_backup"
+        echo "# Public dotfiles backup created on $(date)" >> "$BACKUP_DIR/backup_info.txt"
+        echo "# Original dotfiles directory: $DOTFILES_DIR" >> "$BACKUP_DIR/backup_info.txt"
+        echo "# Files backed up: $backup_count" >> "$BACKUP_DIR/backup_info.txt"
+        echo "# Repository: https://github.com/okubax/dotfiles" >> "$BACKUP_DIR/backup_info.txt"
+        
+        success "Backed up $backup_count files to $BACKUP_DIR"
+        info "Backup location saved to ~/.dotfiles_last_backup"
+    fi
+}
+
+# Restore from backup
+restore_backup() {
+    local backup_dir="${1:-}"
+    
+    # If no backup dir specified, use the last one
+    if [[ -z "$backup_dir" ]]; then
+        if [[ -f "$HOME/.dotfiles_last_backup" ]]; then
+            backup_dir=$(cat "$HOME/.dotfiles_last_backup")
+            info "Using last backup: $backup_dir"
+        else
+            error "No backup directory specified and no last backup found"
+            echo "Usage: $0 restore [backup_directory]"
+            echo "Available backups:"
+            ls -la "$HOME"/.dotfiles_backup_* 2>/dev/null || echo "  No backups found"
+            return 1
+        fi
+    fi
+    
+    if [[ ! -d "$backup_dir" ]]; then
+        error "Backup directory not found: $backup_dir"
+        return 1
+    fi
+    
+    info "Restoring from backup: $backup_dir"
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        warning "DRY RUN MODE - No changes will be made"
+    fi
+    
+    local restore_count=0
+    
+    # Show backup info if available
+    if [[ -f "$backup_dir/backup_info.txt" ]]; then
+        info "Backup information:"
+        cat "$backup_dir/backup_info.txt" | sed 's/^/  /'
+        echo ""
+    fi
+    
+    # Restore each file
+    for backup_file in "$backup_dir"/*; do
+        if [[ -e "$backup_file" ]] && [[ "$(basename "$backup_file")" != "backup_info.txt" ]]; then
+            local filename=$(basename "$backup_file")
+            
+            # Remove any numbering suffix added during backup
+            local clean_filename=$(echo "$filename" | sed 's/\.[0-9]*$//')
+            local restore_path="$HOME/$clean_filename"
+            
+            # Handle special cases for dotfiles
+            if [[ "$clean_filename" != .* ]]; then
+                restore_path="$HOME/.$clean_filename"
+            fi
+            
+            verbose "Restoring: $backup_file → $restore_path"
+            
+            if [[ "$DRY_RUN" == false ]]; then
+                # Remove current symlink/file if it exists
+                if [[ -L "$restore_path" ]]; then
+                    rm "$restore_path"
+                elif [[ -e "$restore_path" ]]; then
+                    rm -rf "$restore_path"
+                fi
+                
+                # Restore the backup
+                if [[ -d "$backup_file" ]]; then
+                    cp -r "$backup_file" "$restore_path"
+                else
+                    cp "$backup_file" "$restore_path"
+                fi
+                ((restore_count++))
+            else
+                echo "  Would restore: $backup_file → $restore_path"
+            fi
+        fi
+    done
+    
+    if [[ "$DRY_RUN" == false ]]; then
+        success "Restored $restore_count files from backup"
+        warning "Note: You may need to reconfigure private settings (credentials, keys, etc.)"
+    fi
 }
 
 # Create necessary directories
@@ -293,6 +461,12 @@ install() {
         warning "DRY RUN MODE - No changes will be made"
     fi
     
+    # Create backup first (unless disabled or dry run)
+    if [[ "$DRY_RUN" == false ]]; then
+        create_backup
+        echo ""
+    fi
+    
     local success_count=0
     local skip_count=0
     local missing_count=0
@@ -431,6 +605,48 @@ parse_args() {
     
     while [[ $# -gt 0 ]]; do
         case $1 in
+            install|uninstall|status|backup|restore|help)
+                command="$1"
+                shift
+                ;;
+            -d|--dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            -v|--verbose)
+                VERBOSE=true
+                shift
+                ;;
+            -f|--force)
+                FORCE=true
+                shift
+                ;;
+            -p|--path)
+                DOTFILES_DIR="$2"
+                shift 2
+                ;;
+            -b|--no-backup)
+                NO_BACKUP=true
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            *)
+                error "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+        esac
+    done
+    
+    echo "$command"
+}() {
+    local command="install"
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
             install|uninstall|status|help)
                 command="$1"
                 shift
@@ -493,6 +709,12 @@ main() {
             ;;
         status)
             status
+            ;;
+        backup)
+            create_backup
+            ;;
+        restore)
+            restore_backup "${2:-}"
             ;;
         help)
             usage
