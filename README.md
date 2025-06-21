@@ -64,6 +64,8 @@ The `dotfiles.sh` script handles everything automatically:
 ./dotfiles.sh install          # Install all available dotfiles
 ./dotfiles.sh status           # Check current installation status
 ./dotfiles.sh uninstall        # Remove all symlinks safely
+./dotfiles.sh backup           # Create backup of existing configs
+./dotfiles.sh restore          # Restore from most recent backup
 ```
 
 ### Advanced Options
@@ -71,13 +73,19 @@ The `dotfiles.sh` script handles everything automatically:
 ./dotfiles.sh install --dry-run    # Preview installation without changes
 ./dotfiles.sh install --force      # Overwrite existing files
 ./dotfiles.sh install --verbose    # Show detailed output
+./dotfiles.sh install --no-backup  # Skip automatic backup during install
+./dotfiles.sh backup --dry-run     # Preview what would be backed up
+./dotfiles.sh restore [backup_dir] # Restore from specific backup
 ```
 
-### Safety Features
+### Backup & Safety Features
+- **Automatic backups**: Creates backups before installation by default
+- **Manual backups**: Create backups anytime with `backup` command
+- **Smart restoration**: Restore from most recent or specific backup
 - **Graceful handling**: Missing files show warnings but don't stop installation
 - **Interactive prompts**: Choose what to do with existing files
 - **Dry-run mode**: See what will happen before making changes
-- **Selective installation**: Only available files are processed
+- **Backup tracking**: Remembers last backup location for easy restoration
 
 ---
 
@@ -145,7 +153,50 @@ exec sway
 sudo pacman -S ttf-liberation ttf-dejavu
 ```
 
-### 4. Set Up Private Configurations
+### 4. Backup Management
+
+The dotfiles script includes comprehensive backup functionality:
+
+**Automatic Backups:**
+```bash
+# Backups are created automatically before installation
+./dotfiles.sh install
+```
+
+**Manual Backup Operations:**
+```bash
+# Create backup anytime
+./dotfiles.sh backup
+
+# Preview what would be backed up
+./dotfiles.sh backup --dry-run
+
+# Install without creating backup
+./dotfiles.sh install --no-backup
+```
+
+**Restore Operations:**
+```bash
+# Restore from most recent backup
+./dotfiles.sh restore
+
+# List available backups
+ls -la ~/.dotfiles_backup_*
+
+# Restore from specific backup
+./dotfiles.sh restore ~/.dotfiles_backup_20250621_120000
+
+# Preview restore operation
+./dotfiles.sh restore --dry-run
+```
+
+**Backup Features:**
+- **Smart detection**: Only backs up files that would be overwritten
+- **Metadata tracking**: Each backup includes creation info and file list
+- **Conflict handling**: Automatically handles naming conflicts
+- **Easy restoration**: Remember last backup location for quick recovery
+
+### 5. Set Up Private Configurations
 
 Some configurations are not included in this public repository for privacy/security:
 
@@ -180,10 +231,14 @@ pass init "your-gpg-key-id"
 | **File Manager** | `ranger/rc.conf` | Key bindings, previews |
 
 ### Color Schemes
-The setup includes several color schemes:
+The setup includes several color schemes and follows XDG Base Directory specifications:
 - **Kitty**: Multiple themes in `kitty/colors/`
 - **Vim**: Catppuccin variants included
-- **ZSH**: Syntax highlighting themes
+- **ZSH**: Syntax highlighting themes in `~/.local/share/zsh/plugins/`
+  - Catppuccin Frappe (warm, muted)
+  - Catppuccin Latte (light variant)
+  - Catppuccin Macchiato (balanced)
+  - Catppuccin Mocha (dark, rich)
 
 ### Adding Your Own Configs
 1. **Fork this repository**
@@ -197,7 +252,7 @@ The setup includes several color schemes:
 
 ```
 ~/dotfiles/
-├── dotfiles.sh              # Installation script
+├── dotfiles.sh              # Installation script with backup functionality
 ├── aliases/                 # Shell aliases and functions
 ├── bin/                     # Custom scripts and utilities
 ├── fontconfig/              # Font configuration
@@ -213,9 +268,39 @@ The setup includes several color schemes:
 │   └── wofi/               # Application launcher
 ├── vim/                     # Text editor configuration
 ├── zsh/                     # Shell configuration
-│   └── config/             # Modular ZSH configs
+│   ├── config/             # Modular ZSH configs
+│   │   ├── history.zsh     # History settings
+│   │   ├── options.zsh     # Shell options
+│   │   ├── completion.zsh  # Completion system
+│   │   ├── prompt.zsh      # Prompt configuration
+│   │   ├── aliases.zsh     # ZSH-specific aliases
+│   │   └── plugins.zsh     # Plugin management
+│   ├── plugins/            # ZSH syntax highlighting themes
+│   │   ├── catppuccin_frappe-zsh-syntax-highlighting.zsh
+│   │   ├── catppuccin_latte-zsh-syntax-highlighting.zsh
+│   │   ├── catppuccin_macchiato-zsh-syntax-highlighting.zsh
+│   │   └── catppuccin_mocha-zsh-syntax-highlighting.zsh
+│   ├── zprofile           # ZSH profile
+│   ├── zshenv             # ZSH environment
+│   ├── zshrc              # Main ZSH config (loads modular configs)
+│   └── zsh_history        # ZSH command history
 └── README.md               # This file
 ```
+
+### ZSH Plugin Management
+
+The ZSH setup includes a sophisticated plugin system:
+
+- **Plugin Storage**: Themes are stored in `~/.local/share/zsh/plugins/` (following XDG Base Directory spec)
+- **Theme Selection**: Multiple Catppuccin syntax highlighting variants included
+- **Modular Loading**: Plugin management handled via `zsh/config/plugins.zsh`
+- **Easy Switching**: Change themes by updating the plugin configuration
+
+**Available Themes:**
+- `catppuccin_frappe` - Warm, muted colors
+- `catppuccin_latte` - Light theme variant  
+- `catppuccin_macchiato` - Balanced contrast
+- `catppuccin_mocha` - Dark, rich colors
 
 ---
 
@@ -253,6 +338,24 @@ This is normal and expected for a public dotfiles repository!
 
 # Install only what's available:
 ./dotfiles.sh install --verbose
+```
+
+**Want to undo changes:**
+```bash
+# Restore from backup
+./dotfiles.sh restore
+
+# Or remove all symlinks
+./dotfiles.sh uninstall
+```
+
+**Need to backup before experimenting:**
+```bash
+# Create manual backup
+./dotfiles.sh backup
+
+# Try changes, then restore if needed
+./dotfiles.sh restore
 ```
 
 **Permission errors:**
