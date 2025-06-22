@@ -8,6 +8,9 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Configuration - set to true to show loading messages
+SHOW_ALIAS_LOADING=${SHOW_ALIAS_LOADING:-false}
+
 # Function to safely load alias files
 load_aliases() {
     local file="$1"
@@ -15,60 +18,145 @@ load_aliases() {
     
     if [ -f "$file" ]; then
         source "$file"
-        echo -e "${GREEN}✓${NC} Loaded $description"
+        if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
+            echo -e "${GREEN}✓${NC} Loaded $description"
+        fi
+        return 0
     else
-        echo -e "${RED}✗${NC} Warning: $file not found"
+        if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
+            echo -e "${RED}✗${NC} Warning: $file not found"
+        fi
+        return 1
     fi
 }
 
+# Silent loading by default
+if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
+    echo "Loading shell aliases..."
+fi
+
 # Load all alias files
-echo "Loading shell aliases..."
-
-# Load system aliases (core utilities, package management, system admin)
 load_aliases "$HOME/.aliases_system" "system aliases"
-
-# Load development aliases (programming, tools, servers)
 load_aliases "$HOME/.aliases_dev" "development aliases"
-
-# Load personal aliases (configs, notes, personal shortcuts)
 load_aliases "$HOME/.aliases_personal" "personal aliases"
-
-# Load personal script aliases
 load_aliases "$HOME/.aliases_script" "script aliases"
 
-echo -e "${GREEN}Alias loading complete!${NC}"
+if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
+    echo -e "${GREEN}Alias loading complete!${NC}"
+fi
+
+# Alias status checking function
+alias-status() {
+    echo -e "${GREEN}=== Alias Loading Status ===${NC}"
+    local loaded=0
+    local missing=0
+    
+    for file in "$HOME/.aliases_system" "$HOME/.aliases_dev" "$HOME/.aliases_personal" "$HOME/.aliases_script"; do
+        local basename=$(basename "$file")
+        if [ -f "$file" ]; then
+            echo -e "${GREEN}✓${NC} $basename"
+            ((loaded++))
+        else
+            echo -e "${RED}✗${NC} $basename (missing)"
+            ((missing++))
+        fi
+    done
+    
+    echo ""
+    echo "Loaded: $loaded files"
+    if [[ $missing -gt 0 ]]; then
+        echo -e "${YELLOW}Missing: $missing files${NC}"
+    fi
+    
+    echo ""
+    echo -e "${CYAN}To show loading messages on startup:${NC}"
+    echo "  export SHOW_ALIAS_LOADING=true"
+    echo ""
+    echo -e "${CYAN}To hide loading messages:${NC}"
+    echo "  export SHOW_ALIAS_LOADING=false"
+}
 
 # Quick help function
 alias-help() {
-    echo "=== Available Alias Categories ==="
-    echo "System aliases (.aliases_system):"
+    echo -e "${GREEN}=== Available Alias Categories ===${NC}"
+    echo ""
+    echo -e "${CYAN}System aliases${NC} (.aliases_system):"
     echo "  - Core utilities (ls, grep, find, etc.)"
     echo "  - Package management (pac*, flat*, aur*)"
     echo "  - Systemctl functions (start, stop, restart, etc.)"
     echo "  - Dynamic device management (mountdev, umountdev)"
     echo "  - System monitoring (bat, dfu, errors, etc.)"
     echo ""
-    echo "Development aliases (.aliases_dev):"
+    echo -e "${CYAN}Development aliases${NC} (.aliases_dev):"
     echo "  - Python/pip shortcuts (pyserv, pipi, etc.)"
     echo "  - Node.js/npm shortcuts (npmi, npmup, etc.)"
     echo "  - Media tools (ytd, ytdm)"
     echo "  - Development utilities (calc, genpass)"
     echo ""
-    echo "Personal aliases (.aliases_personal):"
+    echo -e "${CYAN}Personal aliases${NC} (.aliases_personal):"
     echo "  - Config editing (vsway, vbar, etc.)"
     echo "  - Note editing (vtodo, vuni, etc.)"
     echo "  - Personal shortcuts and functions"
     echo ""
+    echo -e "${CYAN}Script aliases${NC} (.aliases_script):"
+    echo "  - Custom script shortcuts"
+    echo ""
+    echo -e "${YELLOW}Commands:${NC}"
+    echo "  aliases-help (or 'ah')     - Show this help"
+    echo "  alias-status (or 'as')     - Show loading status"
+    echo "  alias-reload (or 'ar')     - Reload all aliases"
+    echo "  alias-test                 - Test alias functionality"
+    echo ""
     echo "Use 'grep alias ~/.aliases_*' to see all available aliases"
-    echo "Use 'deploy_websites.sh --help' for website deployment help"
 }
 
-# Add the help function as an alias
+# Reload aliases function
+alias-reload() {
+    echo -e "${BLUE}Reloading aliases...${NC}"
+    local old_setting="$SHOW_ALIAS_LOADING"
+    export SHOW_ALIAS_LOADING=true
+    source "$HOME/.aliases"
+    export SHOW_ALIAS_LOADING="$old_setting"
+}
+
+# Test aliases function
+alias-test() {
+    echo -e "${GREEN}=== Testing Common Aliases ===${NC}"
+    
+    # Test a few key aliases
+    local test_commands=("ls" "gs" "pac" "deploy")
+    
+    for cmd in "${test_commands[@]}"; do
+        if command -v "$cmd" >/dev/null 2>&1 || alias "$cmd" >/dev/null 2>&1; then
+            echo -e "${GREEN}✓${NC} $cmd is available"
+        else
+            echo -e "${YELLOW}?${NC} $cmd not found"
+        fi
+    done
+    
+    echo ""
+    echo -e "${CYAN}Total aliases loaded:${NC} $(alias | wc -l)"
+}
+
+# Add the help function as aliases
 alias aliases-help='alias-help'
 alias ah='alias-help'
+alias as='alias-status'
+alias ar='alias-reload'
 
 # Deployment script shortcut (if the script exists)
 if [ -f "$HOME/bin/deploy_websites.sh" ]; then
     alias deploy='~/bin/deploy_websites.sh 2>/dev/null'
     alias deploy-dry='deploy --dry-run'
+fi
+
+# Optional: Show a subtle one-liner on first load of the day
+ALIAS_LOG="$HOME/.alias_load_log"
+TODAY=$(date +%Y-%m-%d)
+
+if [[ ! -f "$ALIAS_LOG" ]] || ! grep -q "$TODAY" "$ALIAS_LOG" 2>/dev/null; then
+    echo -e "${GREEN}💡 Aliases ready${NC} (type 'ah' for help, 'as' for status)"
+    echo "$TODAY: Aliases loaded" >> "$ALIAS_LOG"
+    # Keep only last 7 days of logs
+    tail -7 "$ALIAS_LOG" > "$ALIAS_LOG.tmp" && mv "$ALIAS_LOG.tmp" "$ALIAS_LOG"
 fi
