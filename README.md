@@ -2,6 +2,11 @@
 
 A complete keyboard-driven desktop setup for Arch Linux featuring Sway compositor, Waybar status bar, and productivity-focused applications.
 
+## Screenshots
+
+![Desktop Screenshot](screenshot.png)
+![Desktop Screenshot with Vim](screenshot2.png)
+
 ## Components
 
 **Core Desktop**
