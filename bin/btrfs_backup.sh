@@ -498,6 +498,13 @@ create_weekly_external_backup() {
     # Check external drive disk space
     check_and_warn_disk_space "$EXTERNAL_MOUNT" "External drive"
     
+    # Verify external drive is BTRFS
+    if ! btrfs filesystem show "$EXTERNAL_MOUNT" >/dev/null 2>&1; then
+        log "ERROR: External drive is not a BTRFS filesystem or not properly mounted"
+        log "External backup requires BTRFS filesystem for btrfs send/receive"
+        return 1
+    fi
+    
     for subvol_entry in "${SUBVOLUMES[@]}"; do
         local name="${subvol_entry%%:*}"
         local backup_name="weekly_backup_${timestamp}"
@@ -516,42 +523,109 @@ create_weekly_external_backup() {
         
         log "Using snapshot for $name backup: $(basename "$latest_weekly")"
         
-        # Find parent for incremental backup
-        local parent_backup=$(find "$EXTERNAL_BACKUP_DIR/$name" -maxdepth 1 -name "*_backup_*" -type d 2>/dev/null | sort | tail -1 || true)
+        # Find parent for incremental backup - must be a valid subvolume
+        local parent_backup=""
+        local potential_parents=($(find "$EXTERNAL_BACKUP_DIR/$name" -maxdepth 1 -name "*_backup_*" -type d 2>/dev/null | sort -r))
+        
+        for potential_parent in "${potential_parents[@]}"; do
+            if btrfs subvolume show "$potential_parent" >/dev/null 2>&1; then
+                parent_backup="$potential_parent"
+                log "Found valid parent backup: $(basename "$parent_backup")"
+                break
+            else
+                log "Skipping invalid parent backup: $(basename "$potential_parent")"
+            fi
+        done
         
         if [[ -n "$parent_backup" ]]; then
-            log "Creating incremental backup for $name from parent: $(basename "$parent_backup")"
-            if [[ "$DRY_RUN" == "true" ]]; then
-                log "WOULD EXECUTE: btrfs send -p '$parent_backup' '$latest_weekly' | btrfs receive '$EXTERNAL_BACKUP_DIR/$name'"
-                log "WOULD RENAME: received snapshot to $backup_name"
-            else
-                if btrfs send -p "$parent_backup" "$latest_weekly" | btrfs receive "$EXTERNAL_BACKUP_DIR/$name"; then
-                    local received_name=$(basename "$latest_weekly")
-                    if mv "$EXTERNAL_BACKUP_DIR/$name/$received_name" "$backup_path"; then
-                        log "Successfully created incremental weekly backup for $name: $backup_path"
-                        verify_backup "$backup_path" "$name weekly backup"
-                    else
-                        error_continue "Failed to rename weekly backup for $name"
-                        failed_backups+=("$name")
-                    fi
+            # For incremental backup, we need to find the corresponding local snapshot
+            # that was used to create the parent backup
+            local parent_backup_name=$(basename "$parent_backup")
+            local parent_timestamp=""
+            
+            # Extract timestamp from parent backup name (format: weekly_backup_YYYYMMDD_HHMMSS)
+            if [[ $parent_backup_name =~ weekly_backup_([0-9]{8})_([0-9]{6}) ]]; then
+                local date_part="${BASH_REMATCH[1]}"
+                local time_part="${BASH_REMATCH[2]}"
+                parent_timestamp="${date_part}_${time_part}"
+            fi
+            
+            local local_parent=""
+            if [[ -n "$parent_timestamp" ]]; then
+                local_parent="/mnt/btr_pool/.snapshots/$name/weekly_${parent_timestamp}"
+                if [[ -d "$local_parent" ]] && btrfs subvolume show "$local_parent" >/dev/null 2>&1; then
+                    log "Found corresponding local parent snapshot: $(basename "$local_parent")"
                 else
-                    error_continue "Failed to create incremental weekly backup for $name"
-                    failed_backups+=("$name")
+                    log "Local parent snapshot not found: $local_parent"
+                    local_parent=""
                 fi
             fi
-        else
-            log "Creating full backup for $name (no parent found)"
+            
+            if [[ -n "$local_parent" ]]; then
+                log "Creating incremental backup for $name using local parent: $(basename "$local_parent")"
+                if [[ "$DRY_RUN" == "true" ]]; then
+                    log "WOULD EXECUTE: btrfs send -p '$local_parent' '$latest_weekly' | btrfs receive '$EXTERNAL_BACKUP_DIR/$name'"
+                    log "WOULD RENAME: received snapshot to $backup_name"
+                else
+                    # Create incremental backup using local parent
+                    local send_cmd="btrfs send -p '$local_parent' '$latest_weekly'"
+                    local receive_cmd="btrfs receive '$EXTERNAL_BACKUP_DIR/$name'"
+                    
+                    log "Executing incremental send/receive for $name"
+                    if eval "$send_cmd" | eval "$receive_cmd"; then
+                        local received_name=$(basename "$latest_weekly")
+                        local received_path="$EXTERNAL_BACKUP_DIR/$name/$received_name"
+                        
+                        # Check if received snapshot exists before renaming
+                        if [[ -d "$received_path" ]]; then
+                            if mv "$received_path" "$backup_path"; then
+                                log "Successfully created incremental weekly backup for $name: $backup_path"
+                                verify_backup "$backup_path" "$name weekly backup"
+                            else
+                                error_continue "Failed to rename weekly backup for $name from $received_path to $backup_path"
+                                failed_backups+=("$name")
+                            fi
+                        else
+                            error_continue "Received snapshot not found at expected path: $received_path"
+                            failed_backups+=("$name")
+                        fi
+                    else
+                        log "Incremental backup failed for $name, attempting full backup instead"
+                        local_parent=""  # Force full backup
+                    fi
+                fi
+            else
+                log "No valid local parent found for incremental backup, will create full backup"
+                local_parent=""
+            fi
+        fi
+        
+        # Create full backup if no parent or incremental failed
+        if [[ -z "$parent_backup" ]] || [[ -z "$local_parent" ]]; then
+            log "Creating full backup for $name (no valid parent found)"
             if [[ "$DRY_RUN" == "true" ]]; then
                 log "WOULD EXECUTE: btrfs send '$latest_weekly' | btrfs receive '$EXTERNAL_BACKUP_DIR/$name'"
                 log "WOULD RENAME: received snapshot to $backup_name"
             else
-                if btrfs send "$latest_weekly" | btrfs receive "$EXTERNAL_BACKUP_DIR/$name"; then
+                local send_cmd="btrfs send '$latest_weekly'"
+                local receive_cmd="btrfs receive '$EXTERNAL_BACKUP_DIR/$name'"
+                
+                log "Executing full send/receive for $name"
+                if eval "$send_cmd" | eval "$receive_cmd"; then
                     local received_name=$(basename "$latest_weekly")
-                    if mv "$EXTERNAL_BACKUP_DIR/$name/$received_name" "$backup_path"; then
-                        log "Successfully created full weekly backup for $name: $backup_path"
-                        verify_backup "$backup_path" "$name weekly backup"
+                    local received_path="$EXTERNAL_BACKUP_DIR/$name/$received_name"
+                    
+                    # Check if received snapshot exists before renaming
+                    if [[ -d "$received_path" ]]; then
+                        if mv "$received_path" "$backup_path"; then
+                            log "Successfully created full weekly backup for $name: $backup_path"
+                            verify_backup "$backup_path" "$name weekly backup"
+                        else
+                            error_continue "Failed to rename full weekly backup for $name"
+                            failed_backups+=("$name")
+                        fi
                     else
-                        error_continue "Failed to rename weekly backup for $name"
+                        error_continue "Received snapshot not found at expected path: $received_path"
                         failed_backups+=("$name")
                     fi
                 else
