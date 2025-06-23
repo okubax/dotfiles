@@ -10,6 +10,28 @@
 <script src="https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js" async></script>
 
 <style type="text/css">
+  :root {
+    /* Light theme (default) */
+    --bg-color: #ffffff;
+    --text-color: #222222;
+    --input-bg: #222222;
+    --input-text: #ffffff;
+    --sidebar-bg: #ffffff;
+    --sidebar-shadow: rgba(0, 0, 0, 0.2);
+    --hover-color: #333333;
+  }
+
+  [data-theme="dark"] {
+    /* Dark theme */
+    --bg-color: #1e1e2e;
+    --text-color: #cdd6f4;
+    --input-bg: #313244;
+    --input-text: #cdd6f4;
+    --sidebar-bg: #181825;
+    --sidebar-shadow: rgba(0, 0, 0, 0.5);
+    --hover-color: #f5c2e7;
+  }
+
   body {
     position: absolute;
     top: 0;
@@ -18,9 +40,11 @@
     height: 100%;
     margin: 0;
     padding: 0;
-    color: #222;
+    color: var(--text-color);
+    background-color: var(--bg-color);
     font-family: 'Lato', sans-serif;
     font-weight: 300;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   main {
@@ -55,12 +79,16 @@
     box-sizing: border-box;
     width: 100%;
     padding: 12px;
-    transition: 0.5s;
+    transition: 0.3s ease;
     border-radius: 2px;
-    background-color: #222;
-    color: #fff;
+    background-color: var(--input-bg);
+    color: var(--input-text);
     font-family: 'Lato', sans-serif;
     font-size: 1.1rem;
+  }
+
+  input:focus {
+    box-shadow: 0 0 10px rgba(116, 199, 236, 0.5);
   }
 
   aside {
@@ -71,10 +99,10 @@
     max-width: 190px;
     height: 100%;
     padding: 15px 0 0;
-    transition: transform 700ms;
+    transition: transform 700ms, background-color 0.3s ease;
     transform: translateX(-205px);
-    background-color: #fff;
-    box-shadow: 0 0 15px 0 rgba(0, 0, 0, 0.2);
+    background-color: var(--sidebar-bg);
+    box-shadow: 0 0 15px 0 var(--sidebar-shadow);
     overflow: auto;
     z-index: 1;
   }
@@ -86,6 +114,7 @@
   h1 {
     margin: 0 25px 15px;
     line-height: 1rem;
+    color: var(--text-color);
   }
 
   ul {
@@ -100,12 +129,14 @@
   a {
     display: block;
     padding: 0 25px;
-    color: #222;
+    color: var(--text-color);
     line-height: 1.7rem;
     text-decoration: none;
+    transition: color 0.2s ease;
   }
 
   a:hover .help-name {
+    color: var(--hover-color);
     text-decoration: underline;
   }
 
@@ -115,6 +146,46 @@
 
   .help-name {
     font-size: 0.9rem;
+    transition: color 0.2s ease;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  .theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px var(--sidebar-shadow);
+  }
+
+  .auto-indicator {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--input-bg);
+    color: var(--input-text);
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+  }
+
+  .auto-indicator.show {
+    opacity: 0.8;
   }
 </style>
 
@@ -129,6 +200,9 @@
   <h1>~</h1>
   <ul id="js-help"></ul>
 </aside>
+
+<button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+<div class="auto-indicator" id="auto-indicator">AUTO</div>
 
 <script>
   var config = {
@@ -147,6 +221,7 @@
       { key: 'm', name: 'Gmail', url: 'https://mail.google.com/mail/u/0/#inbox', search: '/search?q=' },
       { key: 'o', name: 'Outlook', url: 'http://outlook.com/', search: '/search?q=' },
       { key: 'p', name: 'Product Hunt', url: 'https://www.producthunt.com', search: '/search?q=' },
+      { key: 'R', name: '', url: '', search: '/search?q=' },
       { key: 'r', name: 'Reddit', url: 'https://www.reddit.com', search: '/search?q=' },
       { key: 's', name: 'Stack Exchange', url: 'https://stackexchange.com', search: '/search?q=' },
       { key: 'S', name: 'SoundCloud', url: 'https://soundcloud.com', search: '/search?q=' },
@@ -156,15 +231,98 @@
       { key: 'y', name: 'YouTube', url: 'https://www.youtube.com', search: '/weather?search_query=' },
     ],
 
-    // if none of the keys are matched, this is triggered
-    // for DuckDuckGo use: https://duckduckgo.com/?q=
-    // defaultCommand: 'https://duckduckgo.com/?q=',
     defaultCommand: 'https://www.google.com/search?q=',
+    searchDelimiter: ':',
 
-    // the delimiter between the key and your search query
-    // e.g. to search GitHub for potatoes you'd type "g:potatoes"
-    searchDelimiter: ':'
+    // Theme settings
+    darkHours: { start: 19, end: 7 }, // Dark theme from 7 PM to 7 AM
+    autoTheme: true // Enable automatic theme switching
   };
+
+  /**
+   * Theme Management
+   */
+  var Theme = (function(config) {
+    var themeToggle = document.getElementById('theme-toggle');
+    var autoIndicator = document.getElementById('auto-indicator');
+    var currentTheme = 'light';
+    var isAuto = config.autoTheme;
+
+    function setTheme(theme) {
+      currentTheme = theme;
+      document.documentElement.setAttribute('data-theme', theme);
+      themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+      localStorage.setItem('theme', theme);
+    }
+
+    function setAutoMode(auto) {
+      isAuto = auto;
+      localStorage.setItem('autoTheme', auto.toString());
+      if (auto) {
+        autoIndicator.classList.add('show');
+        updateThemeByTime();
+      } else {
+        autoIndicator.classList.remove('show');
+      }
+    }
+
+    function updateThemeByTime() {
+      if (!isAuto) return;
+
+      var hour = new Date().getHours();
+      var shouldBeDark = hour >= config.darkHours.start || hour < config.darkHours.end;
+      var newTheme = shouldBeDark ? 'dark' : 'light';
+      
+      if (newTheme !== currentTheme) {
+        setTheme(newTheme);
+      }
+    }
+
+    // Initialize theme
+    var savedTheme = localStorage.getItem('theme');
+    var savedAuto = localStorage.getItem('autoTheme');
+    
+    if (savedAuto !== null) {
+      isAuto = savedAuto === 'true';
+    }
+
+    if (isAuto) {
+      updateThemeByTime();
+      setAutoMode(true);
+    } else if (savedTheme) {
+      setTheme(savedTheme);
+    } else {
+      setTheme('light');
+    }
+
+    // Theme toggle button
+    themeToggle.addEventListener('click', function() {
+      if (isAuto) {
+        // First click: disable auto mode and set opposite theme
+        setAutoMode(false);
+        var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        setTheme(newTheme);
+      } else {
+        // Toggle between themes, or enable auto if we're cycling back
+        if (currentTheme === 'light') {
+          setTheme('dark');
+        } else {
+          // Re-enable auto mode
+          setAutoMode(true);
+          updateThemeByTime();
+        }
+      }
+    });
+
+    // Update theme every minute when in auto mode
+    setInterval(updateThemeByTime, 60000);
+
+    return {
+      updateThemeByTime: updateThemeByTime,
+      setTheme: setTheme,
+      getCurrentTheme: function() { return currentTheme; }
+    };
+  })(config);
 
   /**
    * Clock

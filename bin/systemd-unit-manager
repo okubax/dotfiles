@@ -1,0 +1,654 @@
+#!/bin/bash
+
+# Systemd Unit Management Script
+# Supports both system and user units with various operations
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+WHITE='\033[1;37m'
+GRAY='\033[0;90m'
+ORANGE='\033[0;33m'
+NC='\033[0m' # No Color
+
+# Status color mapping
+declare -A STATUS_COLORS=(
+    ["active"]="$GREEN"
+    ["running"]="$GREEN" 
+    ["listening"]="$GREEN"
+    ["exited"]="$GRAY"
+    ["dead"]="$GRAY"
+    ["inactive"]="$GRAY"
+    ["failed"]="$RED"
+    ["error"]="$RED"
+    ["waiting"]="$YELLOW"
+    ["start-pre"]="$YELLOW"
+    ["start"]="$YELLOW"
+    ["start-post"]="$YELLOW"
+    ["reload"]="$YELLOW"
+    ["stop"]="$ORANGE"
+    ["stop-pre"]="$ORANGE"
+    ["stop-post"]="$ORANGE"
+    ["final-sigterm"]="$ORANGE"
+    ["final-sigkill"]="$ORANGE"
+    ["auto-restart"]="$CYAN"
+    ["condition"]="$PURPLE"
+    ["masked"]="$RED"
+    ["enabled"]="$GREEN"
+    ["disabled"]="$GRAY"
+    ["static"]="$BLUE"
+    ["indirect"]="$CYAN"
+)
+
+# Script configuration
+SCRIPT_NAME=$(basename "$0")
+SCOPE="system"  # Default scope
+
+# Function to display usage
+usage() {
+    cat << EOF
+Usage: $SCRIPT_NAME [OPTIONS] COMMAND [UNIT_NAME]
+
+A comprehensive systemd unit management script supporting both system and user units.
+
+OPTIONS:
+    -u, --user          Operate on user units instead of system units
+    -h, --help          Show this help message
+
+COMMANDS:
+    status [UNIT]       Show status of unit(s)
+    start UNIT          Start a unit
+    stop UNIT           Stop a unit
+    restart UNIT        Restart a unit
+    reload UNIT         Reload a unit
+    enable UNIT         Enable a unit
+    disable UNIT        Disable a unit
+    mask UNIT           Mask a unit
+    unmask UNIT         Unmask a unit
+    list [PATTERN]      List units (optionally filtered by pattern)
+    list-all [PATTERN]  List ALL units (system + user) with color-coded status
+    list-failed         List failed units
+    list-running        List only running units with colors
+    list-stopped        List only stopped/inactive units
+    logs UNIT           Show logs for a unit
+    errors UNIT         Show error logs for a unit
+    follow UNIT         Follow logs for a unit in real-time
+    edit UNIT           Edit unit file
+    cat UNIT            Display unit file contents
+    deps UNIT           Show unit dependencies
+    rdeps UNIT          Show reverse dependencies (what depends on this unit)
+    reload-daemon       Reload systemd daemon
+    reset-failed [UNIT] Reset failed state for unit(s)
+
+EXAMPLES:
+    $SCRIPT_NAME status nginx
+    $SCRIPT_NAME -u status user-service
+    $SCRIPT_NAME list-all
+    $SCRIPT_NAME list-all ssh
+    $SCRIPT_NAME list-running
+    $SCRIPT_NAME list-failed
+    $SCRIPT_NAME logs nginx
+    $SCRIPT_NAME --user enable my-service
+    $SCRIPT_NAME errors ssh
+    $SCRIPT_NAME deps NetworkManager
+
+EOF
+}
+
+# Function to get color for status
+get_status_color() {
+    local status=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+    echo "${STATUS_COLORS[$status]:-$NC}"
+}
+
+# Function to colorize status text
+colorize_status() {
+    local status="$1"
+    local color=$(get_status_color "$status")
+    echo -e "${color}${status}${NC}"
+}
+
+# Function to format unit line with colors
+format_unit_line() {
+    local unit="$1"
+    local load="$2"
+    local active="$3"
+    local sub="$4"
+    local description="$5"
+    local scope="$6"
+    
+    # Determine colors
+    local active_color=$(get_status_color "$active")
+    local sub_color=$(get_status_color "$sub")
+    local load_color=$(get_status_color "$load")
+    local scope_color="$CYAN"
+    
+    # Format the line
+    printf "%-30s ${scope_color}[%s]${NC} ${load_color}%-10s${NC} ${active_color}%-10s${NC} ${sub_color}%-15s${NC} %s\n" \
+        "$unit" "$scope" "$load" "$active" "$sub" "$description"
+}
+
+# Function to show color legend
+show_legend() {
+    print_status "$WHITE" "=== Status Color Legend ==="
+    echo -e "$(colorize_status "active/running")  - Service is running normally"
+    echo -e "$(colorize_status "inactive/dead")   - Service is stopped"
+    echo -e "$(colorize_status "failed")          - Service failed to start or crashed"
+    echo -e "$(colorize_status "waiting")         - Service is starting up"
+    echo -e "$(colorize_status "stop")            - Service is stopping"
+    echo -e "$(colorize_status "auto-restart")    - Service is restarting automatically"
+    echo -e "$(colorize_status "masked")          - Service is masked (disabled)"
+    echo -e "$(colorize_status "enabled")         - Service is enabled to start at boot"
+    echo -e "$(colorize_status "disabled")        - Service is disabled"
+    echo -e "${CYAN}[SYSTEM]${NC}                - System-wide service"
+    echo -e "${CYAN}[USER]${NC}                  - User service"
+    echo
+}
+
+# Function to check if running as root (for system units)
+check_privileges() {
+    if [[ "$SCOPE" == "system" && $EUID -ne 0 ]]; then
+        print_status "$YELLOW" "Warning: Some system unit operations may require root privileges"
+    fi
+}
+
+# Function to build systemctl command
+build_systemctl_cmd() {
+    local cmd="systemctl"
+    if [[ "$SCOPE" == "user" ]]; then
+        cmd="$cmd --user"
+    fi
+    echo "$cmd"
+}
+
+# Function to show unit status
+show_status() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Status for $unit ==="
+    if $systemctl_cmd is-active --quiet "$unit"; then
+        print_status "$GREEN" "Active: $(systemctl --no-pager $([[ "$SCOPE" == "user" ]] && echo "--user") is-active "$unit")"
+    else
+        print_status "$RED" "Active: $(systemctl --no-pager $([[ "$SCOPE" == "user" ]] && echo "--user") is-active "$unit")"
+    fi
+    
+    if $systemctl_cmd is-enabled --quiet "$unit" 2>/dev/null; then
+        print_status "$GREEN" "Enabled: $(systemctl --no-pager $([[ "$SCOPE" == "user" ]] && echo "--user") is-enabled "$unit" 2>/dev/null || echo "N/A")"
+    else
+        print_status "$YELLOW" "Enabled: $(systemctl --no-pager $([[ "$SCOPE" == "user" ]] && echo "--user") is-enabled "$unit" 2>/dev/null || echo "disabled")"
+    fi
+    
+    echo
+    $systemctl_cmd --no-pager status "$unit" || true
+}
+
+# Function to print colored output
+print_status() {
+    local color=$1
+    local message=$2
+    echo -e "${color}${message}${NC}"
+}
+
+# Function to list all units (system + user) with colors
+list_all_units() {
+    local pattern=${1:-}
+    local filter_cmd=""
+    
+    if [[ -n "$pattern" ]]; then
+        filter_cmd="grep -i $pattern"
+        print_status "$BLUE" "=== All units matching pattern: $pattern ==="
+    else
+        filter_cmd="cat"
+        print_status "$BLUE" "=== All system and user units ==="
+    fi
+    
+    show_legend
+    
+    # Header
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "UNIT" "SCOPE" "LOAD" "ACTIVE" "SUB" "DESCRIPTION"
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "----" "-----" "----" "------" "---" "-----------"
+    
+    # Temporary files for processing
+    local temp_system="/tmp/systemd_system_$.txt"
+    local temp_user="/tmp/systemd_user_$.txt"
+    local temp_combined="/tmp/systemd_combined_$.txt"
+    
+    # Get system units
+    systemctl list-units --all --no-pager --no-legend --plain 2>/dev/null | \
+        while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+                echo "SYSTEM|$line"
+            fi
+        done > "$temp_system"
+    
+    # Get user units (if available)
+    if systemctl --user list-units --all --no-pager --no-legend --plain 2>/dev/null; then
+        systemctl --user list-units --all --no-pager --no-legend --plain 2>/dev/null | \
+            while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                    echo "USER|$line"
+                fi
+            done > "$temp_user"
+    else
+        touch "$temp_user"
+    fi
+    
+    # Combine and sort
+    cat "$temp_system" "$temp_user" > "$temp_combined"
+    
+    # Process combined output
+    while IFS='|' read -r scope rest; do
+        if [[ -n "$rest" ]]; then
+            # Parse the systemctl output
+            read -r unit load active sub description <<< "$rest"
+            
+            # Apply pattern filter if specified
+            if [[ -n "$pattern" ]]; then
+                if ! echo "$unit $description" | grep -qi "$pattern"; then
+                    continue
+                fi
+            fi
+            
+            format_unit_line "$unit" "$load" "$active" "$sub" "$description" "$scope"
+        fi
+    done < "$temp_combined" | sort -k1,1
+    
+    # Cleanup
+    rm -f "$temp_system" "$temp_user" "$temp_combined"
+    
+    echo
+    print_status "$GRAY" "Use 'list-running' or 'list-stopped' to filter by status"
+}
+
+# Function to list only running units
+list_running_units() {
+    local pattern=${1:-}
+    
+    print_status "$BLUE" "=== Running units ==="
+    show_legend
+    
+    # Header
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "UNIT" "SCOPE" "LOAD" "ACTIVE" "SUB" "DESCRIPTION"
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "----" "-----" "----" "------" "---" "-----------"
+    
+    # System running units
+    systemctl list-units --state=active --no-pager --no-legend --plain 2>/dev/null | \
+        while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+                read -r unit load active sub description <<< "$line"
+                if [[ -z "$pattern" ]] || echo "$unit $description" | grep -qi "$pattern"; then
+                    format_unit_line "$unit" "$load" "$active" "$sub" "$description" "SYSTEM"
+                fi
+            fi
+        done
+    
+    # User running units
+    if systemctl --user list-units --state=active --no-pager --no-legend --plain 2>/dev/null; then
+        systemctl --user list-units --state=active --no-pager --no-legend --plain 2>/dev/null | \
+            while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                    read -r unit load active sub description <<< "$line"
+                    if [[ -z "$pattern" ]] || echo "$unit $description" | grep -qi "$pattern"; then
+                        format_unit_line "$unit" "$load" "$active" "$sub" "$description" "USER"
+                    fi
+                fi
+            done
+    fi
+}
+
+# Function to list only stopped/inactive units
+list_stopped_units() {
+    local pattern=${1:-}
+    
+    print_status "$BLUE" "=== Stopped/Inactive units ==="
+    show_legend
+    
+    # Header
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "UNIT" "SCOPE" "LOAD" "ACTIVE" "SUB" "DESCRIPTION"
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "----" "-----" "----" "------" "---" "-----------"
+    
+    # System inactive units
+    systemctl list-units --state=inactive --no-pager --no-legend --plain 2>/dev/null | \
+        while IFS= read -r line; do
+            if [[ -n "$line" ]]; then
+                read -r unit load active sub description <<< "$line"
+                if [[ -z "$pattern" ]] || echo "$unit $description" | grep -qi "$pattern"; then
+                    format_unit_line "$unit" "$load" "$active" "$sub" "$description" "SYSTEM"
+                fi
+            fi
+        done
+    
+    # User inactive units  
+    if systemctl --user list-units --state=inactive --no-pager --no-legend --plain 2>/dev/null; then
+        systemctl --user list-units --state=inactive --no-pager --no-legend --plain 2>/dev/null | \
+            while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                    read -r unit load active sub description <<< "$line"
+                    if [[ -z "$pattern" ]] || echo "$unit $description" | grep -qi "$pattern"; then
+                        format_unit_line "$unit" "$load" "$active" "$sub" "$description" "USER"
+                    fi
+                fi
+            done
+    fi
+}
+
+# Function to list units (original behavior for backward compatibility)
+list_units() {
+    local pattern=${1:-}
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    if [[ -n "$pattern" ]]; then
+        print_status "$BLUE" "=== Units matching pattern: $pattern ==="
+        $systemctl_cmd --no-pager list-units --all "*$pattern*"
+    else
+        print_status "$BLUE" "=== All units ==="
+        $systemctl_cmd --no-pager list-units --all
+    fi
+}
+
+# Function to list failed units with colors
+list_failed() {
+    print_status "$BLUE" "=== Failed units (System + User) ==="
+    show_legend
+    
+    local found_failed=false
+    
+    # Header
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "UNIT" "SCOPE" "LOAD" "ACTIVE" "SUB" "DESCRIPTION"
+    printf "%-30s %-8s %-10s %-10s %-15s %s\n" "----" "-----" "----" "------" "---" "-----------"
+    
+    # System failed units
+    if systemctl list-units --failed --no-pager --no-legend --plain 2>/dev/null | grep -q .; then
+        found_failed=true
+        systemctl list-units --failed --no-pager --no-legend --plain 2>/dev/null | \
+            while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                    read -r unit load active sub description <<< "$line"
+                    format_unit_line "$unit" "$load" "$active" "$sub" "$description" "SYSTEM"
+                fi
+            done
+    fi
+    
+    # User failed units
+    if systemctl --user list-units --failed --no-pager --no-legend --plain 2>/dev/null | grep -q .; then
+        found_failed=true
+        systemctl --user list-units --failed --no-pager --no-legend --plain 2>/dev/null | \
+            while IFS= read -r line; do
+                if [[ -n "$line" ]]; then
+                    read -r unit load active sub description <<< "$line"
+                    format_unit_line "$unit" "$load" "$active" "$sub" "$description" "USER"
+                fi
+            done
+    fi
+    
+    if [[ "$found_failed" == false ]]; then
+        echo
+        print_status "$GREEN" "No failed units found"
+    fi
+}
+
+# Function to show logs
+show_logs() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Logs for $unit ==="
+    if [[ "$SCOPE" == "user" ]]; then
+        journalctl --user --no-pager -u "$unit"
+    else
+        journalctl --no-pager -u "$unit"
+    fi
+}
+
+# Function to show error logs
+show_errors() {
+    local unit=$1
+    
+    print_status "$BLUE" "=== Error logs for $unit ==="
+    if [[ "$SCOPE" == "user" ]]; then
+        journalctl --user --no-pager -u "$unit" -p err
+    else
+        journalctl --no-pager -u "$unit" -p err
+    fi
+}
+
+# Function to follow logs
+follow_logs() {
+    local unit=$1
+    
+    print_status "$BLUE" "=== Following logs for $unit (Ctrl+C to stop) ==="
+    if [[ "$SCOPE" == "user" ]]; then
+        journalctl --user -u "$unit" -f
+    else
+        journalctl -u "$unit" -f
+    fi
+}
+
+# Function to show dependencies
+show_deps() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Dependencies for $unit ==="
+    $systemctl_cmd list-dependencies "$unit"
+}
+
+# Function to show reverse dependencies
+show_rdeps() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Reverse dependencies for $unit ==="
+    $systemctl_cmd list-dependencies --reverse "$unit"
+}
+
+# Function to execute simple systemctl commands
+execute_systemctl() {
+    local action=$1
+    local unit=$2
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== ${action^}ing $unit ==="
+    if $systemctl_cmd "$action" "$unit"; then
+        print_status "$GREEN" "Successfully ${action}ed $unit"
+    else
+        print_status "$RED" "Failed to $action $unit"
+        return 1
+    fi
+}
+
+# Function to edit unit file
+edit_unit() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Editing $unit ==="
+    $systemctl_cmd edit "$unit"
+}
+
+# Function to display unit file contents
+cat_unit() {
+    local unit=$1
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Contents of $unit ==="
+    $systemctl_cmd cat "$unit"
+}
+
+# Function to reload daemon
+reload_daemon() {
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    print_status "$BLUE" "=== Reloading systemd daemon ==="
+    if $systemctl_cmd daemon-reload; then
+        print_status "$GREEN" "Successfully reloaded systemd daemon"
+    else
+        print_status "$RED" "Failed to reload systemd daemon"
+        return 1
+    fi
+}
+
+# Function to reset failed units
+reset_failed() {
+    local unit=${1:-}
+    local systemctl_cmd=$(build_systemctl_cmd)
+    
+    if [[ -n "$unit" ]]; then
+        print_status "$BLUE" "=== Resetting failed state for $unit ==="
+        if $systemctl_cmd reset-failed "$unit"; then
+            print_status "$GREEN" "Successfully reset failed state for $unit"
+        else
+            print_status "$RED" "Failed to reset failed state for $unit"
+            return 1
+        fi
+    else
+        print_status "$BLUE" "=== Resetting all failed units ==="
+        if $systemctl_cmd reset-failed; then
+            print_status "$GREEN" "Successfully reset all failed units"
+        else
+            print_status "$RED" "Failed to reset failed units"
+            return 1
+        fi
+    fi
+}
+
+# Main function
+main() {
+    # Parse options
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -u|--user)
+                SCOPE="user"
+                shift
+                ;;
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            -*)
+                print_status "$RED" "Unknown option: $1"
+                usage
+                exit 1
+                ;;
+            *)
+                break
+                ;;
+        esac
+    done
+    
+    # Check if command is provided
+    if [[ $# -eq 0 ]]; then
+        print_status "$RED" "No command specified"
+        usage
+        exit 1
+    fi
+    
+    local command=$1
+    shift
+    
+    # Check privileges
+    check_privileges
+    
+    # Execute command
+    case $command in
+        status)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for status command"
+                exit 1
+            fi
+            show_status "$1"
+            ;;
+        start|stop|restart|reload|enable|disable|mask|unmask)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for $command command"
+                exit 1
+            fi
+            execute_systemctl "$command" "$1"
+            ;;
+        list)
+            list_units "${1:-}"
+            ;;
+        list-all)
+            list_all_units "${1:-}"
+            ;;
+        list-running)
+            list_running_units "${1:-}"
+            ;;
+        list-stopped)
+            list_stopped_units "${1:-}"
+            ;;
+        list-failed)
+            list_failed
+            ;;
+        logs)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for logs command"
+                exit 1
+            fi
+            show_logs "$1"
+            ;;
+        errors)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for errors command"
+                exit 1
+            fi
+            show_errors "$1"
+            ;;
+        follow)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for follow command"
+                exit 1
+            fi
+            follow_logs "$1"
+            ;;
+        edit)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for edit command"
+                exit 1
+            fi
+            edit_unit "$1"
+            ;;
+        cat)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for cat command"
+                exit 1
+            fi
+            cat_unit "$1"
+            ;;
+        deps)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for deps command"
+                exit 1
+            fi
+            show_deps "$1"
+            ;;
+        rdeps)
+            if [[ $# -eq 0 ]]; then
+                print_status "$RED" "Unit name required for rdeps command"
+                exit 1
+            fi
+            show_rdeps "$1"
+            ;;
+        reload-daemon)
+            reload_daemon
+            ;;
+        reset-failed)
+            reset_failed "${1:-}"
+            ;;
+        *)
+            print_status "$RED" "Unknown command: $command"
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+# Run main function with all arguments
+main "$@"
