@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+#
+# Robust battery saving script to stop nextcloud, offlineimap and disable bluetooth
+
+set -euo pipefail  # Exit on error, undefined vars, pipe failures
+
+# Colors for output
+readonly RED='\033[0;31m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly NC='\033[0m' # No Color
+
+# Logging function
+log() {
+    echo -e "${2:-$GREEN}[$(date '+%H:%M:%S')] $1${NC}"
+}
+
+log_error() {
+    log "$1" "$RED" >&2
+}
+
+log_warn() {
+    log "$1" "$YELLOW"
+}
+
+# Check if service is running
+is_service_running() {
+    local service="$1"
+    local user_service="${2:-false}"
+    
+    if [[ "$user_service" == "true" ]]; then
+        systemctl --user is-active "$service" &>/dev/null
+    else
+        systemctl is-active "$service" &>/dev/null
+    fi
+}
+
+# Check if process is running
+is_process_running() {
+    pgrep -x "$1" &>/dev/null
+}
+
+stop_offlineimap() {
+    log "Stopping offlineimap..."
+    
+    if is_service_running "offlineimap" "true"; then
+        if systemctl --user stop offlineimap 2>/dev/null; then
+            log "✓ Stopped offlineimap service"
+        else
+            log_error "✗ Failed to stop offlineimap service"
+            return 1
+        fi
+    else
+        log_warn "⚠ offlineimap service not running"
+    fi
+    
+    # Wait a moment then stop the timer
+    sleep 5
+    
+    if is_service_running "offlineimap.timer" "true"; then
+        if systemctl --user stop offlineimap.timer 2>/dev/null; then
+            log "✓ Stopped offlineimap timer"
+        else
+            log_error "✗ Failed to stop offlineimap timer"
+            return 1
+        fi
+    else
+        log_warn "⚠ offlineimap timer not running"
+    fi
+}
+
+stop_bluetooth() {
+    log "Stopping bluetooth..."
+    
+    if is_service_running "bluetooth"; then
+        if sudo systemctl stop bluetooth 2>/dev/null; then
+            log "✓ Stopped bluetooth service"
+        else
+            log_error "✗ Failed to stop bluetooth service"
+            return 1
+        fi
+    else
+        log_warn "⚠ Bluetooth service not running"
+    fi
+}
+
+stop_nextcloud() {
+    log "Stopping nextcloud..."
+    
+    if is_process_running "nextcloud"; then
+        if nextcloud -q 2>/dev/null; then
+            log "✓ Stopped nextcloud"
+            # Wait a moment to ensure it's fully stopped
+            sleep 3
+            if ! is_process_running "nextcloud"; then
+                log "✓ Confirmed nextcloud stopped"
+            else
+                log_warn "⚠ Nextcloud may still be running"
+            fi
+        else
+            log_error "✗ Failed to stop nextcloud gracefully"
+            return 1
+        fi
+    else
+        log_warn "⚠ Nextcloud not running"
+    fi
+}
+
+# Function to handle script interruption
+cleanup() {
+    log_warn "Script interrupted, cleaning up..."
+    exit 130
+}
+
+# Trap interrupt signals
+trap cleanup INT TERM
+
+main() {
+    log "Starting battery save mode..."
+    local failed_services=()
+    
+    # Run services stops and collect any failures
+    if ! stop_offlineimap; then
+        failed_services+=("offlineimap")
+    fi
+    
+    if ! stop_bluetooth; then
+        failed_services+=("bluetooth")
+    fi
+    
+    if ! stop_nextcloud; then
+        failed_services+=("nextcloud")
+    fi
+    
+    # Report results
+    if [[ ${#failed_services[@]} -eq 0 ]]; then
+        log "✓ Battery save mode activated successfully!"
+        log "Services stopped: offlineimap, bluetooth, nextcloud"
+    else
+        log_error "⚠ Some services failed to stop: ${failed_services[*]}"
+        exit 1
+    fi
+}
+
+# Check if script is run with required permissions
+if ! sudo -n true 2>/dev/null; then
+    log_error "This script requires sudo access for bluetooth control"
+    log "Please run: sudo -v"
+    exit 1
+fi
+
+main "$@"

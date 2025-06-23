@@ -4,8 +4,10 @@ A complete keyboard-driven desktop setup for Arch Linux featuring Sway composito
 
 ## Screenshots
 
-![Desktop Screenshot](screenshot.png)
-![Desktop Screenshot with Vim](screenshot2.png)
+![Desktop](screenshot.png)
+![Vim](screenshot2.png)
+![Vs Code](screenshot.png)
+![Firefox](screenshot2.png)
 
 ## Components
 
