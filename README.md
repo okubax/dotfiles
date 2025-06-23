@@ -4,10 +4,8 @@ A complete keyboard-driven desktop setup for Arch Linux featuring Sway composito
 
 ## Screenshots
 
-![Desktop](screenshot.png)
-![Vim](screenshot2.png)
-![Vs Code](screenshot3.png)
-![Firefox](screenshot4.png)
+![Desktop Screenshot](screenshot.png)
+![Desktop Screenshot with Vim](screenshot2.png)
 
 ## Components
 
@@ -24,6 +22,12 @@ A complete keyboard-driven desktop setup for Arch Linux featuring Sway composito
 - **Music**: MPD + ncmpcpp
 - **File Manager**: ranger
 - **Text Editor**: vim with plugins
+
+**Theming**
+- **Wallpaper**: Generated using `bin/catppuccin_wallpaper.py` script
+- **GTK**: Catppuccin theme via [catppuccin/gtk](https://github.com/catppuccin/gtk)
+- **Qt**: Configured using qt5ct and qt6ct
+- **Theme Tools**: nwg-look for GTK3/4 theme management
 
 ## Installation
 
@@ -54,6 +58,7 @@ sudo pacman -S ttf-fira-code noto-fonts noto-fonts-emoji ttf-ubuntu-font-family
 ### Optional
 ```bash
 sudo pacman -S mpd ncmpcpp mpc pipewire pipewire-pulse mutt offlineimap msmtp neofetch
+sudo pacman -S qt5ct qt6ct nwg-look  # Theme management tools
 yay -S multitail swayshot
 ```
 
