@@ -1,7 +1,6 @@
 #!/bin/bash
-# Public Dotfiles Management Script
+# Portable Dotfiles Management Script
 # Creates symlinks from dotfiles repository to home directory
-# Designed for community sharing - handles missing files gracefully
 
 # Auto-detect dotfiles directory (where this script is located)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -22,7 +21,6 @@ VERBOSE=false
 NO_BACKUP=false
 
 # File mappings: source -> destination
-# Note: Some files may not exist in the public repo - this is normal
 declare -A FILES=(
     # Shell and aliases
     ["aliases/aliases"]="$HOME/.aliases"
@@ -34,28 +32,41 @@ declare -A FILES=(
     # Binaries and scripts
     ["bin"]="$HOME/bin"
     
-    # Application configs (basic)
+    # Application configs
+    ["electrum"]="$HOME/.electrum"
+    ["emailproxy.config"]="$HOME/.emailproxy.config"
     ["fontconfig"]="$HOME/.config/fontconfig"
     ["gitconfig"]="$HOME/.gitconfig"
+    ["gnupg"]="$HOME/.gnupg"
     ["ii"]="$HOME/.config/ii"
     ["img"]="$HOME/.img"
     ["kitty"]="$HOME/.config/kitty"
+    ["mpd"]="$HOME/.mpd"
     ["mplayer"]="$HOME/.mplayer"
     ["multitailrc"]="$HOME/.multitailrc"
     ["mutt"]="$HOME/.mutt"
     ["ncmpcpp"]="$HOME/.ncmpcpp"
-    ["neofetch"]="$HOME/.config/neofetch"
     ["offlineimap.py"]="$HOME/.offlineimap.py"
     ["offlineimaprc"]="$HOME/.offlineimaprc"
+    ["pass"]="$HOME/.password-store"
     ["ranger"]="$HOME/.config/ranger"
+    ["ssh"]="$HOME/.ssh"
     ["startpage"]="$HOME/.startpage"
     ["todo"]="$HOME/.todo"
     ["urlview"]="$HOME/.urlview"
     ["vim"]="$HOME/.vim"
     ["vimrc"]="$HOME/.vimrc"
+    ["yams"]="$HOME/.config/yams"
     
-    # MSMTP config (basic template)
+    # MSMTP configs
     ["msmtprc"]="$HOME/.msmtprc"
+    ["msmtp-gmail.gpg"]="$HOME/.msmtp-gmail.gpg"
+    ["msmtp-gmail2.gpg"]="$HOME/.msmtp-gmail2.gpg"
+    ["msmtp-gmail3.gpg"]="$HOME/.msmtp-gmail3.gpg"
+    ["msmtp-okubax.gpg"]="$HOME/.msmtp-okubax.gpg"
+    ["msmtp-outlook.gpg"]="$HOME/.msmtp-outlook.gpg"
+    ["msmtp-yahoo.gpg"]="$HOME/.msmtp-yahoo.gpg"
+    ["msmtp-yahoo2.gpg"]="$HOME/.msmtp-yahoo2.gpg"
     
     # SwayWM configs
     ["swaywm/mako"]="$HOME/.config/mako"
@@ -115,8 +126,8 @@ usage() {
 Usage: $0 [COMMAND] [OPTIONS]
 
 COMMANDS:
-    install     Install/link all available dotfiles (default)
-    uninstall   Remove all symlinks created by this script
+    install     Install/link all dotfiles (default)
+    uninstall   Remove all symlinks
     status      Show status of all dotfiles
     backup      Create backup of existing configs
     restore     Restore from most recent backup
@@ -131,22 +142,19 @@ OPTIONS:
     -h, --help          Show help
 
 EXAMPLES:
-    $0                                # Install available dotfiles
+    $0                                # Install from script directory
     $0 install -d                     # Preview installation
     $0 backup                         # Create backup manually
+    $0 -p ~/my-dotfiles install       # Use specific dotfiles directory
     $0 status                         # Check current status
     $0 uninstall -f                   # Force remove all symlinks
 
-NOTES:
-    - This is a public dotfiles repository
-    - Some files may not be included for privacy/system-specific reasons
-    - Missing files will show warnings but won't cause installation to fail
-    - Private configs (GPG keys, credentials) are not included
+ENVIRONMENT VARIABLES:
+    DOTFILES_DIR    Override default dotfiles directory
 
 SETUP ON NEW SYSTEM:
-    1. Clone repository: git clone https://github.com/okubax/dotfiles.git ~/dotfiles
-    2. Install dependencies (see README.md)
-    3. Run installer: ~/dotfiles/dotfiles.sh install
+    1. Clone your dotfiles: git clone <repo> ~/dotfiles
+    2. Run installer: ~/dotfiles/dotfiles.sh install
 
 EOF
 }
@@ -167,18 +175,12 @@ create_backup() {
     local backup_count=0
     local backup_list=()
     
-    # Check what needs backing up (only check files that exist in repo)
+    # Check what needs backing up
     for source_rel in "${!FILES[@]}"; do
         local dest="${FILES[$source_rel]}"
-        local source="$DOTFILES_DIR/$source_rel"
-        
-        # Skip if source doesn't exist in this public repo
-        if [[ ! -e "$source" ]]; then
-            continue
-        fi
         
         # Only backup if file/directory exists and is not already a symlink to our dotfiles
-        if [[ -e "$dest" ]] && [[ ! -L "$dest" || "$(readlink "$dest" 2>/dev/null)" != "$source" ]]; then
+        if [[ -e "$dest" ]] && [[ ! -L "$dest" || "$(readlink "$dest" 2>/dev/null)" != "$DOTFILES_DIR/$source_rel" ]]; then
             backup_list+=("$dest")
         fi
     done
@@ -222,10 +224,9 @@ create_backup() {
     if [[ "$DRY_RUN" == false ]]; then
         # Save backup location for easy restoration
         echo "$BACKUP_DIR" > "$HOME/.dotfiles_last_backup"
-        echo "# Public dotfiles backup created on $(date)" >> "$BACKUP_DIR/backup_info.txt"
+        echo "# Backup created on $(date)" >> "$BACKUP_DIR/backup_info.txt"
         echo "# Original dotfiles directory: $DOTFILES_DIR" >> "$BACKUP_DIR/backup_info.txt"
         echo "# Files backed up: $backup_count" >> "$BACKUP_DIR/backup_info.txt"
-        echo "# Repository: https://github.com/okubax/dotfiles" >> "$BACKUP_DIR/backup_info.txt"
         
         success "Backed up $backup_count files to $BACKUP_DIR"
         info "Backup location saved to ~/.dotfiles_last_backup"
@@ -309,11 +310,8 @@ restore_backup() {
     
     if [[ "$DRY_RUN" == false ]]; then
         success "Restored $restore_count files from backup"
-        warning "Note: You may need to reconfigure private settings (credentials, keys, etc.)"
     fi
 }
-
-# Create necessary directories
 create_directories() {
     local dest_path="$1"
     local dest_dir
@@ -332,8 +330,9 @@ should_link() {
     local source="$1"
     local dest="$2"
     
-    # Source must exist (but we handle this gracefully)
+    # Source must exist
     if [[ ! -e "$source" ]]; then
+        verbose "Source doesn't exist: $source"
         return 1
     fi
     
@@ -422,13 +421,6 @@ link_file() {
     
     verbose "Processing: $source_rel"
     
-    # Check if source exists - warn but don't fail
-    if [[ ! -e "$source" ]]; then
-        warning "Source not found (skipping): $source_rel"
-        verbose "  This file may be system-specific or private"
-        return 1
-    fi
-    
     if ! should_link "$source" "$dest"; then
         return 1
     fi
@@ -454,14 +446,12 @@ link_file() {
 # Install all dotfiles
 install() {
     info "Installing dotfiles from $DOTFILES_DIR"
-    info "This is a public dotfiles repository - some files may not be included"
-    echo ""
     
     if [[ "$DRY_RUN" == true ]]; then
         warning "DRY RUN MODE - No changes will be made"
     fi
     
-    # Create backup first (unless disabled or dry run)
+    # Create backup first (unless disabled)
     if [[ "$DRY_RUN" == false ]]; then
         create_backup
         echo ""
@@ -469,18 +459,10 @@ install() {
     
     local success_count=0
     local skip_count=0
-    local missing_count=0
     
     # Process each file
     for source_rel in "${!FILES[@]}"; do
         local dest="${FILES[$source_rel]}"
-        local source="$DOTFILES_DIR/$source_rel"
-        
-        if [[ ! -e "$source" ]]; then
-            ((missing_count++))
-            verbose "Missing: $source_rel (this is normal for public repos)"
-            continue
-        fi
         
         if link_file "$source_rel" "$dest"; then
             ((success_count++))
@@ -493,17 +475,6 @@ install() {
     success "Installation complete!"
     info "Successfully linked: $success_count"
     info "Skipped: $skip_count"
-    
-    if [[ $missing_count -gt 0 ]]; then
-        warning "Missing files: $missing_count (normal for public repo)"
-        verbose "Missing files are typically private configs, credentials, or system-specific"
-    fi
-    
-    echo ""
-    info "Next steps:"
-    info "1. Install required packages (see README.md)"
-    info "2. Configure private settings (email, GPG, etc.)"
-    info "3. Restart your shell or log out/in to apply changes"
 }
 
 # Uninstall all dotfiles
@@ -549,54 +520,32 @@ status() {
     info "Dotfiles status (from: $DOTFILES_DIR):"
     echo ""
     
-    printf "%-50s %-15s %s\n" "FILE" "STATUS" "TARGET/NOTE"
-    printf "%-50s %-15s %s\n" "----" "------" "----------"
-    
-    local available=0
-    local linked=0
-    local missing=0
+    printf "%-50s %-15s %s\n" "FILE" "STATUS" "TARGET"
+    printf "%-50s %-15s %s\n" "----" "------" "------"
     
     for source_rel in "${!FILES[@]}"; do
         local dest="${FILES[$source_rel]}"
         local source="$DOTFILES_DIR/$source_rel"
         local status_text="MISSING"
-        local note=""
-        
-        if [[ ! -e "$source" ]]; then
-            status_text="NOT_IN_REPO"
-            note="(private/system-specific)"
-            printf "%-50s ${YELLOW}%-15s${NC} %s\n" "$dest" "$status_text" "$note"
-            ((missing++))
-            continue
-        fi
-        
-        ((available++))
+        local target=""
         
         if [[ -L "$dest" ]]; then
-            local target
             target=$(readlink "$dest")
             if [[ "$target" == "$source" ]]; then
                 status_text="LINKED"
                 printf "%-50s ${GREEN}%-15s${NC} %s\n" "$dest" "$status_text" "$target"
-                ((linked++))
             else
                 status_text="WRONG_LINK"
                 printf "%-50s ${YELLOW}%-15s${NC} %s\n" "$dest" "$status_text" "$target"
             fi
         elif [[ -e "$dest" ]]; then
             status_text="EXISTS"
-            printf "%-50s ${RED}%-15s${NC} %s\n" "$dest" "$status_text" "(file exists, not symlinked)"
+            printf "%-50s ${RED}%-15s${NC} %s\n" "$dest" "$status_text" ""
         else
-            status_text="AVAILABLE"
-            printf "%-50s ${BLUE}%-15s${NC} %s\n" "$dest" "$status_text" "(ready to link)"
+            status_text="MISSING"
+            printf "%-50s ${BLUE}%-15s${NC} %s\n" "$dest" "$status_text" ""
         fi
     done
-    
-    echo ""
-    info "Summary:"
-    info "  Available in repo: $available"
-    info "  Currently linked: $linked"
-    info "  Not in public repo: $missing"
 }
 
 # Parse command line arguments
@@ -628,44 +577,6 @@ parse_args() {
             -b|--no-backup)
                 NO_BACKUP=true
                 shift
-                ;;
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            *)
-                error "Unknown option: $1"
-                usage
-                exit 1
-                ;;
-        esac
-    done
-    
-    echo "$command"
-}() {
-    local command="install"
-    
-    while [[ $# -gt 0 ]]; do
-        case $1 in
-            install|uninstall|status|help)
-                command="$1"
-                shift
-                ;;
-            -d|--dry-run)
-                DRY_RUN=true
-                shift
-                ;;
-            -v|--verbose)
-                VERBOSE=true
-                shift
-                ;;
-            -f|--force)
-                FORCE=true
-                shift
-                ;;
-            -p|--path)
-                DOTFILES_DIR="$2"
-                shift 2
                 ;;
             -h|--help)
                 usage
