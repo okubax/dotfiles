@@ -205,21 +205,12 @@ alias cmdnote="ns command"               # Find command notes
 # ============================================================================
 
 # System Information Script Aliases
-alias sysinfo='~/bin/fixed_sysinfo_script.sh'
-alias sysinfo-html='~/bin/fixed_sysinfo_script.sh --html'
-alias sysinfo-json='~/bin/fixed_sysinfo_script.sh --json'
-alias sysinfo-brief='~/bin/fixed_sysinfo_script.sh --brief'
-alias sysinfo-health='~/bin/fixed_sysinfo_script.sh --health'
-alias sysinfo-benchmark='~/bin/fixed_sysinfo_script.sh --benchmark'
-alias sysinfo-save='~/bin/fixed_sysinfo_script.sh --save'
-alias sysinfo-compare='~/bin/fixed_sysinfo_script.sh --compare'
-alias sysinfo-verbose='~/bin/fixed_sysinfo_script.sh --verbose'
+alias sysinfo=sysinfo.py                        # Full system report
+alias sysinfo-brief=sysinfo.py --brief          # Brief system report
+alias sysinfo-verbose=sysinfo.py --verbose      # Verbose output with extra details
+alias sysinfo-json=sysinfo.py --json            # JSON output format
+alias sysinfo-brief=sysinfo.py --brief --json   # Brief JSON report
 
-# Quick system overview
-alias sysstatus='~/bin/fixed_sysinfo_script.sh --health && echo && ~/bin/fixed_sysinfo_script.sh --brief'
-
-# Generate HTML report and open in browser  
-alias sysreport='~/bin/fixed_sysinfo_script.sh --html --save && firefox ~/.config/sysinfo/sysinfo_$(hostname)_*.html 2>/dev/null || echo "Report saved to ~/.config/sysinfo/"'
 
 # ============================================================================
 # Disk Usage Analyzer Aliases
