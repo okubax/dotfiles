@@ -1,13 +1,26 @@
-# laptop
-font pango:Ubuntu 10
+# =============================================================================
+# SWAY CONFIGURATION
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# APPEARANCE & THEMING
+# -----------------------------------------------------------------------------
+
+# Font and borders
+font pango:Ubuntu 9
 default_border pixel 3
 default_floating_border pixel 3
 gaps inner 9
 
+# Color scheme (Catppuccin-inspired)
 # class          border  backgr. text    flag    child_border
 client.focused   #ABE9B3 #ABE9B3 #1e1e2e #ABE9B3 #ABE9B3
 client.unfocused #988BA2 #988BA2 #1e1e2e #988BA2 #988BA2
-client.urgent    #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD 
+client.urgent    #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD
+
+# -----------------------------------------------------------------------------
+# VARIABLES
+# -----------------------------------------------------------------------------
 
 set $mod Mod4
 set $left h
@@ -15,105 +28,79 @@ set $down j
 set $up k
 set $right l
 
-output * bg ~/.img/wallpapers/catppuccin_macchiato.png fill
-output eDP-1 scale 2.2
-output HDMI-A-1 scale 1.4
+# -----------------------------------------------------------------------------
+# OUTPUT CONFIGURATION
+# -----------------------------------------------------------------------------
 
-exec mpd
-exec yams
-exec nextcloud --background
-exec /usr/bin/mako
-exec emailproxy --no-gui --config-file ~/.emailproxy.config 
-exec_always import-gsettings
-#exec /usr/bin/gentoo-pipewire-launcher
-#The following instructs swayidle to lock the screen after 15 minutes and turn it off five seconds after: 
-#exec swayidle -w \
-#	timeout 300 'swaylock -f' \
-#	timeout 600 'swaymsg "output * dpms off"' \
-#	resume 'swaymsg "output * dpms on"'
-#The following instructs swayidle to lock the screen after 15 minutes and turn it off five seconds after: 
-exec swayidle -w \
-	timeout 900 'swaylock -f' \
-	timeout 905 'swaymsg "output * power off"' \
-	resume 'swaymsg "output * power on"'
+output * bg ~/.img/wallpapers/catppuccin_wallpaper_1.png fill
+output eDP-1 scale 2.1
+output HDMI-A-1 scale 1.5
 
-exec playerctld daemon
+# -----------------------------------------------------------------------------
+# INPUT CONFIGURATION
+# -----------------------------------------------------------------------------
 
 input type:keyboard {
-  xkb_layout "gb,us"
-  xkb_options grp:alts_toggle
+    xkb_layout "gb,us"
+    xkb_options grp:alts_toggle
 }
+
 input type:touchpad {
     tap enabled
     natural_scroll enabled
 }
-# Toggle workspaces
-bindsym $mod+Tab workspace back_and_forth
-#screensharing
+
+# Drag floating windows: $mod + left mouse button
+floating_modifier $mod normal
+
+# -----------------------------------------------------------------------------
+# STARTUP APPLICATIONS
+# -----------------------------------------------------------------------------
+
+# System services
+exec mpd
+exec yams
+exec nextcloud --background
+exec /usr/bin/mako
+exec emailproxy --no-gui --config-file ~/.emailproxy.config
+exec playerctld daemon
+exec sway-audio-idle-inhibit
+exec_always import-gsettings
+
+# Screen sharing
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
-#clipman clipboard manager
+
+# Clipboard manager
 exec wl-paste -t text --watch clipman store
 exec wl-paste -p -t text --watch clipman store -P --histpath="~/.local/share/clipman-primary.json"
 
-### key bindings 
-# applications
+# Screen locker and idle management
+exec swayidle -w \
+    timeout 900 'swaylock -f' \
+    timeout 905 'swaymsg "output * power off"' \
+    resume 'swaymsg "output * power on"'
 
-### key bindings
-# applications
+# Commented startup applications
+#exec ~/.todo/todo-conky
+#exec /usr/bin/gentoo-pipewire-launcher
+
+# Alternative idle configurations (commented)
+#exec swayidle -w \
+#	timeout 300 'swaylock -f' \
+#	timeout 600 'swaymsg "output * dpms off"' \
+#	resume 'swaymsg "output * dpms on"'
+
+# -----------------------------------------------------------------------------
+# KEY BINDINGS - SYSTEM
+# -----------------------------------------------------------------------------
+
+# Window management
 bindsym $mod+q kill
-bindsym $mod+t exec kitty
-bindsym $mod+r exec wofi -H 260
-bindsym $mod+p exec swayshot
-bindsym $mod+Shift+p exec swayshot window
-bindsym mod1+p exec swayshot region
-#bindsym Mod4+Print       exec swayshot display upload
-#bindsym Mod4+Mod1+Print  exec swayshot window  upload
-#bindsym Mod4+Shift+Print exec swayshot region  upload
-
-#bindsym $mod+p exec grim -g "$(slurp)" - | wl-copy
-#bindsym $mod+Shift+p exec grim -g "$(slurp)"
-bindsym mod1+h exec clipman pick -t wofi --tool-args="-H 260"
-bindsym $mod+Escape exec swaylock
-bindsym $mod+f exec $HOME/.firefox/firefox
-bindsym $mod+m exec $HOME/.thunderbird/thunderbird
-bindsym $mod+g exec google-chrome-stable
-bindsym mod1+w exec $HOME/.firefox-developer/firefox
-bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
-bindsym mod1+shift+f exec thunar
-bindsym $mod+Shift+r exec kitty -e ranger
-#bindsym mod1+c exec code -enable-features=UseOzonePlatform -ozone-platform=wayland --password-store="gnome-libsecret"
-bindsym mod1+c exec code
-bindsym $mod+shift+t exec kitty -e htop
-bindsym mod1+e exec kitty -e mutt
-bindsym $mod+a exec gsimplecal
-bindsym mod1+n exec nextcloud
-bindsym $mod+c exec qalculate-gtk
-bindsym $mod+i exec "kitty -e multitail -CS ii -s 2 /home/ajibola/irc/lb/127.0.0.1/#archlinux/out /home/ajibola/irc/lb/127.0.0.1/#sway/out /home/ajibola/irc/lb/127.0.0.1/#bash/out /home/ajibola/irc/sn/127.0.0.1/#f1/out /home/ajibola/irc/of/127.0.0.1/#wayland/out"
-#bindsym $mod+i exec "kitty -e multitail -CS ii -s 0 -ts -f $HOME/irc/lb/127.0.0.1/#archlinux/out -ts -f $HOME/irc/lb/127.0.0.1/#bash/out -ts -f $HOME/irc/lb/127.0.0.1/#sway/out -ts -f $HOME/irc/of/127.0.0.1/#wayland/out -ts -f $HOME/irc/sn/127.0.0.1/#f1/out"
-# Enables inhibit_idle when playing audio
-exec sway-audio-idle-inhibit
-
-# audio
-bindsym XF86AudioPlay exec "mpc toggle"
-bindsym XF86AudioStop exec "mpc stop"
-bindsym XF86AudioNext exec "mpc next"
-bindsym XF86AudioPrev exec "mpc prev"
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle
-bindsym mod1+a exec mpc play
-bindsym mod1+s exec mpc pause
-bindsym mod1+x exec mpc next
-bindsym mod1+z exec mpc previous
-
-# backlight
-bindsym XF86MonBrightnessDown exec brightnessctl -q set 10%-
-bindsym XF86MonBrightnessUp   exec brightnessctl -q set +10%
-
-# reload configuration file
 bindsym $mod+Shift+c reload
-# exit wayland session
 bindsym $mod+Shift+e exec ~/.config/waybar/scripts/power_menu.sh
+bindsym $mod+Escape exec swaylock
+
+# Alternative power menu (commented)
 #bindsym $mod+Shift+e exec swaynag \
 #        -t warning \
 #        --font='JetBrains Mono 7' \
@@ -133,22 +120,126 @@ bindsym $mod+Shift+e exec ~/.config/waybar/scripts/power_menu.sh
 #        -b '  Sleep  ' 'systemctl suspend' \
 #        -b '  Logout  ' 'swaymsg exit'
 
-# change focused container 
-bindsym $mod+$left  focus left
-bindsym $mod+$down  focus down
-bindsym $mod+$up    focus up
+# -----------------------------------------------------------------------------
+# KEY BINDINGS - APPLICATIONS
+# -----------------------------------------------------------------------------
+
+# Terminal and launcher
+bindsym $mod+t exec kitty
+bindsym $mod+r exec wofi -H 260
+
+# Web browsers
+bindsym $mod+f exec $HOME/.firefox/firefox
+bindsym $mod+g exec google-chrome-stable
+bindsym mod1+w exec $HOME/.firefox-developer/firefox
+bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
+
+# File managers
+bindsym mod1+shift+f exec thunar
+bindsym $mod+Shift+r exec kitty -e ranger
+
+# Development and productivity
+bindsym mod1+c exec code
+#bindsym mod1+c exec code -enable-features=UseOzonePlatform -ozone-platform=wayland --password-store="gnome-libsecret"
+
+# System monitoring and utilities
+bindsym $mod+shift+t exec kitty -e htop
+bindsym mod1+e exec kitty -e mutt
+bindsym $mod+a exec gsimplecal
+bindsym mod1+n exec nextcloud
+bindsym $mod+c exec qalculate-gtk
+
+# Screenshot tools
+bindsym $mod+p exec swayshot
+bindsym $mod+Shift+p exec swayshot window
+bindsym mod1+p exec swayshot region
+
+# Alternative screenshot commands (commented)
+#bindsym Mod4+Print       exec swayshot display upload
+#bindsym Mod4+Mod1+Print  exec swayshot window  upload
+#bindsym Mod4+Shift+Print exec swayshot region  upload
+#bindsym $mod+p exec grim -g "$(slurp)" - | wl-copy
+#bindsym $mod+Shift+p exec grim -g "$(slurp)"
+
+# Clipboard management
+bindsym mod1+h exec clipman pick -t wofi --tool-args="-H 260"
+
+# IRC (ii) bindings
+bindsym $mod+i exec ~/bin/ii-sway chat
+bindsym $mod+Shift+i exec ~/bin/ii-sway quick-chat
+bindsym $mod+Ctrl+i exec ~/bin/ii-sway compose
+bindsym $mod+Alt+i exec ~/bin/ii-sway status
+
+# Individual IRC channel monitoring
+bindsym $mod+F1 exec ~/bin/ii-sway monitor arch
+bindsym $mod+F2 exec ~/bin/ii-sway monitor sway
+bindsym $mod+F3 exec ~/bin/ii-sway monitor f1
+
+# Alternative IRC multitail commands (commented)
+#bindsym $mod+i exec "kitty -e multitail -CS ii -s 2 /home/ajibola/irc/lb/127.0.0.1/#archlinux/out /home/ajibola/irc/lb/127.0.0.1/#sway/out /home/ajibola/irc/lb/127.0.0.1/#bash/out /home/ajibola/irc/sn/127.0.0.1/#f1/out /home/ajibola/irc/of/127.0.0.1/#wayland/out"
+#bindsym $mod+i exec "kitty -e multitail -CS ii -s 0 -ts -f $HOME/irc/lb/127.0.0.1/#archlinux/out -ts -f $HOME/irc/lb/127.0.0.1/#bash/out -ts -f $HOME/irc/lb/127.0.0.1/#sway/out -ts -f $HOME/irc/of/127.0.0.1/#wayland/out -ts -f $HOME/irc/sn/127.0.0.1/#f1/out"
+
+# -----------------------------------------------------------------------------
+# KEY BINDINGS - MEDIA CONTROLS
+# -----------------------------------------------------------------------------
+
+# Hardware media keys
+bindsym XF86AudioPlay exec "mpc toggle"
+bindsym XF86AudioStop exec "mpc stop"
+bindsym XF86AudioNext exec "mpc next"
+bindsym XF86AudioPrev exec "mpc prev"
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle
+
+# Alternative media controls
+bindsym mod1+a exec mpc play
+bindsym mod1+s exec mpc pause
+bindsym mod1+x exec mpc next
+bindsym mod1+z exec mpc previous
+
+# Brightness controls
+bindsym XF86MonBrightnessDown exec brightnessctl -q set 10%-
+bindsym XF86MonBrightnessUp exec brightnessctl -q set +10%
+
+# -----------------------------------------------------------------------------
+# KEY BINDINGS - WINDOW MANAGEMENT
+# -----------------------------------------------------------------------------
+
+# Focus movement
+bindsym $mod+$left focus left
+bindsym $mod+$down focus down
+bindsym $mod+$up focus up
 bindsym $mod+$right focus right
 
-# move focused window
-bindsym $mod+Shift+$left  move left
-bindsym $mod+Shift+$down  move down
-bindsym $mod+Shift+$up    move up
+# Window movement
+bindsym $mod+Shift+$left move left
+bindsym $mod+Shift+$down move down
+bindsym $mod+Shift+$up move up
 bindsym $mod+Shift+$right move right
 
-# drag floating windows: $mod + left mouse button
-floating_modifier $mod normal
+# Layout controls
+bindsym $mod+b splith
+bindsym $mod+v splitv
+bindsym $mod+s layout stacking
+bindsym $mod+w layout tabbed
+bindsym $mod+e layout toggle split
 
-# switch to workspace
+# Window states
+bindsym $mod+Shift+f fullscreen
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+# Scratchpad (minimize functionality)
+bindsym $mod+n move scratchpad
+bindsym $mod+Shift+n scratchpad show
+
+# -----------------------------------------------------------------------------
+# KEY BINDINGS - WORKSPACES
+# -----------------------------------------------------------------------------
+
+# Workspace switching
+bindsym $mod+Tab workspace back_and_forth
 bindsym $mod+1 workspace number 1
 bindsym $mod+2 workspace number 2
 bindsym $mod+3 workspace number 3
@@ -156,7 +247,7 @@ bindsym $mod+4 workspace number 4
 bindsym $mod+5 workspace number 5
 bindsym $mod+6 workspace number 6
 
-# move focused window to workspace
+# Move containers to workspaces
 bindsym $mod+Shift+1 move container to workspace number 1
 bindsym $mod+Shift+2 move container to workspace number 2
 bindsym $mod+Shift+3 move container to workspace number 3
@@ -164,44 +255,32 @@ bindsym $mod+Shift+4 move container to workspace number 4
 bindsym $mod+Shift+5 move container to workspace number 5
 bindsym $mod+Shift+6 move container to workspace number 6
 
-# change whether windows open horizontally or
-# vertically to currently open windows, respectively
-bindsym $mod+b splith
-bindsym $mod+v splitv
+# -----------------------------------------------------------------------------
+# WINDOW RULES
+# -----------------------------------------------------------------------------
 
-# switch focused container between different layouts
-bindsym $mod+s layout stacking
-bindsym $mod+w layout tabbed
-bindsym $mod+e layout toggle split
-
-# make focused window fullscreen
-bindsym $mod+Shift+f fullscreen
-
-# toggle focused window between floating and tiling
-bindsym $mod+Shift+space floating toggle
-
-# switch focus between tiling and floating windows
-bindsym $mod+space focus mode_toggle
-
-# scratchpad: bag for holding windows (like minimize)
-# move focused window to scratchpad
-bindsym $mod+n move scratchpad
-
-# cycle through windows in scratchpad
-bindsym $mod+Shift+n scratchpad show
-
-# Programs default workspaces
+# Application workspace assignments
 assign [app_id="firefox"] 1
 assign [app_id="libreoffice-writer"] 4
 assign [app_id="libreoffice-calc"] 4
 
-# floating windows
-for_window [app_id="imv"]               floating enable
-for_window [app_id="pwvucontrol"]       floating enable
-for_window [app_id="qalculate-gtk"]     floating enable
+# Floating window rules
+for_window [app_id="imv"] floating enable
+for_window [app_id="pwvucontrol"] floating enable
+for_window [app_id="qalculate-gtk"] floating enable
+for_window [window_type="dialog"] floating enable
+for_window [window_role="dialog"] floating enable
+
+# -----------------------------------------------------------------------------
+# STATUS BAR
+# -----------------------------------------------------------------------------
 
 bar {
-  swaybar_command waybar
+    swaybar_command waybar
 }
+
+# -----------------------------------------------------------------------------
+# INCLUDES
+# -----------------------------------------------------------------------------
 
 include /etc/sway/config.d/*
