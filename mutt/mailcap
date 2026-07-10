@@ -1,2 +1,0 @@
-text/html; w3m -I %{charset} -T text/html; copiousoutput;
-image/*; feh %s

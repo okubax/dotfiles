@@ -1,6 +1,9 @@
 # =============================================================================
 # MAIN .zshrc
 # =============================================================================
+# Thin loader: all real configuration lives in modular files under
+# ~/.config/zsh/ (history, options, completion, prompt, aliases, plugins).
+# Machine-local overrides go in ~/.zshrc.local (not tracked in the repo).
 
 # Set config directory
 ZSH_CONFIG_DIR="$HOME/.config/zsh"
@@ -11,7 +14,8 @@ load_config() {
     [[ -f "$config_file" ]] && source "$config_file"
 }
 
-# Load modular configuration files
+# Load modular configuration files (order matters: aliases.zsh overrides
+# earlier definitions, plugins.zsh must come last for syntax highlighting)
 load_config "history.zsh"
 load_config "options.zsh"
 load_config "completion.zsh"

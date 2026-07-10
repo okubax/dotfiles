@@ -2,6 +2,8 @@
 
 # ISO to USB Bootable Media Creator
 # Interactive script to write Linux ISOs to USB drives
+# (prompts for ISO and target device; needs root for dd).
+# WARNING: destroys all data on the chosen USB device.
 
 set -e  # Exit on any error
 
@@ -227,7 +229,7 @@ write_iso() {
             
             # Show periodic updates
             (
-                while kill -0 $ 2>/dev/null; do
+                while kill -0 $$ 2>/dev/null; do
                     sleep 10
                     if pgrep -f "dd.*$selected_drive" >/dev/null; then
                         print_info "Still writing... ($(date '+%H:%M:%S'))"

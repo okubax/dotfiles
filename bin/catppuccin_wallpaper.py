@@ -6,8 +6,32 @@ Generates beautiful tiled wallpapers using the Catppuccin color palette
 
 import random
 import math
+import sys
+import os
+from pathlib import Path
+from typing import Tuple, Dict, List, Optional
 from PIL import Image, ImageDraw
 import argparse
+
+try:
+    import numpy as np
+    NUMPY_AVAILABLE = True
+except ImportError:
+    NUMPY_AVAILABLE = False
+    print("Warning: NumPy not available. Gradient generation will be slower.", file=sys.stderr)
+    print("Install with: pip install numpy", file=sys.stderr)
+
+# Constants
+HEXAGON_TILE_SIZE = 80
+TRIANGLE_TILE_SIZE = 60
+DIAMOND_TILE_SIZE = 40
+CIRCLE_COUNT = 30
+CIRCLE_RADIUS_MIN = 50
+CIRCLE_RADIUS_MAX = 200
+PIXEL_NOISE_SIZE = 8
+PIXEL_NOISE_DENSITY = 0.3
+WAVE_COUNT = 5
+LARGE_IMAGE_THRESHOLD = 3840 * 2160  # 4K resolution
 
 # Catppuccin color palettes
 CATPPUCCIN_PALETTES = {
@@ -125,17 +149,33 @@ CATPPUCCIN_PALETTES = {
     }
 }
 
-def hex_to_rgb(hex_color):
-    """Convert hex color to RGB tuple"""
+def validate_dimensions(width: int, height: int) -> None:
+    """Validate image dimensions are positive and reasonable."""
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Width and height must be positive integers, got {width}x{height}")
+    if width > 16384 or height > 16384:
+        raise ValueError(f"Dimensions too large (max 16384x16384), got {width}x{height}")
+
+    if width * height > LARGE_IMAGE_THRESHOLD:
+        print(f"⚠ Warning: Large image ({width}x{height}) - generation may take a while", file=sys.stderr)
+
+def validate_darkness(darkness: float) -> None:
+    """Validate darkness factor is in valid range."""
+    if not 0.0 <= darkness <= 1.0:
+        raise ValueError(f"Darkness must be between 0.0 and 1.0, got {darkness}")
+
+def hex_to_rgb(hex_color: str) -> Tuple[int, int, int]:
+    """Convert hex color to RGB tuple."""
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-def darken_color(rgb_color, factor=0.7):
-    """Darken an RGB color by a given factor (0.0 = black, 1.0 = original)"""
+def darken_color(rgb_color: Tuple[int, int, int], factor: float = 0.7) -> Tuple[int, int, int]:
+    """Darken an RGB color by a given factor (0.0 = black, 1.0 = original)."""
     return tuple(int(c * factor) for c in rgb_color)
 
-def draw_hexagon(draw, x, y, size, color):
-    """Draw a hexagon at given position"""
+def draw_hexagon(draw: ImageDraw.ImageDraw, x: float, y: float, size: float,
+                 color: Tuple[int, int, int]) -> None:
+    """Draw a hexagon at given position."""
     points = []
     for i in range(6):
         angle = math.pi / 3 * i
@@ -144,31 +184,35 @@ def draw_hexagon(draw, x, y, size, color):
         points.append((px, py))
     draw.polygon(points, fill=color)
 
-def generate_geometric_pattern(width, height, palette_name='mocha', pattern='hexagon', darkness=1.0):
-    """Generate geometric tiled patterns"""
+def generate_geometric_pattern(width: int, height: int, palette_name: str = 'mocha',
+                               pattern: str = 'hexagon', darkness: float = 1.0) -> Image.Image:
+    """Generate geometric tiled patterns."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
-    
+
     if pattern == 'hexagon':
-        tile_size = 80
+        tile_size = HEXAGON_TILE_SIZE
         colors = [palette['mauve'], palette['pink'], palette['blue'], palette['green'], palette['peach']]
-        
+
         # Extend range to ensure full coverage
         for y in range(-tile_size, height + tile_size * 2, int(tile_size * 0.75)):
             for x in range(-tile_size, width + tile_size * 2, int(tile_size * 0.866)):
                 # Offset every other row
                 offset_x = (tile_size // 2) if (y // int(tile_size * 0.75)) % 2 else 0
                 hex_x = x + offset_x
-                
+
                 color = random.choice(colors)
                 final_color = darken_color(hex_to_rgb(color), darkness)
                 draw_hexagon(draw, hex_x, y, tile_size // 2, final_color)
-    
+
     elif pattern == 'triangle':
-        tile_size = 60
+        tile_size = TRIANGLE_TILE_SIZE
         colors = [palette['lavender'], palette['sky'], palette['teal'], palette['yellow'], palette['red']]
-        
+
         # Extend range to ensure full coverage
         for y in range(-tile_size, height + tile_size * 2, int(tile_size * 0.866)):
             for x in range(-tile_size, width + tile_size * 2, tile_size):
@@ -176,16 +220,16 @@ def generate_geometric_pattern(width, height, palette_name='mocha', pattern='hex
                 # Upward triangle
                 points = [(x, y + tile_size), (x + tile_size//2, y), (x + tile_size, y + tile_size)]
                 draw.polygon(points, fill=darken_color(hex_to_rgb(color), darkness))
-                
+
                 # Downward triangle
                 color2 = random.choice(colors)
                 points2 = [(x + tile_size//2, y), (x + tile_size, y + tile_size), (x + tile_size + tile_size//2, y)]
                 draw.polygon(points2, fill=darken_color(hex_to_rgb(color2), darkness))
-    
+
     elif pattern == 'diamond':
-        tile_size = 40
+        tile_size = DIAMOND_TILE_SIZE
         colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green']]
-        
+
         # Extend range to ensure full coverage
         for y in range(-tile_size, height + tile_size * 2, tile_size):
             for x in range(-tile_size, width + tile_size * 2, tile_size):
@@ -198,22 +242,26 @@ def generate_geometric_pattern(width, height, palette_name='mocha', pattern='hex
                     (x, y + tile_size//2)
                 ]
                 draw.polygon(points, fill=darken_color(hex_to_rgb(color), darkness))
-    
+
     return img
 
-def generate_gradient_waves(width, height, palette_name='mocha', darkness=1.0):
-    """Generate flowing wave patterns with gradients"""
+def generate_gradient_waves(width: int, height: int, palette_name: str = 'mocha',
+                            darkness: float = 1.0) -> Image.Image:
+    """Generate flowing wave patterns with gradients."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
-    
+
     colors = [palette['mauve'], palette['pink'], palette['blue'], palette['lavender'], palette['sky']]
-    
-    for i in range(5):
+
+    for i in range(WAVE_COUNT):
         wave_height = height // 10
         y_offset = i * (height // 6)
         color = darken_color(hex_to_rgb(colors[i % len(colors)]), darkness)
-        
+
         points = [(0, y_offset)]
         for x in range(0, width, 10):
             y = y_offset + wave_height * math.sin(x * 0.01 + i * 2)
@@ -221,111 +269,174 @@ def generate_gradient_waves(width, height, palette_name='mocha', darkness=1.0):
         points.append((width, y_offset))
         points.append((width, height))
         points.append((0, height))
-        
+
         draw.polygon(points, fill=color)
-    
+
     return img
 
-def generate_abstract_circles(width, height, palette_name='mocha', darkness=1.0):
-    """Generate abstract overlapping circles"""
+def generate_abstract_circles(width: int, height: int, palette_name: str = 'mocha',
+                              darkness: float = 1.0) -> Image.Image:
+    """Generate abstract overlapping circles."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
-    
-    colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green'], 
+
+    colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green'],
               palette['peach'], palette['yellow'], palette['teal']]
-    
+
     # Generate random circles
-    for _ in range(30):
+    for _ in range(CIRCLE_COUNT):
         x = random.randint(-100, width + 100)
         y = random.randint(-100, height + 100)
-        radius = random.randint(50, 200)
+        radius = random.randint(CIRCLE_RADIUS_MIN, CIRCLE_RADIUS_MAX)
         color = darken_color(hex_to_rgb(random.choice(colors)), darkness)
-        
+
         # Create semi-transparent effect by blending
         overlay = Image.new('RGBA', (width, height), (0, 0, 0, 0))
         overlay_draw = ImageDraw.Draw(overlay)
-        overlay_draw.ellipse([x-radius, y-radius, x+radius, y+radius], 
+        overlay_draw.ellipse([x-radius, y-radius, x+radius, y+radius],
                            fill=(*color, 100))  # Semi-transparent
-        
+
         img = Image.alpha_composite(img.convert('RGBA'), overlay).convert('RGB')
-    
+
     return img
 
-def generate_pixel_noise(width, height, palette_name='mocha', darkness=1.0):
-    """Generate organized pixel noise pattern"""
+def generate_pixel_noise(width: int, height: int, palette_name: str = 'mocha',
+                         darkness: float = 1.0) -> Image.Image:
+    """Generate organized pixel noise pattern."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
-    
-    colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green'], 
+
+    colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green'],
               palette['peach'], palette['yellow'], palette['teal'], palette['lavender']]
-    
-    pixel_size = 8
+
+    pixel_size = PIXEL_NOISE_SIZE
     for y in range(0, height, pixel_size):
         for x in range(0, width, pixel_size):
-            if random.random() > 0.7:  # 30% chance for colored pixel
+            if random.random() < PIXEL_NOISE_DENSITY:
                 color = darken_color(hex_to_rgb(random.choice(colors)), darkness)
                 for py in range(pixel_size):
                     for px in range(pixel_size):
                         if x + px < width and y + py < height:
                             img.putpixel((x + px, y + py), color)
-    
+
     return img
 
-def generate_plain_background(width, height, palette_name='mocha', color_name='base', darkness=1.0):
-    """Generate plain solid color background"""
+def generate_plain_background(width: int, height: int, palette_name: str = 'mocha',
+                              color_name: str = 'base', darkness: float = 1.0) -> Image.Image:
+    """Generate plain solid color background."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
-    
+
     if color_name not in palette:
-        print(f"Warning: Color '{color_name}' not found in {palette_name} palette. Using 'base' instead.")
+        print(f"Warning: Color '{color_name}' not found in {palette_name} palette. Using 'base' instead.", file=sys.stderr)
         color_name = 'base'
-    
+
     color = darken_color(hex_to_rgb(palette[color_name]), darkness)
     img = Image.new('RGB', (width, height), color)
     return img
 
-def generate_gradient_background(width, height, palette_name='mocha', color1='base', color2='surface0', direction='horizontal', darkness=1.0):
-    """Generate gradient background between two colors"""
+def generate_gradient_background(width: int, height: int, palette_name: str = 'mocha',
+                                color1: str = 'base', color2: str = 'surface0',
+                                direction: str = 'horizontal', darkness: float = 1.0) -> Image.Image:
+    """Generate gradient background between two colors."""
+    validate_dimensions(width, height)
+    validate_darkness(darkness)
+
     palette = CATPPUCCIN_PALETTES[palette_name]
-    
+
     # Validate colors
     if color1 not in palette:
-        print(f"Warning: Color '{color1}' not found in {palette_name} palette. Using 'base' instead.")
+        print(f"Warning: Color '{color1}' not found in {palette_name} palette. Using 'base' instead.", file=sys.stderr)
         color1 = 'base'
     if color2 not in palette:
-        print(f"Warning: Color '{color2}' not found in {palette_name} palette. Using 'surface0' instead.")
+        print(f"Warning: Color '{color2}' not found in {palette_name} palette. Using 'surface0' instead.", file=sys.stderr)
         color2 = 'surface0'
-    
+
     # Get RGB values and apply darkness
     rgb1 = darken_color(hex_to_rgb(palette[color1]), darkness)
     rgb2 = darken_color(hex_to_rgb(palette[color2]), darkness)
-    
+
+    # Use NumPy if available for much faster gradient generation
+    if NUMPY_AVAILABLE:
+        if direction == 'horizontal':
+            # Create a gradient array using NumPy broadcasting
+            ratio = np.linspace(0, 1, width).reshape(1, width)
+            gradient = np.zeros((height, width, 3), dtype=np.uint8)
+            gradient[:, :, 0] = rgb1[0] * (1 - ratio) + rgb2[0] * ratio
+            gradient[:, :, 1] = rgb1[1] * (1 - ratio) + rgb2[1] * ratio
+            gradient[:, :, 2] = rgb1[2] * (1 - ratio) + rgb2[2] * ratio
+            return Image.fromarray(gradient, 'RGB')
+
+        elif direction == 'vertical':
+            ratio = np.linspace(0, 1, height).reshape(height, 1)
+            gradient = np.zeros((height, width, 3), dtype=np.uint8)
+            gradient[:, :, 0] = rgb1[0] * (1 - ratio) + rgb2[0] * ratio
+            gradient[:, :, 1] = rgb1[1] * (1 - ratio) + rgb2[1] * ratio
+            gradient[:, :, 2] = rgb1[2] * (1 - ratio) + rgb2[2] * ratio
+            return Image.fromarray(gradient, 'RGB')
+
+        elif direction == 'diagonal':
+            x = np.arange(width)
+            y = np.arange(height)
+            xx, yy = np.meshgrid(x, y)
+            max_distance = np.sqrt(width**2 + height**2)
+            distance = np.sqrt(xx**2 + yy**2)
+            ratio = distance / max_distance
+
+            gradient = np.zeros((height, width, 3), dtype=np.uint8)
+            gradient[:, :, 0] = rgb1[0] * (1 - ratio) + rgb2[0] * ratio
+            gradient[:, :, 1] = rgb1[1] * (1 - ratio) + rgb2[1] * ratio
+            gradient[:, :, 2] = rgb1[2] * (1 - ratio) + rgb2[2] * ratio
+            return Image.fromarray(gradient, 'RGB')
+
+        elif direction == 'radial':
+            center_x, center_y = width // 2, height // 2
+            max_distance = np.sqrt(center_x**2 + center_y**2)
+            x = np.arange(width) - center_x
+            y = np.arange(height) - center_y
+            xx, yy = np.meshgrid(x, y)
+            distance = np.sqrt(xx**2 + yy**2)
+            ratio = np.minimum(distance / max_distance, 1.0)
+
+            gradient = np.zeros((height, width, 3), dtype=np.uint8)
+            gradient[:, :, 0] = rgb1[0] * (1 - ratio) + rgb2[0] * ratio
+            gradient[:, :, 1] = rgb1[1] * (1 - ratio) + rgb2[1] * ratio
+            gradient[:, :, 2] = rgb1[2] * (1 - ratio) + rgb2[2] * ratio
+            return Image.fromarray(gradient, 'RGB')
+
+    # Fallback to slower pixel-by-pixel method if NumPy not available
     img = Image.new('RGB', (width, height))
-    
+
     if direction == 'horizontal':
-        # Horizontal gradient (left to right)
         for x in range(width):
             ratio = x / width
             r = int(rgb1[0] * (1 - ratio) + rgb2[0] * ratio)
             g = int(rgb1[1] * (1 - ratio) + rgb2[1] * ratio)
             b = int(rgb1[2] * (1 - ratio) + rgb2[2] * ratio)
-            
+
             for y in range(height):
                 img.putpixel((x, y), (r, g, b))
-    
+
     elif direction == 'vertical':
-        # Vertical gradient (top to bottom)
         for y in range(height):
             ratio = y / height
             r = int(rgb1[0] * (1 - ratio) + rgb2[0] * ratio)
             g = int(rgb1[1] * (1 - ratio) + rgb2[1] * ratio)
             b = int(rgb1[2] * (1 - ratio) + rgb2[2] * ratio)
-            
+
             for x in range(width):
                 img.putpixel((x, y), (r, g, b))
-    
+
     elif direction == 'diagonal':
-        # Diagonal gradient (top-left to bottom-right)
         max_distance = math.sqrt(width**2 + height**2)
         for y in range(height):
             for x in range(width):
@@ -335,12 +446,11 @@ def generate_gradient_background(width, height, palette_name='mocha', color1='ba
                 g = int(rgb1[1] * (1 - ratio) + rgb2[1] * ratio)
                 b = int(rgb1[2] * (1 - ratio) + rgb2[2] * ratio)
                 img.putpixel((x, y), (r, g, b))
-    
+
     elif direction == 'radial':
-        # Radial gradient (center outward)
         center_x, center_y = width // 2, height // 2
         max_distance = math.sqrt(center_x**2 + center_y**2)
-        
+
         for y in range(height):
             for x in range(width):
                 distance = math.sqrt((x - center_x)**2 + (y - center_y)**2)
@@ -349,7 +459,7 @@ def generate_gradient_background(width, height, palette_name='mocha', color1='ba
                 g = int(rgb1[1] * (1 - ratio) + rgb2[1] * ratio)
                 b = int(rgb1[2] * (1 - ratio) + rgb2[2] * ratio)
                 img.putpixel((x, y), (r, g, b))
-    
+
     return img
 
 def add_text_overlay(img, text, palette_name='mocha', text_color='text', font_size=None):
@@ -502,6 +612,55 @@ def generate_random_wallpaper(width, height):
     
     return img
 
+def save_image(img: Image.Image, output_path: str, format_override: Optional[str] = None,
+               quality: int = 95) -> None:
+    """Save image with error handling and format detection."""
+    # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(output_path)
+    if output_dir and not os.path.exists(output_dir):
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            print(f"Created output directory: {output_dir}")
+        except OSError as e:
+            raise IOError(f"Failed to create output directory '{output_dir}': {e}")
+
+    # Determine format
+    if format_override:
+        img_format = format_override.upper()
+    else:
+        ext = os.path.splitext(output_path)[1].lower()
+        format_map = {
+            '.png': 'PNG',
+            '.jpg': 'JPEG',
+            '.jpeg': 'JPEG',
+            '.webp': 'WEBP'
+        }
+        img_format = format_map.get(ext, 'PNG')
+
+    try:
+        # Save with appropriate settings
+        if img_format == 'PNG':
+            img.save(output_path, 'PNG', optimize=True)
+        elif img_format == 'JPEG':
+            # Convert to RGB if necessary (JPEG doesn't support RGBA)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                rgb_img = Image.new('RGB', img.size, (255, 255, 255))
+                rgb_img.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                img = rgb_img
+            img.save(output_path, 'JPEG', quality=quality, optimize=True)
+        elif img_format == 'WEBP':
+            img.save(output_path, 'WEBP', quality=quality)
+        else:
+            img.save(output_path, img_format)
+
+        # Get file size
+        file_size = os.path.getsize(output_path)
+        size_mb = file_size / (1024 * 1024)
+        print(f"✓ Wallpaper saved as {output_path} ({size_mb:.2f} MB)")
+
+    except Exception as e:
+        raise IOError(f"Failed to save image to '{output_path}': {e}")
+
 def main():
     # Get all available colors from any palette (they're consistent across palettes)
     available_colors = list(CATPPUCCIN_PALETTES['mocha'].keys())
@@ -509,7 +668,7 @@ def main():
     color1_help = f"First color for gradient backgrounds. Available colors: {', '.join(available_colors)}"
     color2_help = f"Second color for gradient backgrounds. Available colors: {', '.join(available_colors)}"
     text_color_help = f"Color for text overlay. Available colors: {', '.join(available_colors)}"
-    
+
     parser = argparse.ArgumentParser(
         description='Generate beautiful Catppuccin wallpapers with various patterns, gradients, and text overlays',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -545,10 +704,24 @@ Random Examples:
   # Generate 5 random wallpapers
   for i in {{1..5}}; do catppuccin_wallpaper.py --random --output random_$i.png; done
 
+Output Formats:
+  --format png: Lossless PNG (default, largest file size)
+  --format jpeg: JPEG with quality setting (smaller, lossy)
+  --format webp: WebP with quality setting (good balance)
+
+  Examples:
+    --output wallpaper.jpg --quality 85
+    --output wallpaper.webp --format webp --quality 90
+
 Complete Examples:
+  # High-quality PNG with radial gradient
   catppuccin_wallpaper.py --width 2560 --height 1600 --pattern gradient \\
     --color1 rosewater --color2 teal --direction radial --darkness 0.3 \\
     --text "Hello World" --text-color lavender --output beautiful.png
+
+  # Smaller JPEG for quick backgrounds
+  catppuccin_wallpaper.py --pattern hexagon --darkness 0.4 \\
+    --output ~/Pictures/wallpaper.jpg --quality 85
         """)
     
     parser.add_argument('--width', type=int, default=2560, help='Width of wallpaper (default: 2560)')
@@ -568,38 +741,61 @@ Complete Examples:
                        help='Font size for text (auto-calculated based on image size if not specified)')
     parser.add_argument('--darkness', type=float, default=1.0, 
                        help='Darkness factor: 0.1=very dark, 1.0=normal brightness (default: 1.0)')
-    parser.add_argument('--random', action='store_true', 
+    parser.add_argument('--random', action='store_true',
                        help='Generate completely random wallpaper (ignores most other options)')
-    parser.add_argument('--output', default='catppuccin_wallpaper.png', 
+    parser.add_argument('--output', default='catppuccin_wallpaper.png',
                        help='Output filename (default: catppuccin_wallpaper.png)')
-    
+    parser.add_argument('--format', choices=['png', 'jpeg', 'jpg', 'webp'],
+                       help='Output format (auto-detected from filename if not specified)')
+    parser.add_argument('--quality', type=int, default=95,
+                       help='Quality for JPEG/WEBP output (1-100, default: 95)')
+
     args = parser.parse_args()
-    
-    if args.random:
-        print("🎨 Generating random wallpaper...")
-        img = generate_random_wallpaper(args.width, args.height)
-    else:
-        print(f"Generating {args.width}x{args.height} wallpaper with {args.palette} palette...")
-        
-        if args.pattern in ['hexagon', 'triangle', 'diamond']:
-            img = generate_geometric_pattern(args.width, args.height, args.palette, args.pattern, args.darkness)
-        elif args.pattern == 'waves':
-            img = generate_gradient_waves(args.width, args.height, args.palette, args.darkness)
-        elif args.pattern == 'circles':
-            img = generate_abstract_circles(args.width, args.height, args.palette, args.darkness)
-        elif args.pattern == 'noise':
-            img = generate_pixel_noise(args.width, args.height, args.palette, args.darkness)
-        elif args.pattern == 'plain':
-            img = generate_plain_background(args.width, args.height, args.palette, args.color, args.darkness)
-        elif args.pattern == 'gradient':
-            img = generate_gradient_background(args.width, args.height, args.palette, args.color1, args.color2, args.direction, args.darkness)
-        
-        # Add text overlay if specified
-        if args.text:
-            img = add_text_overlay(img, args.text, args.palette, args.text_color, args.font_size)
-    
-    img.save(args.output, 'PNG', optimize=True)
-    print(f"Wallpaper saved as {args.output}")
+
+    try:
+        # Validate inputs
+        if args.quality < 1 or args.quality > 100:
+            print("Error: Quality must be between 1 and 100", file=sys.stderr)
+            sys.exit(1)
+
+        if args.random:
+            print("🎨 Generating random wallpaper...")
+            img = generate_random_wallpaper(args.width, args.height)
+        else:
+            print(f"Generating {args.width}x{args.height} wallpaper with {args.palette} palette...")
+
+            if args.pattern in ['hexagon', 'triangle', 'diamond']:
+                img = generate_geometric_pattern(args.width, args.height, args.palette, args.pattern, args.darkness)
+            elif args.pattern == 'waves':
+                img = generate_gradient_waves(args.width, args.height, args.palette, args.darkness)
+            elif args.pattern == 'circles':
+                img = generate_abstract_circles(args.width, args.height, args.palette, args.darkness)
+            elif args.pattern == 'noise':
+                img = generate_pixel_noise(args.width, args.height, args.palette, args.darkness)
+            elif args.pattern == 'plain':
+                img = generate_plain_background(args.width, args.height, args.palette, args.color, args.darkness)
+            elif args.pattern == 'gradient':
+                img = generate_gradient_background(args.width, args.height, args.palette, args.color1, args.color2, args.direction, args.darkness)
+
+            # Add text overlay if specified
+            if args.text:
+                img = add_text_overlay(img, args.text, args.palette, args.text_color, args.font_size)
+
+        # Save the image
+        save_image(img, args.output, format_override=args.format, quality=args.quality)
+
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except IOError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+    except KeyboardInterrupt:
+        print("\nInterrupted by user", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

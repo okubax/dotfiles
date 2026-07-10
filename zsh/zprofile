@@ -1,3 +1,6 @@
+# Auto-start Sway when logging in on tty1 (and only there),
+# replacing the login shell with the compositor
 if [[ -z $DISPLAY && $TTY = /dev/tty1 ]]; then
+        export GDK_BACKEND=wayland
         exec sway --unsupported-gpu
 fi

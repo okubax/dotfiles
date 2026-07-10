@@ -1,13 +1,15 @@
-# todo.txt configuration for Conky highlighting.
-export BLACK='${color 181818}'
-export RED='${color ab4642}'
-export GREEN='${color a1b56c}'
-export BLUE='${color 7cafc2}'
-export PURPLE='${color ba8baf}'
-export CYAN='${color 86c1b9}'
-export LIGHT_GREY='${color b8b8b8}'
-export DARK_GREY='${color 585858}'
-export ORANGE='${color dc9656}'
-export WHITE='${color f8f8f8}'
+# todo.txt configuration for Conky highlighting (Catppuccin colors).
+# Overrides the ANSI colors with Conky ${color} tags, then loads the
+# normal todo.cfg for file locations and priority/color assignments.
+export BLACK='${color 494d64}'
+export RED='${color ed8796}'
+export GREEN='${color a6da95}'
+export BLUE='${color 8aadf4}'
+export PURPLE='${color b7bdf8}'
+export CYAN='${color 8bd5ca}'
+export LIGHT_GREY='${color 939ab7}'
+export DARK_GREY='${color 5b6078}'
+export ORANGE='${color f5a97f}'
+export WHITE='${color eff1f5}'
 export DEFAULT='${color}'
 source ~/.todo/todo.cfg

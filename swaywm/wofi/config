@@ -1,3 +1,5 @@
+# Wofi launcher configuration (run mode; styling in style.css)
+# Launched with $mod+r (see sway config)
 show=run
 width=450
 height=215

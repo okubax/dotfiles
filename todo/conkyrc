@@ -1,11 +1,15 @@
+-- Conky overlay showing the todo.txt list in the bottom-right corner
+-- (Wayland output for Sway). Started by the todo-conky script.
 conky.config = {
+    out_to_wayland = true,
+    out_to_x = false,
     alignment = 'bottom_right',
     background = true,
     border_width = 5,
     double_buffer = true,
-    font = 'jetbrains mono medium:size=4',
-    gap_x = 50,
-    gap_y = 70,
+    font = 'Ubuntu:size=8',
+    gap_x = 20,
+    gap_y = 20,
     minimum_height = 5,
     minimum_width = 5,
     own_window = true,
@@ -13,7 +17,7 @@ conky.config = {
     own_window_colour = '2E3440',
     own_window_argb_visual = true,
     own_window_argb_value = 255,
-    own_window_type = 'panel',
+    own_window_type = 'override',
     own_window_hints = 'below',
     draw_shades = false,
     draw_outline = false,
@@ -23,6 +27,8 @@ conky.config = {
     use_xft = true
 }
 
+-- Every 2 minutes: list todos using the conky color config,
+-- dropping the two summary lines at the end
 conky.text = [[
 ${execpi 120 todo.sh -d ~/.todo/config-conky ls | head -n -2}
 ]]

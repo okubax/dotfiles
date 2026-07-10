@@ -1,9 +1,9 @@
 [user]
-    email = user@youremail.com
+	email = user@youremail.com
 	name = Your Name
-[color]
-    ui = auto
 
+[color]
+	ui = auto
 
 [alias]
 	# === BASIC WORKFLOW ===
@@ -22,6 +22,9 @@
 	# Status and diff
 	s = status
 	d = diff
+
+	# Clone
+	cl = clone
 
 	# === COMMIT HISTORY ===
 	# Simple log views

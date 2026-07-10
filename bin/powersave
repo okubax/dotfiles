@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 #
-# Robust battery saving script to stop nextcloud, offlineimap and disable bluetooth
+# powersave - enter battery-save mode: stop nextcloud and disable
+# bluetooth to extend battery life.
+# Requires cached sudo credentials (run 'sudo -v' first) for bluetooth.
+# Counterpart: powerfull (restores everything).
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
@@ -40,35 +43,6 @@ is_process_running() {
     pgrep -x "$1" &>/dev/null
 }
 
-stop_offlineimap() {
-    log "Stopping offlineimap..."
-    
-    if is_service_running "offlineimap" "true"; then
-        if systemctl --user stop offlineimap 2>/dev/null; then
-            log "✓ Stopped offlineimap service"
-        else
-            log_error "✗ Failed to stop offlineimap service"
-            return 1
-        fi
-    else
-        log_warn "⚠ offlineimap service not running"
-    fi
-    
-    # Wait a moment then stop the timer
-    sleep 5
-    
-    if is_service_running "offlineimap.timer" "true"; then
-        if systemctl --user stop offlineimap.timer 2>/dev/null; then
-            log "✓ Stopped offlineimap timer"
-        else
-            log_error "✗ Failed to stop offlineimap timer"
-            return 1
-        fi
-    else
-        log_warn "⚠ offlineimap timer not running"
-    fi
-}
-
 stop_bluetooth() {
     log "Stopping bluetooth..."
     
@@ -88,7 +62,7 @@ stop_nextcloud() {
     log "Stopping nextcloud..."
     
     if is_process_running "nextcloud"; then
-        if nextcloud -q 2>/dev/null; then
+        if pkill nextcloud 2>/dev/null; then
             log "✓ Stopped nextcloud"
             # Wait a moment to ensure it's fully stopped
             sleep 3
@@ -120,10 +94,6 @@ main() {
     local failed_services=()
     
     # Run services stops and collect any failures
-    if ! stop_offlineimap; then
-        failed_services+=("offlineimap")
-    fi
-    
     if ! stop_bluetooth; then
         failed_services+=("bluetooth")
     fi
@@ -135,7 +105,7 @@ main() {
     # Report results
     if [[ ${#failed_services[@]} -eq 0 ]]; then
         log "✓ Battery save mode activated successfully!"
-        log "Services stopped: offlineimap, bluetooth, nextcloud"
+        log "Services stopped: bluetooth, nextcloud"
     else
         log_error "⚠ Some services failed to stop: ${failed_services[*]}"
         exit 1

@@ -1,4 +1,14 @@
 #!/bin/sh
+# pdfcompress - shrink a PDF using Ghostscript
+# (72dpi /screen preset; output defaults to input-compressed.pdf)
+
+if [ -z "$1" ]; then
+    echo "Usage: $(basename "$0") input.pdf [output.pdf]" >&2
+    exit 1
+fi
+
+input="$1"
+output="${2:-${input%.pdf}-compressed.pdf}"
 
 gs  -q -dNOPAUSE -dBATCH -dSAFER \
     -sDEVICE=pdfwrite \
@@ -12,5 +22,7 @@ gs  -q -dNOPAUSE -dBATCH -dSAFER \
     -dGrayImageResolution=72 \
     -dMonoImageDownsampleType=/Bicubic \
     -dMonoImageResolution=72 \
-    -sOutputFile=out.pdf \
-     $1
+    -sOutputFile="$output" \
+    "$input"
+
+echo "Compressed: $input -> $output"

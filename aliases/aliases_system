@@ -1,10 +1,11 @@
 #!/bin/bash
 # ~/.aliases_system - System administration and core utilities
+# Loaded by ~/.aliases (see aliases/aliases in the dotfiles repo).
 
 ## Core Utilities ##
 alias cls='echo -ne "\033c"'       # Clear screen completely
 alias ls='ls --color=auto'         # Colorized ls output
-alias grep='grep --color=always'   # Colorized grep output
+alias grep='grep --color=always'   # Colorized grep output (note: --color=always keeps ANSI codes when piping)
 alias lsblk='lsblk -f'            # Show filesystem info with lsblk
 alias find="fd"                    # Use fd instead of find
 alias du="gdu"                     # Use gdu for disk usage
@@ -13,7 +14,7 @@ alias ps="ps auxf"                 # Show processes in tree format
 ## Package Management ##
 # Pacman essentials
 alias pac="sudo pacman -S"         # Install packages
-alias pacy="sudo pacman -Syy"      # Sync 
+alias pacy="sudo pacman -Syy"      # Force-refresh package databases
 alias pacu="sudo pacman -Syu"      # Update all packages
 alias pacr="sudo pacman -Rns"      # Remove packages with dependencies
 alias pacs="pacman -Ss"            # Search packages
@@ -36,7 +37,7 @@ alias flats="flatpak search"       # Search flatpaks
 alias flatup="flatpak update"      # Update all flatpaks
 
 ## Systemctl Functions ##
-# System level services
+# System-level services: start sshd, restart smb, etc.
 start() { sudo systemctl start "$1"; }
 stop() { sudo systemctl stop "$1"; }
 restart() { sudo systemctl restart "$1"; }
@@ -44,7 +45,7 @@ status() { sudo systemctl status "$1"; }
 enable() { sudo systemctl enable "$1"; }
 disable() { sudo systemctl disable "$1"; }
 
-# User level services
+# User-level services (systemctl --user): ustart mpd, ustatus yams, etc.
 ustart() { systemctl --user start "$1"; }
 ustop() { systemctl --user stop "$1"; }
 urestart() { systemctl --user restart "$1"; }
@@ -53,7 +54,7 @@ uenable() { systemctl --user enable "$1"; }
 udisable() { systemctl --user disable "$1"; }
 
 ## System Monitoring ##
-alias bat="upower --show-info /org/freedesktop/UPower/devices/battery_BAT0"
+alias bat="upower --show-info /org/freedesktop/UPower/devices/battery_BAT0"  # Battery status
 alias dfu="vizex --details"         # Disk usage with vizex
 alias whichport="sudo netstat -tulpn"  # Show listening ports
 alias bandw="sudo bandwhich"        # Bandwidth monitor
@@ -83,8 +84,8 @@ umountdev() {
     fi
 }
 
-# Encrypted device management
-# Usage: unlockdev sda2, lockdev sda2
+# LUKS encrypted device management
+# Usage: unlockdev sda2, lockdev dm-0 (lockdev lists the luks-* mapper devices first)
 unlockdev() {
     if [[ -b "/dev/$1" ]]; then
         udisksctl unlock -b "/dev/$1"
@@ -95,7 +96,6 @@ unlockdev() {
 }
 
 lockdev() {
-    local mapper_path="/dev/mapper/luks-*"
     echo "Available encrypted devices to lock:"
     ls -la /dev/mapper/luks-* 2>/dev/null || echo "No encrypted devices found"
     if [[ -b "/dev/$1" ]]; then
@@ -105,7 +105,7 @@ lockdev() {
     fi
 }
 
-# Show available devices
+# Overview of block devices and mounted filesystems
 showdevs() {
     echo "=== Available Block Devices ==="
     lsblk -f
@@ -114,10 +114,10 @@ showdevs() {
 }
 
 ## Network Management ##
-alias wifiscan="sudo wpa_cli -i wlan0 scan && sleep 3 && sudo wpa_cli -i wlan0 scan_results"
-alias rnetw="sudo systemctl restart wpa_supplicant@wlan0"
-alias rnetn="sudo systemctl restart systemd-networkd"
-alias rnetr="sudo systemctl restart systemd-resolved"
+alias wifiscan="sudo wpa_cli -i wlan0 scan && sleep 3 && sudo wpa_cli -i wlan0 scan_results"  # Scan for WiFi networks
+alias rnetw="sudo systemctl restart wpa_supplicant@wlan0"   # Restart WiFi supplicant
+alias rnetn="sudo systemctl restart systemd-networkd"       # Restart network daemon
+alias rnetr="sudo systemctl restart systemd-resolved"       # Restart DNS resolver
 
 ## File Permissions & Archive Management ##
 # Fix directory permissions (755 for dirs, 644 for files)
@@ -131,7 +131,8 @@ fix() {
 # Make file executable
 alias makex="chmod +x"
 
-# Extract various archive formats
+# Extract any common archive format based on its extension
+# Usage: extract file.tar.gz [more files...]
 extract() {
     if [ -z "$1" ]; then
         echo "Usage: extract <path/file_name>.<zip|rar|bz2|gz|tar|tbz2|tgz|Z|7z|xz|ex|tar.bz2|tar.gz|tar.xz>"
@@ -176,9 +177,9 @@ extract() {
 alias 7zmax='7z a -r -t7z -m0=lzma2 -mx=9 -myx=9 -mqs=on -ms=on'
 
 ## Elevated Commands ##
-alias nanos="sudo nano"
-alias vims="sudo vim"
-alias cats="sudo cat"
+alias nanos="sudo nano"            # Edit as root (nano)
+alias vims="sudo vim"              # Edit as root (vim)
+alias cats="sudo cat"              # Read root-only files
 
 ## History Search ##
-alias histg="cat ~/.zsh_history | grep"
+alias histg="cat ~/.zsh_history | grep"   # Usage: histg <pattern>

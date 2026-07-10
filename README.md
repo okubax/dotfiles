@@ -1,6 +1,6 @@
 # Dotfiles - Sway Desktop Environment
 
-A complete keyboard-driven desktop setup for Arch Linux featuring Sway compositor, Waybar status bar, and productivity-focused applications.
+A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed throughout with [Catppuccin](https://github.com/catppuccin).
 
 ## Screenshots
 
@@ -11,19 +11,31 @@ A complete keyboard-driven desktop setup for Arch Linux featuring Sway composito
 
 ## Components
 
-**Core Desktop**
-- **Window Manager**: Sway (i3-compatible, Wayland)
-- **Status Bar**: Waybar with custom modules
+**Core Desktop (all Wayland-native)**
+- **Window Manager**: Sway (i3-compatible Wayland compositor)
+- **Status Bar**: Waybar
+- **Launcher / Menus**: Wofi (app launcher, power menu, clipboard picker)
 - **Terminal**: Kitty
 - **Notifications**: Mako
-- **Lock Screen**: Swaylock
+- **Lock Screen**: Swaylock (blurred wallpaper + clock) with swayidle (auto-lock, lock on suspend)
+- **Clipboard**: cliphist + wl-clipboard (history picker bound to Alt+h)
+- **Screenshots**: swayshot (full screen / window / region)
 - **Shell**: ZSH with modular configuration
 
+**Waybar modules**
+- Workspace switcher (Japanese numerals, only occupied workspaces shown)
+- MPD now-playing (hidden when nothing is queued; click to play/pause)
+- Idle inhibitor, CPU, memory, backlight (scroll to adjust)
+- PulseAudio/PipeWire volume (click to mute, scroll to adjust)
+- Network (SSID + signal strength, IP in tooltip)
+- Keyboard layout (gb/us, click to switch), battery, system tray, clock with calendar
+
 **Applications**
-- **Email**: mutt + offlineimap templates
-- **Music**: MPD + ncmpcpp
-- **File Manager**: ranger
-- **Text Editor**: vim with plugins
+- **Music**: MPD + ncmpcpp + mpc
+- **File Managers**: ranger (terminal), thunar (GUI)
+- **Text Editor**: vim with native packages (`vim/pack`)
+- **IRC**: ii + stunnel + multitail (see `bin/ii-start`, `bin/ii-sway`)
+- **Todo**: todo.txt with a conky overlay (`todo/`)
 
 **Theming**
 - **Wallpaper**: Generated using `bin/catppuccin_wallpaper.py` script
@@ -53,15 +65,16 @@ cd ~/dotfiles
 
 ### Essential
 ```bash
-sudo pacman -S sway waybar mako swaylock wofi wl-clipboard kitty zsh ranger vim
-sudo pacman -S ttf-fira-code noto-fonts noto-fonts-emoji ttf-ubuntu-font-family
+sudo pacman -S sway waybar mako swaylock swayidle wofi wl-clipboard cliphist kitty zsh ranger vim
+sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome noto-fonts noto-fonts-emoji
 ```
 
 ### Optional
 ```bash
-sudo pacman -S mpd ncmpcpp mpc pipewire pipewire-pulse mutt offlineimap msmtp neofetch
-sudo pacman -S qt5ct qt6ct nwg-look  # Theme management tools
-yay -S multitail swayshot
+sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
+sudo pacman -S gsimplecal qalculate-gtk thunar neofetch              # Desktop utilities
+sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools
+yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
 ## Commands
@@ -79,14 +92,14 @@ yay -S multitail swayshot
 ## Post-Installation
 
 1. Set ZSH as default shell: `chsh -s $(which zsh)`
-2. Start Sway: `exec sway` (from TTY) or select from display manager
-3. Logout and log back in
+2. Log in on tty1 — `zsh/zprofile` starts Sway automatically (or run `sway` manually)
+3. Machine-local secrets (API keys etc.) go in `~/.zshrc.local`, which is sourced by `zsh/zshrc` but not tracked here
 
 ## Configuration
 
 ### Key Files
 - **Sway**: `swaywm/sway/config`
-- **Waybar**: `swaywm/waybar/config`
+- **Waybar**: `swaywm/waybar/config` + `swaywm/waybar/style.css`
 - **Terminal**: `kitty/kitty.conf`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
@@ -95,18 +108,29 @@ yay -S multitail swayshot
 ```
 ~/dotfiles/
 ├── dotfiles.sh          # Installation script
-├── aliases/             # Shell aliases
-├── bin/                 # Custom scripts
+├── aliases/             # Shell aliases (system/dev/personal/scripts)
+├── bin/                 # Custom scripts (see below)
+├── ii/                  # ii IRC credentials template
 ├── kitty/               # Terminal config
-├── swaywm/              # Sway, Waybar, Mako configs
-├── vim/                 # Editor configuration
-├── zsh/                 # Shell configuration
-│   ├── config/         # Modular ZSH configs
-│   └── plugins/        # Syntax highlighting themes
+├── mpd/                 # Music Player Daemon
+├── ncmpcpp/             # Music player client
 ├── ranger/              # File manager
-├── ncmpcpp/             # Music player
-└── mutt/                # Email client
+├── startpage/           # Browser start page
+├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
+├── todo/                # todo.txt + conky overlay
+├── vim/                 # Editor configuration (native packages)
+└── zsh/                 # Shell configuration
+    ├── config/          # Modular ZSH configs
+    └── plugins/         # Syntax highlighting themes
 ```
+
+### Notable Scripts in `bin/`
+- `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
+- `deploy_websites.sh` / `backup_godaddy.sh` - static site deployment and hosting backups (configured via config file/env vars)
+- `btrfs_backup.sh` / `arch-backupr.sh` - snapshot and full-system backups
+- `disk_analyzer.sh`, `filesearch.py`, `sysinfo.py` - system inspection tools
+- `news_reader.py` - terminal RSS reader
+- `catppuccin_wallpaper.py` - wallpaper generator
 
 ## ZSH Configuration
 
@@ -132,9 +156,11 @@ The installation script includes automatic backup functionality:
 
 For security reasons, the following are excluded:
 - SSH keys and server configurations
-- Email credentials and GPG keys
+- Email setup, credentials and GPG keys
 - Password manager databases
 - Personal scripts with sensitive information
+
+Files like `ii/credentials`, `gitconfig`, and the server-related scripts ship with placeholder values — fill in your own.
 
 ## Troubleshooting
 
@@ -143,6 +169,8 @@ For security reasons, the following are excluded:
 **Undo installation**: Use `./dotfiles.sh restore` or `./dotfiles.sh uninstall`
 
 **Sway won't start**: Check dependencies and logs with `journalctl --user -u sway`
+
+**Waybar shows no icons**: Install `ttf-font-awesome` (the bar uses Font Awesome 6 glyphs)
 
 **Permission errors**: Run `chmod +x ./dotfiles.sh`
 

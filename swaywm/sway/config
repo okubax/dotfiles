@@ -1,6 +1,12 @@
 # =============================================================================
 # SWAY CONFIGURATION
 # =============================================================================
+# Main config for the Sway Wayland compositor.
+#   $mod  = Super/Windows key
+#   Mod1  = Alt key
+# Status bar: waybar (see waybar/config), launcher: wofi,
+# notifications: mako, lock screen: swaylock.
+# =============================================================================
 
 # -----------------------------------------------------------------------------
 # APPEARANCE & THEMING
@@ -22,6 +28,7 @@ client.urgent    #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD
 # VARIABLES
 # -----------------------------------------------------------------------------
 
+# $mod = Super key; vim-style direction keys for focus/move bindings
 set $mod Mod4
 set $left h
 set $down j
@@ -32,6 +39,8 @@ set $right l
 # OUTPUT CONFIGURATION
 # -----------------------------------------------------------------------------
 
+# Wallpaper on all outputs, per-output scaling
+# (eDP-1 = laptop panel, HDMI-A-1 = external monitor)
 output * bg ~/.img/wallpapers/catppuccin_wallpaper_1.png fill
 output eDP-1 scale 2.1
 output HDMI-A-1 scale 1.5
@@ -40,6 +49,7 @@ output HDMI-A-1 scale 1.5
 # INPUT CONFIGURATION
 # -----------------------------------------------------------------------------
 
+# GB/US layouts; toggle with both Alt keys pressed together
 input type:keyboard {
     xkb_layout "gb,us"
     xkb_options grp:alts_toggle
@@ -57,68 +67,57 @@ floating_modifier $mod normal
 # STARTUP APPLICATIONS
 # -----------------------------------------------------------------------------
 
-# System services
+# System services:
+#   mpd                     - Music Player Daemon
+#   yams                    - Last.fm scrobbler for mpd
+#   nextcloud               - sync client (background)
+#   mako                    - notification daemon
+#   playerctld              - media key routing to the active player
+#   sway-audio-idle-inhibit - prevent idle/lock while audio is playing
+#   import-gsettings        - sync GTK theme settings into the session
 exec mpd
 exec yams
 exec nextcloud --background
 exec /usr/bin/mako
-exec emailproxy --no-gui --config-file ~/.emailproxy.config
 exec playerctld daemon
 exec sway-audio-idle-inhibit
 exec_always import-gsettings
 
 # Screen sharing
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
+# Export critical environment variables to the systemd/D-Bus user session
+exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway GDK_BACKEND=wayland
 
-# Clipboard manager
-exec wl-paste -t text --watch clipman store
-exec wl-paste -p -t text --watch clipman store -P --histpath="~/.local/share/clipman-primary.json"
+# Force systemd to stop any frozen portal instances and track the new session variables
+exec systemctl --user stop xdg-desktop-portal xdg-desktop-portal-wlr
+exec systemctl --user start xdg-desktop-portal
 
-# Screen locker and idle management
+# Ensure portal is started when sway is started
+#exec /usr/lib/xdg-desktop-portal-gtk
+
+# Clipboard management: record history, Alt+h opens picker in wofi
+bindsym Mod1+h exec cliphist list | wofi -H 260 -S dmenu | cliphist decode | wl-copy
+exec wl-paste --watch cliphist store
+
+# Idle management: lock after 15 min, screens off shortly after,
+# and always lock before the system suspends (e.g. lid close)
 exec swayidle -w \
     timeout 900 'swaylock -f' \
     timeout 905 'swaymsg "output * power off"' \
-    resume 'swaymsg "output * power on"'
-
-# Commented startup applications
-#exec ~/.todo/todo-conky
-#exec /usr/bin/gentoo-pipewire-launcher
-
-# Alternative idle configurations (commented)
-#exec swayidle -w \
-#	timeout 300 'swaylock -f' \
-#	timeout 600 'swaymsg "output * dpms off"' \
-#	resume 'swaymsg "output * dpms on"'
+    resume 'swaymsg "output * power on"' \
+    before-sleep 'swaylock -f'
 
 # -----------------------------------------------------------------------------
 # KEY BINDINGS - SYSTEM
 # -----------------------------------------------------------------------------
 
-# Window management
+# $mod+q       - close focused window
+# $mod+Shift+c - reload this config
+# $mod+Shift+e - power menu (wofi script)
+# $mod+Escape  - lock screen now
 bindsym $mod+q kill
 bindsym $mod+Shift+c reload
 bindsym $mod+Shift+e exec ~/.config/waybar/scripts/power_menu.sh
 bindsym $mod+Escape exec swaylock
-
-# Alternative power menu (commented)
-#bindsym $mod+Shift+e exec swaynag \
-#        -t warning \
-#        --font='JetBrains Mono 7' \
-#        --text=CDD6F4 \
-#        --button-text=CDD6F4 \
-#        --background=1E1E2E \
-#        --button-background=1E1E2E \
-#        --border=B4BEFE \
-#        --border-bottom=B4BEFE \
-#        --button-gap=20 \
-#        --button-dismiss-gap=20 \
-#        --button-margin-right=10 \
-#        -m '  You pressed the exit shortcut. What do you want?' \
-#        -s '  Cancel  ' \
-#        -b '  Shutdown  ' 'systemctl poweroff' \
-#        -b '  Reboot  ' 'systemctl reboot' \
-#        -b '  Sleep  ' 'systemctl suspend' \
-#        -b '  Logout  ' 'swaymsg exit'
 
 # -----------------------------------------------------------------------------
 # KEY BINDINGS - APPLICATIONS
@@ -144,7 +143,7 @@ bindsym mod1+c exec code
 
 # System monitoring and utilities
 bindsym $mod+shift+t exec kitty -e htop
-bindsym mod1+e exec kitty -e mutt
+bindsym mod1+e exec evolution
 bindsym $mod+a exec gsimplecal
 bindsym mod1+n exec nextcloud
 bindsym $mod+c exec qalculate-gtk
@@ -153,16 +152,6 @@ bindsym $mod+c exec qalculate-gtk
 bindsym $mod+p exec swayshot
 bindsym $mod+Shift+p exec swayshot window
 bindsym mod1+p exec swayshot region
-
-# Alternative screenshot commands (commented)
-#bindsym Mod4+Print       exec swayshot display upload
-#bindsym Mod4+Mod1+Print  exec swayshot window  upload
-#bindsym Mod4+Shift+Print exec swayshot region  upload
-#bindsym $mod+p exec grim -g "$(slurp)" - | wl-copy
-#bindsym $mod+Shift+p exec grim -g "$(slurp)"
-
-# Clipboard management
-bindsym mod1+h exec clipman pick -t wofi --tool-args="-H 260"
 
 # IRC (ii) bindings
 bindsym $mod+i exec ~/bin/ii-sway chat
@@ -175,10 +164,6 @@ bindsym $mod+F1 exec ~/bin/ii-sway monitor arch
 bindsym $mod+F2 exec ~/bin/ii-sway monitor sway
 bindsym $mod+F3 exec ~/bin/ii-sway monitor f1
 
-# Alternative IRC multitail commands (commented)
-#bindsym $mod+i exec "kitty -e multitail -CS ii -s 2 /home/ajibola/irc/lb/127.0.0.1/#archlinux/out /home/ajibola/irc/lb/127.0.0.1/#sway/out /home/ajibola/irc/lb/127.0.0.1/#bash/out /home/ajibola/irc/sn/127.0.0.1/#f1/out /home/ajibola/irc/of/127.0.0.1/#wayland/out"
-#bindsym $mod+i exec "kitty -e multitail -CS ii -s 0 -ts -f $HOME/irc/lb/127.0.0.1/#archlinux/out -ts -f $HOME/irc/lb/127.0.0.1/#bash/out -ts -f $HOME/irc/lb/127.0.0.1/#sway/out -ts -f $HOME/irc/of/127.0.0.1/#wayland/out -ts -f $HOME/irc/sn/127.0.0.1/#f1/out"
-
 # -----------------------------------------------------------------------------
 # KEY BINDINGS - MEDIA CONTROLS
 # -----------------------------------------------------------------------------
@@ -188,11 +173,11 @@ bindsym XF86AudioPlay exec "mpc toggle"
 bindsym XF86AudioStop exec "mpc stop"
 bindsym XF86AudioNext exec "mpc next"
 bindsym XF86AudioPrev exec "mpc prev"
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute 0 toggle
+bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
+bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
+bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
 
-# Alternative media controls
+# MPD controls on Alt keys (for keyboards without media keys)
 bindsym mod1+a exec mpc play
 bindsym mod1+s exec mpc pause
 bindsym mod1+x exec mpc next
@@ -230,7 +215,7 @@ bindsym $mod+Shift+f fullscreen
 bindsym $mod+Shift+space floating toggle
 bindsym $mod+space focus mode_toggle
 
-# Scratchpad (minimize functionality)
+# Scratchpad: $mod+n hides a window, $mod+Shift+n cycles hidden windows back
 bindsym $mod+n move scratchpad
 bindsym $mod+Shift+n scratchpad show
 
@@ -259,7 +244,7 @@ bindsym $mod+Shift+6 move container to workspace number 6
 # WINDOW RULES
 # -----------------------------------------------------------------------------
 
-# Application workspace assignments
+# Application workspace assignments (find app_ids with the 'appid' alias)
 assign [app_id="firefox"] 1
 assign [app_id="libreoffice-writer"] 4
 assign [app_id="libreoffice-calc"] 4
@@ -267,6 +252,7 @@ assign [app_id="libreoffice-calc"] 4
 # Floating window rules
 for_window [app_id="imv"] floating enable
 for_window [app_id="pwvucontrol"] floating enable
+for_window [app_id="nwg-displays"] floating enable
 for_window [app_id="qalculate-gtk"] floating enable
 for_window [window_type="dialog"] floating enable
 for_window [window_role="dialog"] floating enable
@@ -275,6 +261,7 @@ for_window [window_role="dialog"] floating enable
 # STATUS BAR
 # -----------------------------------------------------------------------------
 
+# Use waybar instead of the default swaybar
 bar {
     swaybar_command waybar
 }

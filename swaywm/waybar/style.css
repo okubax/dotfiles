@@ -1,3 +1,7 @@
+/* Waybar styling (Catppuccin palette)
+ * Bar is transparent; the module strip sits in a pill shape:
+ * rounded on the left at #workspaces, rounded on the right at #clock. */
+
 * {
   border-radius: 0;
   font-family: "Ubuntu Mono", "Font Awesome 6 Free";
@@ -10,13 +14,21 @@ window#waybar {
   color: #DADAE8;
 }
 
-tooltip {
-  background: #BAC2DE;
-  border-width: 30px;
-  border-style: solid;
-  border-color: #BAC2DE;
+/* 'tooltip.background' matches the GTK theme's selector specificity;
+ * plain 'tooltip' alone loses to it, leaving the theme's dark
+ * square-cornered background poking out at the corners. */
+tooltip,
+tooltip.background {
+  background-color: #1e1e2e;
+  border: 2px solid #96cdfb;
+  border-radius: 7px;
 }
 
+tooltip label {
+  color: #DADAE8;
+}
+
+/* Left end of the pill */
 #workspaces {
   border-radius: 15px 0px 0px 15px;
 }
@@ -40,34 +52,34 @@ tooltip {
   color: #96cdfb;
 }
 
-#clock, #battery, #custom-wifi, #custom-mail,
-#pulseaudio, #custom-mpd, #workspaces, #idle_inhibitor {
+/* Shared background/spacing for every module */
+#clock, #battery, #network, #pulseaudio, #mpd, #workspaces,
+#idle_inhibitor, #mode, #cpu, #memory, #backlight, #language, #tray {
   padding: 2px 5px;
   background: #494D64;
   margin-top: 9px;
   margin-bottom: 3px;
 }
 
-#custom-wifi {
-  color: #f8bd96;
-}
-
+/* Per-module accent colors */
+#mode { color: #F28FAD; }
+#mpd { color: #96cdfb; }
+#idle_inhibitor { color: #96cdfb; }
+#cpu { color: #ABE9B3; }
+#memory { color: #F5C2E7; }
+#backlight { color: #FAE3B0; }
 #pulseaudio { color: #94E2D5; }
-#custom-mail { color: #94E2D5; }
-#custom-mpd { color: #96cdfb; }
-#idle_inhibitor { color:#7a887a; }
+#network { color: #f8bd96; }
+#language { color: #C9CBFF; }
+#battery { color: #f2cdcd; }
 
+/* Battery alert states */
+#battery.warning { color: #FAE3B0; }
+#battery.critical { color: #F28FAD; }
 
-#battery {
-  color: #f2cdcd;
-}
-
-#idle_inhibitor {
-  color: #96cdfb;
-}
-
+/* Right end of the pill */
 #clock {
   color: #96cdfb;
-      border-radius: 0px 15px 15px 0px;
-      padding-right: 10px;
+  border-radius: 0px 15px 15px 0px;
+  padding-right: 10px;
 }

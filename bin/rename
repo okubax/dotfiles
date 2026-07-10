@@ -1,4 +1,6 @@
 #!/bin/bash
+# rename - sequentially rename all .png files in the current directory
+# to 1.png, 2.png, 3.png, ... (in shell glob order)
 num=1
 for file in *.png; do
        mv "$file" "$(printf "%u" $num).png"

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
+# xps2pdf - convert XPS documents to PDF using gxps (GhostPDL)
+# Usage: xps2pdf file1.xps [file2.xps ...]
+# If gxps isn't installed, downloads and compiles GhostPDL 9.20 into ~/bin.
 
-# Extras
+# Helpers to test for available commands
 function command_exists {
 	type "$1" &> /dev/null
 	# fish not bash: type --quiet "$1"
@@ -24,7 +27,7 @@ function down {
 	fi
 }
 
-# XPS to PDF
+# Find gxps, or build it from source if missing
 cwd=$(pwd)
 bin=gxps
 if command_missing $bin; then
@@ -43,6 +46,7 @@ if command_missing $bin; then
 	fi
 fi
 
+# Convert each argument, replacing the .xps extension with .pdf
 echo "converting $# files"
 for xps in "$@"
 do
@@ -54,7 +58,7 @@ do
 
 	if command_exists GetFileInfo && command_exists SetFile; then
 		echo "setting creation time"
-		local ctime=$(GetFileInfo -m "$xps")
+		ctime=$(GetFileInfo -m "$xps")
 		SetFile -d "$ctime" "$pdf"
 	fi
 done

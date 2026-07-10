@@ -1,17 +1,28 @@
 #!/bin/bash
 # ~/.aliases - Main alias loader
-# This file loads all organized alias files
+#
+# Entry point for all shell aliases. Sourced by zsh via
+# zsh/config/aliases.zsh, this file in turn loads the four
+# category files from $HOME:
+#   .aliases_system   - core utilities, pacman/AUR, systemctl, devices
+#   .aliases_dev      - python/npm/media/dev tools
+#   .aliases_personal - config editing, notes, personal shortcuts
+#   .aliases_script   - wrappers for scripts in ~/bin (ii, notes, disk, btrfs)
+#
+# Set SHOW_ALIAS_LOADING=true to see per-file loading messages on startup.
 
 # Define colors for status messages
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# Configuration - set to true to show loading messages
+# Silent loading by default; export SHOW_ALIAS_LOADING=true to change
 SHOW_ALIAS_LOADING=${SHOW_ALIAS_LOADING:-false}
 
-# Function to safely load alias files
+# Source an alias file if it exists, optionally reporting the result
 load_aliases() {
     local file="$1"
     local description="$2"
@@ -30,12 +41,11 @@ load_aliases() {
     fi
 }
 
-# Silent loading by default
 if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
     echo "Loading shell aliases..."
 fi
 
-# Load all alias files
+# Load the four category files
 load_aliases "$HOME/.aliases_system" "system aliases"
 load_aliases "$HOME/.aliases_dev" "development aliases"
 load_aliases "$HOME/.aliases_personal" "personal aliases"
@@ -45,7 +55,7 @@ if [[ "$SHOW_ALIAS_LOADING" == true ]]; then
     echo -e "${GREEN}Alias loading complete!${NC}"
 fi
 
-# Alias status checking function
+# alias-status ('as') - report which alias files were found/missing
 alias-status() {
     echo -e "${GREEN}=== Alias Loading Status ===${NC}"
     local loaded=0
@@ -76,7 +86,7 @@ alias-status() {
     echo "  export SHOW_ALIAS_LOADING=false"
 }
 
-# Quick help function
+# alias-help ('ah') - overview of the alias categories and helper commands
 alias-help() {
     echo -e "${GREEN}=== Available Alias Categories ===${NC}"
     echo ""
@@ -110,7 +120,7 @@ alias-help() {
     echo "Use 'grep alias ~/.aliases_*' to see all available aliases"
 }
 
-# Reload aliases function
+# alias-reload ('ar') - re-source this file with loading messages shown
 alias-reload() {
     echo -e "${BLUE}Reloading aliases...${NC}"
     local old_setting="$SHOW_ALIAS_LOADING"
@@ -119,7 +129,7 @@ alias-reload() {
     export SHOW_ALIAS_LOADING="$old_setting"
 }
 
-# Test aliases function
+# alias-test - sanity-check that a few key aliases/commands resolve
 alias-test() {
     echo -e "${GREEN}=== Testing Common Aliases ===${NC}"
     
@@ -138,7 +148,7 @@ alias-test() {
     echo -e "${CYAN}Total aliases loaded:${NC} $(alias | wc -l)"
 }
 
-# Add the help function as aliases
+# Short aliases for the helper functions above
 alias aliases-help='alias-help'
 alias ah='alias-help'
 alias as='alias-status'
@@ -150,7 +160,8 @@ if [ -f "$HOME/bin/deploy_websites.sh" ]; then
     alias deploy-dry='deploy --dry-run'
 fi
 
-# Optional: Show a subtle one-liner on first load of the day
+# Show a one-line reminder on the first shell of the day
+# (tracked via ~/.alias_load_log, trimmed to the last 7 entries)
 ALIAS_LOG="$HOME/.alias_load_log"
 TODAY=$(date +%Y-%m-%d)
 

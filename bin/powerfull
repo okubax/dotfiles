@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 #
-# Robust script to restore offlineimap, nextcloud and bluetooth services
+# powerfull - leave battery-save mode: restart the services that
+# powersave stopped (nextcloud, bluetooth).
+# Requires cached sudo credentials (run 'sudo -v' first) for bluetooth.
 
 set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
@@ -38,30 +40,6 @@ is_service_running() {
 # Check if process is running
 is_process_running() {
     pgrep -x "$1" &>/dev/null
-}
-
-start_offlineimap() {
-    log "Starting offlineimap..."
-    
-    if is_service_running "offlineimap" "true"; then
-        log_warn "⚠ offlineimap already running"
-        return 0
-    fi
-    
-    if systemctl --user start offlineimap 2>/dev/null; then
-        log "✓ Started offlineimap service"
-        # Give it a moment to start
-        sleep 2
-        if is_service_running "offlineimap" "true"; then
-            log "✓ Confirmed offlineimap is running"
-        else
-            log_error "✗ offlineimap failed to start properly"
-            return 1
-        fi
-    else
-        log_error "✗ Failed to start offlineimap service"
-        return 1
-    fi
 }
 
 start_bluetooth() {
@@ -129,10 +107,6 @@ main() {
     local failed_services=()
     
     # Start services and collect any failures
-    if ! start_offlineimap; then
-        failed_services+=("offlineimap")
-    fi
-    
     if ! start_bluetooth; then
         failed_services+=("bluetooth")
     fi
@@ -144,7 +118,7 @@ main() {
     # Report results
     if [[ ${#failed_services[@]} -eq 0 ]]; then
         log "✓ All services restored successfully!"
-        log "Services started: offlineimap, bluetooth, nextcloud"
+        log "Services started: bluetooth, nextcloud"
     else
         log_error "⚠ Some services failed to start: ${failed_services[*]}"
         exit 1

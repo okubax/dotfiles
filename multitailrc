@@ -1,4 +1,10 @@
-# ii - irc client
+# ~/.multitailrc - used by the ii-chat* aliases (multitail -CS ii ...)
+# Color scheme for ii IRC log files:
+#   cyan    - timestamps
+#   magenta - nicknames
+#   green   - lines addressed to 'nion'
+#   yellow  - URLs
+#   blue    - joins and mode changes
 colorscheme:ii:ii IRC client http://www.suckless.org/wiki/tools/irc
 cs_re_s:cyan:(^....-..-.. ..:..)
 cs_re_s:magenta:^....-..-.. ..:.. <([[:alnum:]_\^\|`-]+)>
@@ -7,12 +13,14 @@ cs_re_s:yellow:(((http|https|ftp|gopher)|mailto):(//)?[^ <>\"[:blank:]]*|(www|ft
 cs_re:blue:....-..-.. ..:...*has joined \#.*
 cs_re:blue:....-..-.. ..:.. .*changed mode.*
 
+# Window title and timestamp formats
 titlebar:%m %u@%h %f (%t) [%l]
 
 statusline_ts_format:%d/%m %H:%M
 
 line_ts_format:%H:%M:%S
 
+# Don't check for new mail
 check_mail:0
 
 # Pick default screen
