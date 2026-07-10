@@ -1,0 +1,101 @@
+#!/bin/bash
+# ii-sway - Sway integration for the ii IRC client.
+# Bound in the sway config: $mod+i chat, $mod+Shift+i quick-chat,
+# $mod+Ctrl+i compose, $mod+Alt+i status, $mod+F1..F3 monitor.
+# Usage: ii-sway {chat|quick-chat|compose|status|monitor [channel]}
+
+case "$1" in
+    "chat")
+        # Launch multitail with all active channels
+        cmd=$(~/bin/ii-start multitail-quiet)
+        if [ $? -eq 0 ] && [ -n "$cmd" ]; then
+            exec kitty -e sh -c "$cmd"
+        else
+            notify-send "ii IRC" "No active channels found. Start ii first." --urgency=critical
+        fi
+        ;;
+        
+    "quick-chat")
+        # Just show the most active channels (your specific channels)
+        exec kitty -e multitail -CS ii -s 2 \
+            "$HOME/irc/lb/127.0.0.1/#archlinux/out" \
+            "$HOME/irc/lb/127.0.0.1/#sway/out" \
+            "$HOME/irc/lb/127.0.0.1/#bash/out" \
+            "$HOME/irc/sn/127.0.0.1/#f1/out" \
+            "$HOME/irc/of/127.0.0.1/#wayland/out"
+        ;;
+        
+    "compose")
+        # Quick message interface using wofi
+        channel=$(echo -e "#archlinux\n#sway\n#bash\n#wayland\n#f1" | \
+                 wofi -H 260 --dmenu --prompt "Channel:")
+        
+        if [ -n "$channel" ]; then
+            message=$(echo "" | wofi -H 260 --dmenu --prompt "Message to $channel:")
+            if [ -n "$message" ]; then
+                # Route to correct network based on your setup
+                case "$channel" in
+                    "#archlinux"|"#sway"|"#bash")
+                        echo "$message" > "$HOME/irc/lb/127.0.0.1/$channel/in"
+                        network="Libera Chat"
+                        ;;
+                    "#wayland")
+                        echo "$message" > "$HOME/irc/of/127.0.0.1/$channel/in"
+                        network="OFTC"
+                        ;;
+                    "#f1")
+                        echo "$message" > "$HOME/irc/sn/127.0.0.1/$channel/in"
+                        network="Snoonet"
+                        ;;
+                    *)
+                        notify-send "ii IRC" "Unknown channel: $channel" --urgency=critical
+                        exit 1
+                        ;;
+                esac
+                notify-send "ii IRC" "Message sent to $channel ($network)"
+            fi
+        fi
+        ;;
+        
+    "status")
+        # Show ii status in a notification
+        status=$(~/bin/ii-start status 2>&1)
+        notify-send "ii IRC Status" "$status" --urgency=normal
+        ;;
+
+    "monitor")
+        # Individual channel monitoring shortcuts
+        case "$2" in
+            "arch")
+                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#archlinux/out"
+                ;;
+            "sway")
+                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#sway/out"
+                ;;
+            "bash")
+                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#bash/out"
+                ;;
+            "wayland")
+                exec kitty -e tail -f "$HOME/irc/of/127.0.0.1/#wayland/out"
+                ;;
+            "f1")
+                exec kitty -e tail -f "$HOME/irc/sn/127.0.0.1/#f1/out"
+                ;;
+            *)
+                echo "Available channels: arch, sway, bash, wayland, f1"
+                ;;
+        esac
+        ;;
+        
+    *)
+        echo "Usage: $0 {chat|quick-chat|compose|status|monitor [channel]}"
+        echo
+        echo "Commands:"
+        echo "  chat       - Launch full multitail viewer"
+        echo "  quick-chat - Launch with your active channels"
+        echo "  compose    - Quick message composer using wofi"
+        echo "  status     - Show ii status notification"
+        echo "  monitor    - Monitor individual channel (arch|sway|bash|wayland|f1)"
+        exit 1
+        ;;
+esac

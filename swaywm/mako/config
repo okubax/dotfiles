@@ -1,4 +1,7 @@
-font=Ubuntu Mono 11
+# Mako notification daemon (Catppuccin theme)
+# Started from the sway config: exec /usr/bin/mako
+
+font=Ubuntu Mono 9
 background-color=#1e1e2e
 text-color=#f5e0dc
 max-icon-size=48

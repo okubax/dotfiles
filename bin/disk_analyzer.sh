@@ -2,6 +2,8 @@
 
 # Collapsible Disk Usage Analyzer for Arch Linux
 # Features: Interactive tree view, colors, size bars, duplicate detection, cache cleanup
+# Usage: disk_analyzer.sh [options] [directory]  (see --help for all options)
+# Wrapped by the du-* aliases in ~/.aliases_script (dus, du-home, du-big, ...)
 
 # Color definitions
 RED='\033[0;31m'
@@ -368,7 +370,7 @@ interactive_mode() {
                 max_size=$(get_max_size "$dir")
                 ;;
             f|F|full)
-                COMPACT_MODE=$(!$COMPACT_MODE && echo true || echo false)
+                if [[ "$COMPACT_MODE" == true ]]; then COMPACT_MODE=false; else COMPACT_MODE=true; fi
                 ;;
             +)
                 SHOW_TOP_N=$((SHOW_TOP_N + 5))

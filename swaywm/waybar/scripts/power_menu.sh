@@ -115,9 +115,10 @@ confirm_action() {
 lock_screen() {
     log_info "Locking screen..."
     
-    # Try swaylock first
+    # Try swaylock first (-f: fork to background so callers like
+    # suspend_system don't block until the screen is unlocked)
     if command -v swaylock &> /dev/null; then
-        if swaylock; then
+        if swaylock -f; then
             log_debug "Screen locked with swaylock"
             return 0
         else

@@ -1,32 +1,126 @@
 #!/usr/bin/env python
+"""auru - check installed AUR (foreign) packages for available updates.
+
+Compares every locally installed package that isn't in a sync repo
+against the AUR RPC API. Exit code: 0 = up to date, 1 = updates available.
+Options: -q/--quiet (exit code only), --color/--no-color.
+"""
 
 import pyalpm
 from pycman import config
 from json import loads
-from subprocess import check_output
 from urllib.request import urlopen
+from urllib.error import URLError, HTTPError
+import sys
+import argparse
 
-aur='https://aur.archlinux.org/rpc/?v=5&'
-newer_fmt = '\033[34m:: \033[0;1m{Name} \033[0;31m{Old}\033[0m -> \033[32m{New}\033[0m'
-older_fmt = '\033[34m:: \033[0;1m{Name} \033[0m{Old} != {New}'
+AUR_RPC = 'https://aur.archlinux.org/rpc/?v=5&'
+TIMEOUT = 10  # seconds
 
-handle = config.init_with_config("/etc/pacman.conf")
+def supports_color():
+    """Check if terminal supports color output."""
+    return hasattr(sys.stdout, 'isatty') and sys.stdout.isatty()
 
-syncpkgs = set(p.name for db in handle.get_syncdbs() for p in db.pkgcache)
+def get_format_strings(use_color):
+    """Return format strings based on color support."""
+    if use_color:
+        newer_fmt = '\033[34m:: \033[0;1m{Name} \033[0;31m{Old}\033[0m -> \033[32m{New}\033[0m'
+        older_fmt = '\033[34m:: \033[0;1m{Name} \033[0m{Old} != {New}'
+    else:
+        newer_fmt = ':: {Name} {Old} -> {New}'
+        older_fmt = ':: {Name} {Old} != {New}'
+    return newer_fmt, older_fmt
 
-foreign_vers = { p.name: p.version for p in handle.get_localdb().pkgcache if not p.name in syncpkgs }
+def check_aur_updates(quiet=False, use_color=None):
+    """Check for AUR package updates."""
+    # Auto-detect color support if not specified
+    if use_color is None:
+        use_color = supports_color()
 
-params = '&arg[]=' + '&arg[]='.join(foreign_vers.keys())
+    newer_fmt, older_fmt = get_format_strings(use_color)
 
-with urlopen(aur + 'type=info' + params) as url:
-   info  = loads(url.read().decode())['results']
+    try:
+        handle = config.init_with_config("/etc/pacman.conf")
+    except Exception as e:
+        print(f"Error: Failed to initialize pacman config: {e}", file=sys.stderr)
+        return 1
 
-for pkg in info:
-    params = {'Name': pkg['Name'], 'Old': foreign_vers[pkg['Name']], 'New': pkg['Version']}
-    newer = pyalpm.vercmp(pkg['Version'], foreign_vers[pkg['Name']])
-    if newer > 0:
-        print(newer_fmt.format(**params))
-    elif newer < 0:
-        print(older_fmt.format(**params))
+    syncpkgs = set(p.name for db in handle.get_syncdbs() for p in db.pkgcache)
+    foreign_vers = {p.name: p.version for p in handle.get_localdb().pkgcache if p.name not in syncpkgs}
+
+    if not foreign_vers:
+        if not quiet:
+            print("No AUR packages found.")
+        return 0
+
+    params = '&arg[]=' + '&arg[]='.join(foreign_vers.keys())
+
+    try:
+        with urlopen(AUR_RPC + 'type=info' + params, timeout=TIMEOUT) as url:
+            data = loads(url.read().decode())
+
+            if 'results' not in data:
+                print("Error: Unexpected API response format", file=sys.stderr)
+                return 1
+
+            info = data['results']
+    except HTTPError as e:
+        print(f"Error: HTTP {e.code} - {e.reason}", file=sys.stderr)
+        return 1
+    except URLError as e:
+        print(f"Error: Failed to connect to AUR: {e.reason}", file=sys.stderr)
+        return 1
+    except Exception as e:
+        print(f"Error: Failed to fetch AUR data: {e}", file=sys.stderr)
+        return 1
+
+    updates_available = 0
+    downgrades = 0
+
+    for pkg in info:
+        params = {'Name': pkg['Name'], 'Old': foreign_vers[pkg['Name']], 'New': pkg['Version']}
+        newer = pyalpm.vercmp(pkg['Version'], foreign_vers[pkg['Name']])
+        if newer > 0:
+            if not quiet:
+                print(newer_fmt.format(**params))
+            updates_available += 1
+        elif newer < 0:
+            if not quiet:
+                print(older_fmt.format(**params))
+            downgrades += 1
+
+    if not quiet and (updates_available > 0 or downgrades > 0):
+        print()
+        if updates_available > 0:
+            print(f"{updates_available} update(s) available")
+        if downgrades > 0:
+            print(f"{downgrades} package(s) newer than AUR")
+
+    return 0 if updates_available == 0 else 1
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Check for AUR package updates',
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('-q', '--quiet', action='store_true',
+                       help='suppress output, only set exit code')
+
+    color_group = parser.add_mutually_exclusive_group()
+    color_group.add_argument('--color', dest='color', action='store_const',
+                            const=True, help='force color output')
+    color_group.add_argument('--no-color', dest='color', action='store_const',
+                            const=False, help='disable color output')
+
+    args = parser.parse_args()
+
+    try:
+        return check_aur_updates(quiet=args.quiet, use_color=args.color)
+    except KeyboardInterrupt:
+        print("\nInterrupted by user", file=sys.stderr)
+        return 130
+
+if __name__ == '__main__':
+    sys.exit(main())
 
 

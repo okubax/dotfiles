@@ -1,3 +1,7 @@
+# Custom ranger commands: archive extraction/creation via atool
+# (:extract, :archive, :extracthere, :compress).
+# NOTE: 'archive' and 'compress' are near-identical (both pack the current
+# selection with apack); kept both since both may be bound/used.
 import os
 from ranger.api.commands import *
 from ranger.core.loader import CommandLoader

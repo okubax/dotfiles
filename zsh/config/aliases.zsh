@@ -9,6 +9,8 @@
 alias ll='ls -alF'
 alias la='ls -A'
 alias l='ls -CF'
+# NOTE: this overrides the grep='grep --color=always' alias from
+# ~/.aliases_system, since this file runs after ~/.aliases is sourced
 alias grep='grep --color=auto'
 alias fgrep='fgrep --color=auto'
 alias egrep='egrep --color=auto'

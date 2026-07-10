@@ -1,4 +1,13 @@
 #!/bin/bash
+# Launch the conky todo.txt overlay (see conkyrc in this directory)
+set -euo pipefail
 
-#todo
-sleep 10 && conky -c $HOME/.todo/conkyrc ;
+CONKY_CONFIG="$HOME/.todo/conkyrc"
+
+if [[ ! -f "$CONKY_CONFIG" ]]; then
+    echo "Error: Conky config not found at $CONKY_CONFIG" >&2
+    exit 1
+fi
+
+# Start conky in background, suppress output
+nohup conky -c "$CONKY_CONFIG" >/dev/null 2>&1 &

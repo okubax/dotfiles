@@ -1,5 +1,8 @@
 #
-# ~/.ncmpcpp/config
+# ~/.ncmpcpp/config - ncurses MPD client
+# Minimal look: header and statusbar hidden, custom progressbar,
+# spectrum visualizer fed by mpd's fifo output (/tmp/mpd.fifo).
+# Note: the [section] headers below are decorative labels ncmpcpp ignores.
 #
 
 # connection settings

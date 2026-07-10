@@ -104,9 +104,8 @@ declare -A FILE_CATEGORIES=(
     ["exe"]="applications"
     ["msi"]="applications"
     ["app"]="applications"
-    ["deb"]="applications"
-    ["rpm"]="applications"
     ["appimage"]="applications"
+    # Note: deb/rpm are kept under archives (already defined above)
     
     # Fonts
     ["ttf"]="fonts"

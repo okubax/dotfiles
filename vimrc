@@ -1,4 +1,5 @@
-execute pathogen#infect()
+" ~/.vimrc
+" Leader key is ',' (set in the leader section below)
 
 "general
 "-------
@@ -20,7 +21,9 @@ filetype indent on      " load filetype-specific indent files
 set wildmenu            " visual autocomplete for command menu
 set lazyredraw          " redraw only when we need to.
 set showmatch           " highlight matching [{()}]
+" Catppuccin theme from ~/.vim/colors
 colorscheme catppuccin_macchiato
+
 "search
 "------
 set incsearch           " search as characters are entered
@@ -51,6 +54,9 @@ autocmd FileType mail set spell
 
 "statusline
 "----------
+" Hand-rolled statusline: mode indicator, buffer number, paste/spell flags,
+" file name, then right-aligned file type, line:column and percentage.
+" The %#...# items switch highlight groups for colour.
 set laststatus=2
 set statusline=
 set statusline+=%#DiffAdd#%{(mode()=='n')?'\ \ NORMAL\ ':''}
@@ -75,10 +81,13 @@ set statusline+=\ %3l:%-2c\         " line + column
 set statusline+=%#Cursor#       " colour
 set statusline+=\ %3p%%\                " percentage
 
-" mappings
+"ii IRC mappings
+"---------------
+" Send the current line to an ii channel FIFO (used when composing IRC
+" messages from within the ~/irc directories): w1=#archlinux, w2=#bash, w3=#f1
 map w1 :.w >>\#archlinux/in
 map w2 :.w >>\#bash/in
 map w3 :.w >>\#f1/in
 
-" jump to last edied position
+" jump to last edited position when reopening a file
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif

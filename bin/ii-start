@@ -7,25 +7,25 @@ CREDENTIALS_FILE="$HOME/.config/ii/credentials"
 
 # Server configurations
 declare -A SERVERS=(
-    ["net1"]="127.0.0.1:6698:user1"
-    ["net2"]="127.0.0.1:6697:user2" 
-    ["net3"]="127.0.0.1:6699:user3"
+    ["lb"]="127.0.0.1:6698:your_nick"
+    ["sn"]="127.0.0.1:6697:your_nick" 
+    ["of"]="127.0.0.1:6699:your_nick"
 )
 
 # Channel configurations
 declare -A CHANNELS=(
-    ["net1"]="#channel1 #channel2 #channel3"
-    ["net2"]="#channel4"
-    ["net3"]="#channel5"
+    ["lb"]="#archlinux #sway #bash"
+    ["sn"]="#f1"
+    ["of"]="#wayland"
 )
 
-# Network-specific credentials (network:nick:password)
-# NOTE: Remove these and use credentials file instead for security
-declare -A NETWORK_CREDENTIALS=(
-    # ["net1:user1"]="password1"
-    # ["net2:user2"]="password2"
-    # ["net3:user3"]="password3"
-)
+# Network-specific credentials are loaded exclusively from CREDENTIALS_FILE.
+# Do NOT hardcode passwords here — this file is version-controlled.
+# Add entries to ~/.config/ii/credentials in the format:
+#   network:nick:password   (e.g. lb:your_nick:yourpassword)
+# or the legacy format:
+#   nick:password
+declare -A NETWORK_CREDENTIALS=()
 
 # Functions
 check_stunnel() {
@@ -119,7 +119,7 @@ authenticate() {
         
         # Different networks use different IDENTIFY syntax
         case "$name" in
-            "net3")
+            "of")
                 # OFTC uses: IDENTIFY password (no nickname)
                 echo "/j NickServ IDENTIFY $password" > "$IRC_HOME/$name/$host/in"
                 ;;

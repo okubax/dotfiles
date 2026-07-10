@@ -1,10 +1,15 @@
+# Swaylock configuration
+# Minimal look: blurred wallpaper with only a large clock visible.
+# Triggered by $mod+Escape and by swayidle after 15 minutes (see sway config).
+
 ignore-empty-password
 disable-caps-lock-text
-image=~/.img/wallpapers/catppuccin_macchiato_pixelated.png
+image=~/.img/wallpapers/catppuccin_wallpaper.png
 font=Ubuntu Mono
 effect-blur=30x2
 fade-in=0.4
 
+# Hide the default indicator ring/text entirely (everything fully transparent)
 text-ver-color=00000000
 text-wrong-color=00000000
 text-clear-color=00000000
@@ -26,6 +31,7 @@ caps-lock-bs-hl-color=00000000
 caps-lock-key-hl-color=00000000
 separator-color=00000000
 
+# Large clock in place of the indicator
 scaling=fill
 indicator
 clock
