@@ -13,3 +13,6 @@ border-size=2
 border-color=#eba0ac
 border-radius=15
 default-timeout=10000
+
+# Show notifications above fullscreen windows
+layer=overlay

@@ -60,7 +60,7 @@ check_dependencies() {
     
     if [[ ${#missing_deps[@]} -gt 0 ]]; then
         log_error "Missing required dependencies: ${missing_deps[*]}"
-        notify_user "Error" "Missing dependencies: ${missing_deps[*]}"
+        notify_user "critical" "Missing dependencies: ${missing_deps[*]}"
         exit 1
     fi
 }
@@ -69,20 +69,18 @@ check_dependencies() {
 check_sway_session() {
     if [[ -z "${SWAYSOCK:-}" ]] && ! pgrep -x sway &> /dev/null; then
         log_error "Not running in a Sway session"
-        notify_user "Error" "This script requires Sway window manager"
+        notify_user "critical" "This script requires Sway window manager"
         exit 1
     fi
 }
 
-# Send notification to user
+# Send notification to user (urgency must be low/normal/critical)
 notify_user() {
     local urgency="$1"
     local message="$2"
-    
+
     if command -v notify-send &> /dev/null; then
         notify-send --urgency="$urgency" "Power Menu" "$message"
-    elif command -v mako &> /dev/null; then
-        echo "$message" | mako
     else
         log_info "Notification: $message"
     fi
