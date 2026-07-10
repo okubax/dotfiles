@@ -19,10 +19,11 @@ default_floating_border pixel 3
 gaps inner 9
 
 # Color scheme (Catppuccin-inspired)
-# class          border  backgr. text    flag    child_border
-client.focused   #ABE9B3 #ABE9B3 #1e1e2e #ABE9B3 #ABE9B3
-client.unfocused #988BA2 #988BA2 #1e1e2e #988BA2 #988BA2
-client.urgent    #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD
+# class                  border  backgr. text    flag    child_border
+client.focused           #ABE9B3 #ABE9B3 #1e1e2e #ABE9B3 #ABE9B3
+client.focused_inactive  #C9CBFF #C9CBFF #1e1e2e #C9CBFF #C9CBFF
+client.unfocused         #988BA2 #988BA2 #1e1e2e #988BA2 #988BA2
+client.urgent            #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD
 
 # -----------------------------------------------------------------------------
 # VARIABLES
@@ -72,14 +73,12 @@ floating_modifier $mod normal
 #   yams                    - Last.fm scrobbler for mpd
 #   nextcloud               - sync client (background)
 #   mako                    - notification daemon
-#   playerctld              - media key routing to the active player
 #   sway-audio-idle-inhibit - prevent idle/lock while audio is playing
 #   import-gsettings        - sync GTK theme settings into the session
 exec mpd
 exec yams
 exec nextcloud --background
 exec /usr/bin/mako
-exec playerctld daemon
 exec sway-audio-idle-inhibit
 exec_always import-gsettings
 
@@ -176,6 +175,7 @@ bindsym XF86AudioPrev exec "mpc prev"
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +5%
 bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ -5%
 bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ toggle
+bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle
 
 # MPD controls on Alt keys (for keyboards without media keys)
 bindsym mod1+a exec mpc play
@@ -218,6 +218,18 @@ bindsym $mod+space focus mode_toggle
 # Scratchpad: $mod+n hides a window, $mod+Shift+n cycles hidden windows back
 bindsym $mod+n move scratchpad
 bindsym $mod+Shift+n scratchpad show
+
+# Resize mode: $mod+m to enter, vim keys to resize, Escape/Return to leave
+bindsym $mod+m mode "resize"
+mode "resize" {
+    bindsym $left resize shrink width 10px
+    bindsym $down resize grow height 10px
+    bindsym $up resize shrink height 10px
+    bindsym $right resize grow width 10px
+
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
 
 # -----------------------------------------------------------------------------
 # KEY BINDINGS - WORKSPACES
