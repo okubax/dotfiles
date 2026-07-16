@@ -1,15 +1,33 @@
 <!doctype html>
+<html lang="en">
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 
 <title>~</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ctext x='1' y='13' font-size='15' fill='%23888'%3E~%3C/text%3E%3C/svg%3E">
 
-<script>WebFontConfig={google:{families:['Lato:300:latin']}};</script>
-<script src="https://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js" async></script>
+<script>
+  /* Apply the theme before first paint to avoid a white flash at night.
+     Keep the hours in sync with config.darkHours below. */
+  (function() {
+    var theme = 'light';
+    try {
+      if (localStorage.getItem('autoTheme') !== 'false') {
+        var hour = new Date().getHours();
+        var dark = hour >= 19 || hour < 7;
+        if (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) dark = true;
+        theme = dark ? 'dark' : 'light';
+      } else if (localStorage.getItem('theme') === 'dark') {
+        theme = 'dark';
+      }
+    } catch (e) {}
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
 
-<style type="text/css">
+<style>
   :root {
     /* Light theme (default) */
     --bg-color: #ffffff;
@@ -42,7 +60,7 @@
     padding: 0;
     color: var(--text-color);
     background-color: var(--bg-color);
-    font-family: 'Lato', sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-weight: 300;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
@@ -61,9 +79,16 @@
 
   time {
     display: block;
-    margin-bottom: 20px;
     font-size: 5rem;
     letter-spacing: 6px;
+  }
+
+  .date {
+    display: block;
+    margin: 0 0 25px;
+    font-size: 0.95rem;
+    letter-spacing: 3px;
+    opacity: 0.8;
   }
 
   input,
@@ -83,7 +108,7 @@
     border-radius: 2px;
     background-color: var(--input-bg);
     color: var(--input-text);
-    font-family: 'Lato', sans-serif;
+    font-family: inherit;
     font-size: 1.1rem;
   }
 
@@ -191,8 +216,9 @@
 
 <main>
   <time id="js-clock"></time>
+  <div class="date" id="js-date"></div>
   <form id="js-search-form" autocomplete="off">
-    <input id="js-search-input" type="text" autofocus>
+    <input id="js-search-input" type="text" autofocus spellcheck="false" autocapitalize="off" autocorrect="off">
   </form>
 </main>
 
@@ -201,124 +227,131 @@
   <ul id="js-help"></ul>
 </aside>
 
-<button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌙</button>
+<button class="theme-toggle" id="theme-toggle" title="Toggle theme">🌗</button>
 <div class="auto-indicator" id="auto-indicator">AUTO</div>
 
 <script>
   var config = {
+    // `url` is where a bare key navigates; `search` is appended (with the
+    // query) to `searchUrl` if present, otherwise to `url`.
     commands: [
-      { key: 'a', name: 'ArchLinux', url: 'https://www.archlinux.org', search: '/s/?field-keywords=' },
+      { key: 'a', name: 'ArchLinux', url: 'https://archlinux.org', search: '/packages/?q=' },
       { key: 'b', name: 'BBC', url: 'https://www.bbc.co.uk', search: '/search?q=' },
-      { key: 'd', name: 'Drive', url: 'https://your-nextcloud-server.com/index.php/apps/files/', search: '/search?q=' },
-      { key: 'c', name: 'Calender', url: 'https://your-nextcloud-server.com/index.php/apps/calendar/', search: 'search?q=' },
-      { key: 'C', name: 'Contacts', url: 'https://your-nextcloud-server.com/index.php/apps/contacts/', search: 'search?q=' },
+      { key: 'd', name: 'Drive', url: 'https://your-nextcloud-server.com/index.php/apps/files/' },
+      { key: 'c', name: 'Calendar', url: 'https://your-nextcloud-server.com/index.php/apps/calendar/' },
+      { key: 'C', name: 'Contacts', url: 'https://your-nextcloud-server.com/index.php/apps/contacts/' },
       { key: 'e', name: 'Egghead', url: 'https://egghead.io', search: '/search?q=' },
       { key: 'f', name: 'Facebook', url: 'https://www.facebook.com', search: '/search/top/?q=' },
       { key: 'g', name: 'GitHub', url: 'https://github.com', search: '/search?q=' },
-      { key: 'G', name: 'Guardian', url: 'https://www.theguardian.com/uk', search: '/search?q=' },
-      { key: 'h', name: 'Hacker News', url: 'https://news.ycombinator.com/news', search: '/?query=' },
-      { key: 'm', name: 'Gmail', url: 'https://mail.google.com/mail/u/0/#inbox', search: '/search?q=' },
-      { key: 'n', name: 'Notes', url: 'https://your-nextcloud-server.com/index.php/apps/notes/', search: '/search?q=' },
-      { key: 'o', name: 'Outlook', url: 'https://outlook.com/', search: '/search?q=' },
+      { key: 'G', name: 'Guardian', url: 'https://www.theguardian.com/uk', searchUrl: 'https://www.theguardian.com', search: '/search?q=' },
+      { key: 'h', name: 'Hacker News', url: 'https://news.ycombinator.com', searchUrl: 'https://hn.algolia.com', search: '/?q=' },
+      { key: 'm', name: 'Gmail', url: 'https://mail.google.com/mail/u/0/#inbox', searchUrl: 'https://mail.google.com/mail/u/0/', search: '#search/' },
+      { key: 'n', name: 'Notes', url: 'https://your-nextcloud-server.com/index.php/apps/notes/' },
+      { key: 'o', name: 'Outlook', url: 'https://outlook.live.com/mail/0/' },
       { key: 'p', name: 'Paper', url: 'https://your-notes-app.example.com', search: '/search?q=' },
       { key: 'r', name: 'Reddit', url: 'https://www.reddit.com', search: '/search?q=' },
       { key: 's', name: 'Stack Exchange', url: 'https://stackexchange.com', search: '/search?q=' },
       { key: 'S', name: 'SoundCloud', url: 'https://soundcloud.com', search: '/search?q=' },
-      { key: 't', name: 'Twitter', url: 'https://twitter.com', search: '/search?q=' },
-      { key: 'u', name: 'Unsplash', url: 'https://unsplash.com', search: '/search?keyword=' },
-      { key: 'U', name: 'UoPeople', url: 'http://my.uopeople.edu/', search: '/search?keyword=' },
-      { key: 'y', name: 'YouTube', url: 'https://www.youtube.com', search: '/search?q=' },
+      { key: 't', name: 'X (Twitter)', url: 'https://x.com', search: '/search?q=' },
+      { key: 'u', name: 'Unsplash', url: 'https://unsplash.com', search: '/s/photos/' },
+      { key: 'U', name: 'UoPeople', url: 'https://my.uopeople.edu/' },
+      { key: 'y', name: 'YouTube', url: 'https://www.youtube.com', search: '/results?search_query=' },
     ],
 
     defaultCommand: 'https://www.google.com/search?q=',
     searchDelimiter: ':',
 
-    // Theme settings
+    // Theme settings (keep darkHours in sync with the inline script in <head>)
     darkHours: { start: 19, end: 7 }, // Dark theme from 7 PM to 7 AM
     autoTheme: true // Enable automatic theme switching
   };
 
   /**
    * Theme Management
+   * Cycle: auto → light → dark → auto. Auto is dark when the OS prefers
+   * dark OR the current hour falls inside darkHours.
    */
   var Theme = (function(config) {
     var themeToggle = document.getElementById('theme-toggle');
     var autoIndicator = document.getElementById('auto-indicator');
+    var darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
     var currentTheme = 'light';
     var isAuto = config.autoTheme;
 
-    function setTheme(theme) {
+    function storageGet(key) {
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+
+    function storageSet(key, value) {
+      try { localStorage.setItem(key, value); } catch (e) {}
+    }
+
+    function updateButton() {
+      if (isAuto) {
+        themeToggle.textContent = '🌗';
+        themeToggle.title = 'Theme: auto (' + currentTheme + ') — click for light';
+      } else if (currentTheme === 'light') {
+        themeToggle.textContent = '☀️';
+        themeToggle.title = 'Theme: light — click for dark';
+      } else {
+        themeToggle.textContent = '🌙';
+        themeToggle.title = 'Theme: dark — click for auto';
+      }
+    }
+
+    function applyTheme(theme) {
       currentTheme = theme;
       document.documentElement.setAttribute('data-theme', theme);
-      themeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
-      localStorage.setItem('theme', theme);
+      updateButton();
+    }
+
+    function updateAutoTheme() {
+      if (!isAuto) return;
+      var hour = new Date().getHours();
+      var dark = hour >= config.darkHours.start || hour < config.darkHours.end;
+      if (darkQuery && darkQuery.matches) dark = true;
+      applyTheme(dark ? 'dark' : 'light');
     }
 
     function setAutoMode(auto) {
       isAuto = auto;
-      localStorage.setItem('autoTheme', auto.toString());
-      if (auto) {
-        autoIndicator.classList.add('show');
-        updateThemeByTime();
-      } else {
-        autoIndicator.classList.remove('show');
-      }
+      storageSet('autoTheme', auto.toString());
+      autoIndicator.classList.toggle('show', auto);
+      if (auto) updateAutoTheme();
     }
 
-    function updateThemeByTime() {
-      if (!isAuto) return;
-
-      var hour = new Date().getHours();
-      var shouldBeDark = hour >= config.darkHours.start || hour < config.darkHours.end;
-      var newTheme = shouldBeDark ? 'dark' : 'light';
-      
-      if (newTheme !== currentTheme) {
-        setTheme(newTheme);
-      }
-    }
-
-    // Initialize theme
-    var savedTheme = localStorage.getItem('theme');
-    var savedAuto = localStorage.getItem('autoTheme');
-    
-    if (savedAuto !== null) {
-      isAuto = savedAuto === 'true';
-    }
+    // Initialize from saved state (the inline head script already painted it)
+    var savedAuto = storageGet('autoTheme');
+    if (savedAuto !== null) isAuto = savedAuto === 'true';
 
     if (isAuto) {
-      updateThemeByTime();
       setAutoMode(true);
-    } else if (savedTheme) {
-      setTheme(savedTheme);
     } else {
-      setTheme('light');
+      applyTheme(storageGet('theme') === 'dark' ? 'dark' : 'light');
     }
 
-    // Theme toggle button
     themeToggle.addEventListener('click', function() {
       if (isAuto) {
-        // First click: disable auto mode and set opposite theme
         setAutoMode(false);
-        var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        setTheme(newTheme);
+        applyTheme('light');
+        storageSet('theme', 'light');
+      } else if (currentTheme === 'light') {
+        applyTheme('dark');
+        storageSet('theme', 'dark');
       } else {
-        // Toggle between themes, or enable auto if we're cycling back
-        if (currentTheme === 'light') {
-          setTheme('dark');
-        } else {
-          // Re-enable auto mode
-          setAutoMode(true);
-          updateThemeByTime();
-        }
+        setAutoMode(true);
       }
     });
 
-    // Update theme every minute when in auto mode
-    setInterval(updateThemeByTime, 60000);
+    // Track OS theme changes and re-check the clock every minute
+    if (darkQuery) {
+      var onSchemeChange = function() { updateAutoTheme(); };
+      if (darkQuery.addEventListener) darkQuery.addEventListener('change', onSchemeChange);
+      else if (darkQuery.addListener) darkQuery.addListener(onSchemeChange);
+    }
+    setInterval(updateAutoTheme, 60000);
 
     return {
-      updateThemeByTime: updateThemeByTime,
-      setTheme: setTheme,
       getCurrentTheme: function() { return currentTheme; }
     };
   })(config);
@@ -328,6 +361,7 @@
    */
   (function() {
     var clock = document.getElementById('js-clock');
+    var dateLine = document.getElementById('js-date');
 
     function leftpad(num) {
       return ('0' + num.toString()).slice(-2);
@@ -335,9 +369,10 @@
 
     function setTime() {
       var date = new Date();
-      var hours = leftpad(date.getHours());
-      var minutes = leftpad(date.getMinutes());
-      clock.innerHTML = hours + ' ' + minutes;
+      clock.textContent = leftpad(date.getHours()) + ' ' + leftpad(date.getMinutes());
+      dateLine.textContent = date.toLocaleDateString('en-GB', {
+        weekday: 'long', day: 'numeric', month: 'long'
+      });
     }
 
     setTime();
@@ -351,23 +386,29 @@
     var head = document.getElementsByTagName('head')[0];
     var sidebar = document.getElementById('js-sidebar');
     var searchHelp = document.getElementById('js-help');
+    var seenOrigins = {};
 
     config.commands.forEach(function(command) {
-      var prefetch = document.createElement('link');
+      var origin = new URL(command.url).origin;
+      if (!seenOrigins[origin]) {
+        seenOrigins[origin] = true;
+        var prefetch = document.createElement('link');
+        prefetch.rel = 'dns-prefetch';
+        prefetch.href = origin;
+        head.appendChild(prefetch);
+      }
+
       var li = document.createElement('li');
       var anchor = document.createElement('a');
       var key = document.createElement('span');
       var name = document.createElement('span');
 
-      prefetch.rel = 'prerender';
-      prefetch.href = command.url;
       key.className = 'help-key';
-      key.innerHTML = command.key + config.searchDelimiter + ' ';
+      key.textContent = command.key + config.searchDelimiter + ' ';
       name.className = 'help-name';
-      name.innerHTML = command.name;
+      name.textContent = command.name;
       anchor.href = command.url;
 
-      head.appendChild(prefetch);
       anchor.appendChild(key);
       anchor.appendChild(name);
       li.appendChild(anchor);
@@ -375,7 +416,7 @@
     });
 
     document.addEventListener('keydown', function(event) {
-      if (event.keyCode === 27) sidebar.removeAttribute('data-toggled');
+      if (event.key === 'Escape') sidebar.removeAttribute('data-toggled');
     });
 
     return {
@@ -392,42 +433,90 @@
   var Form = (function(config) {
     var searchForm = document.getElementById('js-search-form');
     var searchInput = document.getElementById('js-search-input');
-    var urlRegex = /(\b(https?|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/i;
+    var urlRegex = /^(https?|file):\/\/\S+$/i;
+    var domainRegex = /^[a-z0-9-]+(\.[a-z0-9-]+)+(:\d+)?(\/\S*)?$/i;
 
-    searchForm.addEventListener('submit', function(event) {
-      event.preventDefault();
+    function buildRedirect(raw) {
+      // A leading space or quote forces a plain search: no command matching,
+      // no URL detection, and a trailing ! is kept literal.
+      var forcePlain = /^[\s'"]/.test(raw);
+      var q = raw.replace(/^[\s'"]+/, '').trim();
+      var newTab = false;
 
-      var q = searchInput.value.trim();
-      var qSplit = q.split(config.searchDelimiter);
-      var validCommand = false;
-      var redirect = '';
-
-      if (q === '' || q === '?') {
-        Help.toggle();
-        searchInput.value = '';
-        return false;
+      if (!forcePlain && q.length > 1 && q.slice(-1) === '!') {
+        newTab = true;
+        q = q.slice(0, -1).trim();
       }
 
-      if (q.match(new RegExp(urlRegex))) {
+      if (q === '' || q === '?') return { help: true };
+
+      var redirect;
+      if (!forcePlain && urlRegex.test(q)) {
         redirect = q;
+      } else if (!forcePlain && domainRegex.test(q)) {
+        redirect = 'https://' + q;
       } else {
         redirect = config.defaultCommand + encodeURIComponent(q);
       }
 
-      config.commands.forEach(function(command) {
-        if (qSplit[0] === command.key) {
-          if (qSplit[1] && command.search) {
-            qSplit.shift();
-            var search = encodeURIComponent(qSplit.join(config.searchDelimiter).trim());
-            redirect = command.url + command.search + search;
-          } else {
-            redirect = command.url;
+      if (!forcePlain) {
+        var qSplit = q.split(config.searchDelimiter);
+        config.commands.forEach(function(command) {
+          if (qSplit[0] === command.key) {
+            if (qSplit[1] && command.search) {
+              qSplit.shift();
+              var search = encodeURIComponent(qSplit.join(config.searchDelimiter).trim());
+              redirect = (command.searchUrl || command.url) + command.search + search;
+            } else {
+              redirect = command.url;
+            }
           }
-        }
-      });
+        });
+      }
 
-      window.location.href = redirect;
-    }, false);
+      return { redirect: redirect, newTab: newTab };
+    }
+
+    function submitQuery(forceNewTab) {
+      var result = buildRedirect(searchInput.value);
+
+      if (result.help) {
+        Help.toggle();
+        searchInput.value = '';
+        return;
+      }
+
+      if (forceNewTab || result.newTab) {
+        window.open(result.redirect, '_blank');
+        searchInput.value = '';
+      } else {
+        window.location.href = result.redirect;
+      }
+    }
+
+    searchForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      submitQuery(false);
+    });
+
+    // Ctrl+Enter (or Cmd+Enter) opens the result in a new tab
+    searchInput.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        submitQuery(true);
+      }
+    });
+
+    // Keep the search box focused: typing anywhere lands in it, and
+    // switching back to the tab restores focus
+    document.addEventListener('keydown', function(event) {
+      if (document.activeElement === searchInput) return;
+      if (event.ctrlKey || event.altKey || event.metaKey) return;
+      if (event.key.length === 1) searchInput.focus();
+    });
+    window.addEventListener('focus', function() {
+      searchInput.focus();
+    });
 
     return {
       searchInput: searchInput
