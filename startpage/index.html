@@ -185,6 +185,10 @@
     width: 50px;
     height: 50px;
     cursor: pointer;
+    /* Buttons don't inherit the body font; route the icon glyphs straight
+       to a color emoji font so Firefox doesn't pick a symbol font for the
+       sun and render its U+FE0F variation selector as tofu */
+    font-family: 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
     font-size: 1.2rem;
     transition: all 0.3s ease;
     z-index: 10;
