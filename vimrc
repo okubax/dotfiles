@@ -9,7 +9,26 @@ set softtabstop=4           " number of spaces in tab when editing
 set expandtab               " tabs are spaces
 set mouse=a                 " enable mouse
 set undofile                " Maintain undo history between sessions
-set undodir=~/.vim/undodir  " persistent undo
+" Keep persistent undo OUTSIDE any git repo. ~/.vim is a symlink into this
+" dotfiles repo, so ~/.vim/undodir would put undo history — which records full
+" file contents, including any secrets — under version control. ~/.cache is
+" not tracked. Trailing // encodes the full path in the undofile name to avoid
+" collisions.
+if !isdirectory(expand('~/.cache/vim/undo'))
+    call mkdir(expand('~/.cache/vim/undo'), 'p', 0700)
+endif
+set undodir=~/.cache/vim/undo//  " persistent undo, outside the repo
+
+" Belt-and-braces: never write undo/swap/backup for secrets edited in place.
+" `pass edit` opens a plaintext temp file in /dev/shm/pass.XXXX/ (tmpfs, which
+" pass shreds) — but a persistent undofile would defeat that. Match tmpfs and
+" pass temp dirs and disable every on-disk history for those buffers.
+" Note: in autocmd patterns a single * does NOT cross /, so ** is required to
+" match files nested inside the tmpfs / pass temp directories.
+augroup secret_no_history
+    autocmd!
+    autocmd BufNewFile,BufReadPre /dev/shm/**,**/pass.*/** setlocal noundofile noswapfile nobackup nowritebackup
+augroup END
 set termguicolors
 
 "ui

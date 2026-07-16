@@ -30,6 +30,7 @@ declare -A SITE_REMOTE_PATHS
 declare -A SITE_EXCLUDES
 declare -A SITE_PRE_HOOKS
 declare -A SITE_POST_HOOKS
+declare -A SITE_BUILD_CMDS
 
 # Initialize log file
 init_log() {
@@ -92,17 +93,23 @@ load_config() {
 load_default_sites() {
     # Only load defaults if no sites defined in config
     if [[ ${#SITE_LOCAL_PATHS[@]} -eq 0 ]]; then
+        # Static sites built by a generator into <repo>/output (or _site).
+        # SITE_BUILD_CMDS runs before the rsync; omit it for sites with no build.
         SITE_LOCAL_PATHS[site1]="$LOCAL_PROJECTS/site1/remote/_site"
         SITE_REMOTE_PATHS[site1]="$REMOTE_BASE"
 
         SITE_LOCAL_PATHS[site2]="$LOCAL_PROJECTS/site2/remote/output"
         SITE_REMOTE_PATHS[site2]="$REMOTE_BASE/site2.example.com"
+        SITE_BUILD_CMDS[site2]="cd '$LOCAL_PROJECTS/site2/remote' && python3 ssg.py build"
 
         SITE_LOCAL_PATHS[site3]="$LOCAL_PROJECTS/site3/remote"
         SITE_REMOTE_PATHS[site3]="$REMOTE_BASE/site3.example.com"
 
-        SITE_LOCAL_PATHS[site4]="$LOCAL_PROJECTS/site4/remote"
+        # A PHP app uploaded as-is; exclude patterns are neither uploaded nor
+        # deleted, protecting server-owned runtime files from --with-delete
+        SITE_LOCAL_PATHS[site4]="$LOCAL_PROJECTS/site4"
         SITE_REMOTE_PATHS[site4]="$REMOTE_BASE/site4.example.com"
+        SITE_EXCLUDES[site4]="*.sql,.env,.git,.gitignore,cache,*.log"
     fi
 }
 
@@ -180,6 +187,15 @@ check_dependencies() {
         error "rsync is not installed. Please install it first."
         exit 1
     fi
+
+    # Fall back to the desktop keyring's ssh-agent when run without one
+    # (e.g. from cron or a non-login shell) so the passphrase-protected
+    # key can still be used
+    local gcr_sock="/run/user/$(id -u)/gcr/ssh"
+    if [[ -z "${SSH_AUTH_SOCK:-}" && -S "$gcr_sock" ]]; then
+        export SSH_AUTH_SOCK="$gcr_sock"
+        log "Using keyring ssh-agent: $gcr_sock"
+    fi
 }
 
 # Test SSH connection
@@ -229,6 +245,23 @@ run_hook() {
     return 0
 }
 
+# Run the site's build command if one is defined
+run_build() {
+    local site_name="$1"
+    local build_cmd="${SITE_BUILD_CMDS[$site_name]}"
+
+    if [[ -n "$build_cmd" ]]; then
+        log "Building $site_name: $build_cmd"
+        if bash -c "$build_cmd"; then
+            success "$site_name built successfully"
+        else
+            error "Build failed for $site_name (exit code: $?), aborting deployment"
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Deploy individual site
 deploy_site() {
     local site_name="$1"
@@ -236,6 +269,11 @@ deploy_site() {
     local remote_path="$3"
 
     log "Deploying $site_name..."
+
+    # Build the site first if a build command is defined
+    if ! run_build "$site_name"; then
+        return 1
+    fi
 
     # Validate local directory
     if [ ! -d "$local_path" ]; then
@@ -309,22 +347,43 @@ deploy_site_with_delete() {
     fi
     
     log "Deploying $site_name WITH DELETE..."
-    
+
+    # Build the site first if a build command is defined
+    if ! run_build "$site_name"; then
+        return 1
+    fi
+
     if [ ! -d "$local_path" ]; then
         error "Local directory $local_path does not exist"
         return 1
     fi
-    
+
+    # Honor the same excludes as deploy_site: excluded patterns are neither
+    # uploaded NOR deleted on the server, which protects server-owned runtime
+    # files (logs, caches) from --delete
+    local rsync_opts=(-avz --progress --delete)
+
+    if [[ -f "$SSH_KEY" ]]; then
+        rsync_opts+=(-e "ssh -i $SSH_KEY")
+    fi
+
+    if [[ -n "${SITE_EXCLUDES[$site_name]}" ]]; then
+        local IFS=','
+        for exclude in ${SITE_EXCLUDES[$site_name]}; do
+            rsync_opts+=(--exclude="$exclude")
+        done
+    fi
+
     # Show what will be transferred AND deleted
     log "Preparing to sync: $local_path -> $SERVER_USER@$SERVER_HOST:$remote_path"
     warning "Files on server that don't exist locally WILL BE DELETED"
-    
+
     if [ "$DRY_RUN" = "true" ]; then
         warning "DRY RUN MODE - Showing what would be deleted/transferred"
-        rsync -avz --dry-run --progress --delete "$local_path/" "$SERVER_USER@$SERVER_HOST:$remote_path/"
+        rsync "${rsync_opts[@]}" --dry-run "$local_path/" "$SERVER_USER@$SERVER_HOST:$remote_path/"
     else
         error "DANGER: Syncing with delete enabled!"
-        rsync -avz --progress --delete "$local_path/" "$SERVER_USER@$SERVER_HOST:$remote_path/"
+        rsync "${rsync_opts[@]}" "$local_path/" "$SERVER_USER@$SERVER_HOST:$remote_path/"
         
         if [ $? -eq 0 ]; then
             success "$site_name deployed successfully (with deletions)"
@@ -391,6 +450,9 @@ list_sites() {
         echo "  - $site_name"
         echo "      Local:  ${SITE_LOCAL_PATHS[$site_name]}"
         echo "      Remote: ${SITE_REMOTE_PATHS[$site_name]}"
+        if [[ -n "${SITE_BUILD_CMDS[$site_name]}" ]]; then
+            echo "      Build:  ${SITE_BUILD_CMDS[$site_name]}"
+        fi
         if [[ -n "${SITE_EXCLUDES[$site_name]}" ]]; then
             echo "      Excludes: ${SITE_EXCLUDES[$site_name]}"
         fi
@@ -435,6 +497,7 @@ show_usage() {
     echo "    SITE_LOCAL_PATHS[mysite]=\"/local/path\""
     echo "    SITE_REMOTE_PATHS[mysite]=\"remote/path\""
     echo "    SITE_EXCLUDES[mysite]=\"*.log,.git,node_modules\""
+    echo "    SITE_BUILD_CMDS[mysite]=\"cd /path/to/site && python3 ssg.py build\""
     echo "    SITE_PRE_HOOKS[mysite]=\"/path/to/pre-deploy.sh\""
     echo "    SITE_POST_HOOKS[mysite]=\"/path/to/post-deploy.sh\""
     echo ""
