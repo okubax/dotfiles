@@ -81,6 +81,12 @@ err()     { echo -e "${RED}${BOLD}[ERR ]${RESET}  $*" >&2; }
 banner()  { echo -e "${BOLD}$*${RESET}"; }
 divider() { echo -e "${BOLD}══════════════════════════════════════════${RESET}"; }
 
+# Non-fatal problems (prune/compact/check) increment this so the run ends in
+# COMPLETED WITH WARNINGS + a non-zero exit, instead of a misleading SUCCESS.
+WARNINGS=0
+warn_problem() { WARNINGS=$((WARNINGS + 1)); warn "$*"; }
+EXIT_WARNINGS=2   # exit code when the backup completed but a check flagged something
+
 # ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
@@ -287,21 +293,25 @@ do_backup() {
         --keep-daily "$KEEP_DAILY" \
         --keep-weekly "$KEEP_WEEKLY" \
         --keep-monthly "$KEEP_MONTHLY" \
-        "$BORG_REPO" || warn "Prune reported a problem."
+        "$BORG_REPO" || warn_problem "Prune reported a problem."
 
     info "Compacting repository to free space ..."
-    borg compact "$BORG_REPO" || warn "Compact reported a problem (older borg without 'compact'?)."
+    borg compact "$BORG_REPO" || warn_problem "Compact reported a problem (older borg without 'compact'?)."
 
     # Integrity check: quick every run, deep only with --verify.
     if [[ $VERIFY -eq 1 ]]; then
         info "Verifying repository AND data (borg check --verify-data) ..."
-        borg check --verify-data "$BORG_REPO" || warn "Verification reported a problem."
+        borg check --verify-data "$BORG_REPO" || warn_problem "Verification reported a problem — the backup may be incomplete/corrupt."
     else
         info "Checking repository consistency (borg check --repository-only) ..."
-        borg check --repository-only "$BORG_REPO" || warn "Repository check reported a problem."
+        borg check --repository-only "$BORG_REPO" || warn_problem "Repository check reported a problem — the backup may be incomplete/corrupt."
     fi
 
     _finish "$start_epoch" 0
+    if [[ $WARNINGS -gt 0 ]]; then
+        return $EXIT_WARNINGS
+    fi
+    return 0
 }
 
 _finish() {
@@ -315,10 +325,12 @@ _finish() {
     divider
     info "Finished   : $end_time"
     info "Elapsed    : $elapsed_fmt"
-    if [[ "$rc" -eq 0 ]]; then
-        ok "Status     : SUCCESS"
-    else
+    if [[ "$rc" -ne 0 ]]; then
         err "Status     : FAILED (exit $rc)"
+    elif [[ ${WARNINGS:-0} -gt 0 ]]; then
+        warn "Status     : COMPLETED WITH WARNINGS ($WARNINGS) — review the [WARN] lines above; the backup may be incomplete/corrupt"
+    else
+        ok "Status     : SUCCESS"
     fi
     divider
 }
@@ -397,8 +409,9 @@ main() {
             # Log via process substitution (not a pipe) so do_backup runs in THIS
             # shell, not a subshell -- keeps exit status and any state intact.
             exec > >(tee -a "$LOG_FILE") 2>&1
-            do_backup
-            exit $?
+            local rc=0
+            do_backup || rc=$?
+            exit "$rc"
             ;;
         list)      do_list ;;
         info)      do_info ;;
