@@ -179,33 +179,33 @@ init_repo_if_needed() {
 }
 
 # ---------------------------------------------------------------------------
-# Staging: bind-mount the newest root + home snapshots into a unified tree.
+# Staging + borg create, run inside a PRIVATE MOUNT NAMESPACE.
+#
+# The bind-mounts happen inside `unshare --mount`, so:
+#   * they never appear in the host mount table (no propagation to /run), and
+#   * when this returns, the namespace is destroyed and every mount inside it
+#     vanishes automatically -- no trap, no leftover mounts even on crash/^C.
+# The external drive (borg repo target) is inherited into the namespace at
+# creation, so borg can still write to it. Only NEW mounts are isolated.
+#
+# Args: <root_snap> <home_snap> <borg create args...>
 # ---------------------------------------------------------------------------
-STAGING_UP=0
-teardown_staging() {
-    [[ $STAGING_UP -eq 1 ]] || return 0
-    # Unmount in reverse order; fall back to lazy unmount if busy.
-    if mountpoint -q "$STAGING/home" 2>/dev/null; then
-        umount "$STAGING/home" 2>/dev/null || umount -l "$STAGING/home" 2>/dev/null || true
-    fi
-    if mountpoint -q "$STAGING" 2>/dev/null; then
-        umount "$STAGING" 2>/dev/null || umount -l "$STAGING" 2>/dev/null || true
-    fi
-    rmdir "$STAGING" 2>/dev/null || true
-    STAGING_UP=0
-}
-trap teardown_staging EXIT INT TERM
-
-setup_staging() {
-    local root_snap="$1" home_snap="$2"
-    mkdir -p "$STAGING"
-    STAGING_UP=1
-    mount --bind "$root_snap" "$STAGING"
-    if [[ ! -d "$STAGING/home" ]]; then
-        err "The root snapshot has no /home mountpoint to bind onto: $root_snap"
-        exit 1
-    fi
-    mount --bind "$home_snap" "$STAGING/home"
+run_borg_create() {
+    local root_snap="$1" home_snap="$2"; shift 2
+    unshare --mount --propagation private -- \
+        /usr/bin/env bash -euo pipefail -c '
+            staging="$1"; root_snap="$2"; home_snap="$3"; shift 3
+            mkdir -p "$staging"
+            mount --bind "$root_snap" "$staging"
+            if [[ ! -d "$staging/home" ]]; then
+                echo "[ERR ]  Root snapshot has no /home to bind onto: $root_snap" >&2
+                exit 3
+            fi
+            mount --bind "$home_snap" "$staging/home"
+            cd "$staging"
+            # Stored paths become home/…, etc/… (clean, no staging prefix).
+            exec borg create "$@"
+        ' _ "$STAGING" "$root_snap" "$home_snap" "$@"
 }
 
 # ---------------------------------------------------------------------------
@@ -241,7 +241,6 @@ do_backup() {
     divider
 
     init_repo_if_needed
-    setup_staging "$root_snap" "$home_snap"
 
     # Build exclude args
     local exclude_args=()
@@ -260,9 +259,12 @@ do_backup() {
     local archive="::system-{now:%Y%m%d-%H%M%S}"
     info "Creating archive $archive ..."
 
-    # Backup from inside the staging tree so stored paths are clean (home/…, etc/…).
+    # Bind-mount the snapshots and run borg, all inside a private mount namespace
+    # (see run_borg_create) so no mounts ever leak to the host.
     local rc=0
-    ( cd "$STAGING" && borg create "${create_opts[@]}" "${exclude_args[@]}" "$archive" . ) || rc=$?
+    run_borg_create "$root_snap" "$home_snap" \
+        "${create_opts[@]}" "${exclude_args[@]}" "$archive" . || rc=$?
+    rmdir "$STAGING" 2>/dev/null || true   # remove the now-empty staging dir
 
     if [[ $rc -ne 0 ]]; then
         err "borg create failed (exit $rc)."
@@ -392,8 +394,11 @@ main() {
     case "$COMMAND" in
         backup)
             acquire_lock
-            do_backup 2>&1 | tee -a "$LOG_FILE"
-            exit "${PIPESTATUS[0]}"
+            # Log via process substitution (not a pipe) so do_backup runs in THIS
+            # shell, not a subshell -- keeps exit status and any state intact.
+            exec > >(tee -a "$LOG_FILE") 2>&1
+            do_backup
+            exit $?
             ;;
         list)      do_list ;;
         info)      do_info ;;
