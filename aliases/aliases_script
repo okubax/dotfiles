@@ -7,7 +7,8 @@
 #   2. Personal notes management (notes.sh)
 #   3. System information script (sysinfo.py)
 #   4. Disk usage analyzer (disk_analyzer.sh)
-#   5. BTRFS backup script (btrfs_backup.sh)
+#   5. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
+#   6. Borg full-system backup (borg-system-backup.sh)
 
 # ============================================================================
 # 1. ii IRC aliases
@@ -317,7 +318,7 @@ alias du-version="echo 'Disk Analyzer Script - Custom Arch Linux Tool'"
 
 
 # =============================================================================
-# 5. BTRFS Backup aliases (btrfs_backup.sh)
+# 5. BTRFS Snapshot Backup aliases (btrfs-snapshot-backup.sh)
 # =============================================================================
 # Version: 2.3 - Single-parent policy with maximum space efficiency
 # Loaded automatically as part of ~/.aliases_script.
@@ -325,8 +326,8 @@ alias du-version="echo 'Disk Analyzer Script - Custom Arch Linux Tool'"
 # =============================================================================
 
 # Script location, external backup drive UUID and log file
-BTRFS_BACKUP_SCRIPT="/opt/btrfs-backup/btrfs_backup.sh"
-BTRFS_BACKUP_UUID="98f725b9-9e2b-4b89-8345-6e0ca03657f4"
+BTRFS_BACKUP_SCRIPT="/opt/btrfs-backup/btrfs-snapshot-backup.sh"
+BTRFS_BACKUP_UUID="00000000-0000-0000-0000-000000000000"
 BTRFS_LOG_FILE="/var/log/btrfs_backup.log"
 
 # =============================================================================
@@ -337,6 +338,7 @@ BTRFS_LOG_FILE="/var/log/btrfs_backup.log"
 alias bb="sudo $BTRFS_BACKUP_SCRIPT status"
 alias bb-status="sudo $BTRFS_BACKUP_SCRIPT status"
 alias bb-health="sudo $BTRFS_BACKUP_SCRIPT health"
+alias bb-validate="sudo $BTRFS_BACKUP_SCRIPT validate"      # read-only integrity/policy check
 
 # Backup operations
 alias bb-backup="sudo $BTRFS_BACKUP_SCRIPT backup"
@@ -350,8 +352,23 @@ alias bb-cleanup-dry="sudo $BTRFS_BACKUP_SCRIPT cleanup --dry-run"
 alias bb-force-new-parent="sudo $BTRFS_BACKUP_SCRIPT backup --force-new-parent"
 alias bb-force-new-parent-dry="sudo $BTRFS_BACKUP_SCRIPT backup --force-new-parent --dry-run"
 
-# Recovery mode (recreate parent if corrupted)
+# Recovery mode (auto-recreate parent if the incremental reference is lost)
 alias bb-recover="sudo $BTRFS_BACKUP_SCRIPT backup --recovery"
+alias bb-recover-dry="sudo $BTRFS_BACKUP_SCRIPT backup --recovery --dry-run"
+
+# Integrity scrub of the external drive (detects bit-rot)
+alias bb-scrub="sudo $BTRFS_BACKUP_SCRIPT scrub"
+alias bb-scrub-dry="sudo $BTRFS_BACKUP_SCRIPT scrub external --dry-run"
+
+# Restore newest backup into a staging subvolume (never touches live system)
+# Usage: bb-restore root   |   bb-restore home /mnt/btr_pool/restore
+alias bb-restore="sudo $BTRFS_BACKUP_SCRIPT restore"
+alias bb-restore-dry="sudo $BTRFS_BACKUP_SCRIPT restore"   # add --dry-run + args, e.g. bb-restore-dry home --dry-run
+
+# One-time: convert cache dirs to subvolumes so snapshots skip them (run from a
+# TTY with browsers closed). Preview first with --dry-run.
+alias bb-exclude-caches="sudo $BTRFS_BACKUP_SCRIPT exclude-caches"
+alias bb-exclude-caches-dry="sudo $BTRFS_BACKUP_SCRIPT exclude-caches --dry-run"
 
 # Listing operations
 alias bb-list="sudo $BTRFS_BACKUP_SCRIPT list"
@@ -428,10 +445,11 @@ bb-aliases() {
 === BTRFS Backup Aliases - Quick Reference ===
 
 CORE OPERATIONS:
-  bb              - Show backup status
+  bb              - Show backup status (incl. backup freshness)
   bb-backup       - Create snapshots and backups (incremental)
   bb-cleanup      - Clean up old incrementals (parent protected)
-  bb-health       - Show system health
+  bb-health       - Show system health (freshness, compression, scrub status)
+  bb-validate     - Read-only integrity/policy check (safe; no changes)
   bb-list         - List all backups
   bb-help         - Show detailed help
 
@@ -441,14 +459,22 @@ QUICK SHORTCUTS:
   bbl             - List backups
   bbt             - Test backup (dry-run)
 
-PARENT BACKUP OPERATIONS (v2.3):
+PARENT BACKUP OPERATIONS:
   bb-force-new-parent      - Create new parent (DELETE ALL backups!)
   bb-force-new-parent-dry  - Test parent refresh (dry-run)
-  bb-recover               - Recovery mode (recreate if corrupted)
+  bb-recover               - Backup, auto-recreating parent if reference lost
+  bb-recover-dry           - Preview recovery backup
+
+INTEGRITY / RESTORE / MAINTENANCE:
+  bb-scrub                 - Scrub external drive (detect bit-rot)
+  bb-restore root|home     - Restore newest backup to a staging subvolume (safe)
+  bb-exclude-caches        - Convert cache dirs to subvolumes (run once, TTY)
+  bb-exclude-caches-dry    - Preview cache exclusion
 
 DRY-RUN (TEST MODE):
   bb-backup-dry   - Preview backup operation
   bb-cleanup-dry  - Preview cleanup operation
+  bb-scrub-dry    - Preview scrub
 
 LIST OPERATIONS:
   bb-list-local   - List only local snapshots
@@ -491,19 +517,24 @@ Examples:
   bb-force-new-parent-dry             # Test parent refresh
   bb-force-new-parent                 # Refresh parent (every ~90 days)
 
-v2.3 Features - Single-Parent Policy:
+v2.4 Features - Single-Parent Policy + robustness:
   - ONLY ONE parent backup at any time (max space efficiency)
   - All backups after first are incremental (saves ~35% disk space)
   - Parent NEVER auto-deleted (manual refresh with --force-new-parent)
   - Incrementals kept for 30 days (configurable)
   - Local snapshots kept for 30 days (parent reference protected)
   - Chain length warning at 90 incrementals
+  - External drive is compressed on write (reclaims space)
+  - Staleness warnings when backups get old (>14 days)
+  - --recovery auto-recreates the parent if the reference is lost
+  - bb-validate / bb-scrub / bb-restore for integrity and recovery
 
 IMPORTANT NOTES:
   - Normal backups (bb-backup/bbr) always create incrementals
   - Use bb-force-new-parent quarterly (~90 days) to refresh parent
   - ALWAYS test with -dry first before using --force-new-parent
   - --force-new-parent deletes ALL existing backups!
+  - After editing the script in ~/bin, deploy it: sudo cp ~/bin/btrfs-snapshot-backup.sh /opt/btrfs-backup/
 EOF
 }
 
@@ -529,7 +560,7 @@ bb-last() {
     if mount | grep -q "$BTRFS_BACKUP_UUID"; then
         echo "External backups:"
         for subvol in root home; do
-            local ext_dir="/run/media/ajibola/$BTRFS_BACKUP_UUID/btrfs_backups/$subvol"
+            local ext_dir="/run/media/USERNAME/$BTRFS_BACKUP_UUID/btrfs_backups/$subvol"
             if [[ -d "$ext_dir" ]]; then
                 local latest_parent=$(sudo find "$ext_dir" -maxdepth 1 -name "parent_*" -type d 2>/dev/null | sort | tail -1)
                 local latest_incr=$(sudo find "$ext_dir" -maxdepth 1 -name "incremental_*" -type d 2>/dev/null | sort | tail -1)
@@ -550,7 +581,7 @@ bb-count() {
     echo "Local snapshots: $local_count"
 
     if mount | grep -q "$BTRFS_BACKUP_UUID"; then
-        local ext_dir="/run/media/ajibola/$BTRFS_BACKUP_UUID/btrfs_backups"
+        local ext_dir="/run/media/USERNAME/$BTRFS_BACKUP_UUID/btrfs_backups"
         if [[ -d "$ext_dir" ]]; then
             local parent_count=$(sudo find "$ext_dir" -name "parent_*" -type d 2>/dev/null | wc -l)
             local incr_count=$(sudo find "$ext_dir" -name "incremental_*" -type d 2>/dev/null | wc -l)
@@ -586,7 +617,7 @@ bb-tree() {
     # Use a single sudo call to run the entire function logic
     # This avoids multiple sudo prompts and stdin issues
     sudo bash << 'EOFSCRIPT'
-        BTRFS_BACKUP_UUID="98f725b9-9e2b-4b89-8345-6e0ca03657f4"
+        BTRFS_BACKUP_UUID="00000000-0000-0000-0000-000000000000"
 
         echo "=== Backup Chain Structure ==="
         echo
@@ -597,7 +628,7 @@ bb-tree() {
         fi
 
         for subvol in root home; do
-            ext_dir="/run/media/ajibola/$BTRFS_BACKUP_UUID/btrfs_backups/$subvol"
+            ext_dir="/run/media/USERNAME/$BTRFS_BACKUP_UUID/btrfs_backups/$subvol"
 
             if [[ ! -d "$ext_dir" ]]; then
                 continue
@@ -671,3 +702,84 @@ EOF
 
 # Uncomment the following to show a message when aliases are loaded:
 # echo "BTRFS backup aliases loaded. Type 'bb-aliases' for help."
+
+# =============================================================================
+# 6. Borg full-system backup aliases (borg-system-backup.sh)
+# =============================================================================
+# Version: 2.0 - Borg-based versioned backup to the EXT4 external drive.
+# Backs up FROM the read-only btrfs snapshots that btrfs-snapshot-backup.sh creates
+# (it never makes its own). Type 'abk-aliases' for the full quick-reference.
+# =============================================================================
+
+# Script location and external EXT4 drive UUID
+ARCH_BACKUP_SCRIPT="$HOME/bin/borg-system-backup.sh"
+ARCH_BACKUP_UUID="11111111-1111-1111-1111-111111111111"
+ARCH_BACKUP_LOG="/var/log/arch-backup.log"
+
+# Core operations
+alias abk="sudo $ARCH_BACKUP_SCRIPT backup"              # Run a versioned backup
+alias abk-dry="sudo $ARCH_BACKUP_SCRIPT backup --dry-run" # Preview what would be backed up
+alias abk-verify="sudo $ARCH_BACKUP_SCRIPT backup --verify" # Backup + deep data verification
+
+# Inspect the repository
+alias abk-list="sudo $ARCH_BACKUP_SCRIPT list"          # List all archives (restore points)
+alias abk-info="sudo $ARCH_BACKUP_SCRIPT info"          # Repo stats; 'abk-info system-YYYYMMDD-HHMMSS' for one archive
+alias abk-check="sudo $ARCH_BACKUP_SCRIPT check"        # Quick repo consistency check
+alias abk-check-data="sudo $ARCH_BACKUP_SCRIPT check --verify" # Deep check (reads every chunk; slow)
+alias abk-prune-dry="sudo $ARCH_BACKUP_SCRIPT prune-dry" # Preview which archives pruning would remove
+
+# Browse / restore: mount an archive (or the whole repo) read-only via FUSE
+# Usage: abk-mount /mnt/borg            # newest tree of every archive
+#        abk-mount /mnt/borg system-20260717-013000
+#        abk-umount /mnt/borg
+alias abk-mount="sudo $ARCH_BACKUP_SCRIPT mount"
+alias abk-umount="sudo $ARCH_BACKUP_SCRIPT umount"
+
+# Log viewing
+alias abk-log="sudo tail -f $ARCH_BACKUP_LOG"
+alias abk-log-tail="sudo tail -n 50 $ARCH_BACKUP_LOG"
+alias abk-log-errors="sudo grep -iE 'err|fail|warn' $ARCH_BACKUP_LOG"
+
+# Drive status
+alias abk-drive-check="lsblk -f | grep $ARCH_BACKUP_UUID || echo 'Arch backup drive not detected'"
+alias abk-drive-space="df -h | grep $ARCH_BACKUP_UUID || echo 'Arch backup drive not mounted'"
+
+# Quick reference
+abk-aliases() {
+    cat << 'EOF'
+=== Arch Borg Backup Aliases - Quick Reference ===
+
+CORE:
+  abk             - Run a versioned full-system backup (from newest btrfs snapshot)
+  abk-dry         - Preview the backup (borg --dry-run, nothing written)
+  abk-verify      - Backup, then deep-verify every data chunk
+
+INSPECT:
+  abk-list        - List all archives (your restore points)
+  abk-info        - Repository stats (add an archive name for per-archive stats)
+  abk-check       - Quick repo consistency check
+  abk-check-data  - Deep integrity check (reads all data; slow)
+  abk-prune-dry   - Preview what retention pruning would delete
+
+BROWSE / RESTORE (FUSE mount, read-only):
+  abk-mount <dir> [archive]   - Mount repo (or one archive) to browse/copy files out
+  abk-umount <dir>            - Unmount it
+  # To restore fully:  sudo borg extract <repo>::<archive>   (run from an empty dir)
+
+LOGS:
+  abk-log         - Follow the live log
+  abk-log-tail    - Last 50 log lines
+  abk-log-errors  - Errors/warnings only
+
+DRIVE:
+  abk-drive-check - Is the backup drive present?
+  abk-drive-space - Show its free space
+
+RETENTION: keeps 7 daily / 4 weekly / 6 monthly archives (edit in the script).
+
+WORKFLOW:
+  1. bbr           # btrfs-snapshot-backup.sh first — creates the read-only snapshots
+  2. abk           # this backs up FROM those snapshots to the EXT4 drive
+  Prereq: sudo pacman -S borg   (one-time)
+EOF
+}
