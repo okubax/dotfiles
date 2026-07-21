@@ -126,7 +126,7 @@ yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 
 ### Notable Scripts in `bin/`
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
-- `deploy_websites.sh` / `backup_godaddy.sh` - static site deployment and hosting backups (configured via config file/env vars)
+- `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
 - `disk_analyzer.sh`, `filesearch.py`, `sysinfo.py` - system inspection tools
 - `news_reader.py` - terminal RSS reader

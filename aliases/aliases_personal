@@ -63,10 +63,10 @@ webb() {
 alias deployfast="deploy --skip-test"
 alias deploy-dry-fast="deploy --dry-run --skip-test"
 
-# GoDaddy backups (~/bin/backup_godaddy.sh)
-alias backup-gd="backup_godaddy.sh"
-alias backup-gd-dry="backup-gd --dry-run"   # Preview only: nothing written or deleted
-alias backup-gd-quick="backup-gd -s -e"     # Faster: skip SSH test + skip compression
+# GoDaddy server backup (~/bin/godaddy-server-backup.sh)
+alias backup-gd="godaddy-server-backup.sh"
+alias backup-gd-dry="backup-gd --dry-run"       # Preview only: nothing written or deleted
+alias backup-gd-verbose="backup-gd --verbose"   # Per-file progress
 
 # Organize files by extension into categorized folders (-r recursive, -d dry-run)
 alias organize="organize_files.sh -r"
