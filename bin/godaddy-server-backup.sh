@@ -13,7 +13,7 @@
 # Config file: ~/.config/godaddy_backup.conf   (keeps host/user OUT of this script)
 #     SERVER_USER        remote ssh user                              (required)
 #     SERVER_HOST        remote host                                  (required)
-#     LOCAL_BACKUP_DIR   local base dir; mirror goes to .../server-home
+#     LOCAL_BACKUP_DIR   local directory to mirror into (created if missing)
 #     SSH_PRIVATE_KEY    optional ssh identity file
 #     EXTRA_EXCLUDES     bash array of extra rsync excludes (machine-specific,
 #                        e.g. Nextcloud data, a private repo cloned locally,
@@ -43,7 +43,7 @@ log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 # Defaults (overridable by config / env)
 SERVER_USER=""
 SERVER_HOST=""
-LOCAL_BACKUP_DIR="$HOME/Projects/sites/backups/godaddy"
+LOCAL_BACKUP_DIR="$HOME/backups/godaddy-server"
 SSH_PRIVATE_KEY=""
 EXTRA_EXCLUDES=()
 
@@ -117,7 +117,7 @@ build_ssh_cmd() {
 }
 
 run_backup() {
-    local dest="$LOCAL_BACKUP_DIR/server-home"
+    local dest="$LOCAL_BACKUP_DIR"
     local ssh_cmd; ssh_cmd="$(build_ssh_cmd)"
 
     log "Testing SSH connection to $SERVER_HOST ..."
