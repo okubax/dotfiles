@@ -292,7 +292,7 @@ deploy_site() {
 
     # Add SSH key if specified
     if [[ -f "$SSH_KEY" ]]; then
-        rsync_opts+=(-e "ssh -i $SSH_KEY")
+        rsync_opts+=(-e "ssh -i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15")
     fi
 
     # Add exclude patterns if defined
@@ -364,7 +364,7 @@ deploy_site_with_delete() {
     local rsync_opts=(-avz --progress --delete)
 
     if [[ -f "$SSH_KEY" ]]; then
-        rsync_opts+=(-e "ssh -i $SSH_KEY")
+        rsync_opts+=(-e "ssh -i $SSH_KEY -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15")
     fi
 
     if [[ -n "${SITE_EXCLUDES[$site_name]}" ]]; then
