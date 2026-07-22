@@ -9,8 +9,6 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 # Application homes
 export ANDROID_HOME="$HOME/development/android/sdk"
-export GEM_HOME="$HOME/.gem"
-export GOPATH="$HOME/gocode"
 
 # Default applications
 export BROWSER="firefox"
@@ -25,9 +23,6 @@ export MOZ_ENABLE_WAYLAND=1
 export GDK_BACKEND=wayland
 export QEMU_AUDIO_DRV=pipewire
 #export VK_DRIVER_FILES=""
-
-# Application-specific settings
-export R_HISTFILE="$HOME/.Rhistory"
 
 # Secrets (API keys etc.) live in ~/.zshrc.local, which is sourced by
 # ~/.zshrc and not tracked in this repo. Note: that means they're only
@@ -49,11 +44,7 @@ path_dirs=(
     "$HOME/.npm-global/bin"
     "$HOME/.local/bin"
     
-    # Ruby gems
-    "$HOME/.gem/ruby/3.4.0/bin"
-    "$HOME/.gem/bin"
-    
-    # Android development
+   # Android development
     "$HOME/development/android/sdk/cmdline-tools/12.0/bin"
     "$HOME/development/android/sdk/cmdline-tools/12.0"
     "$HOME/development/android/sdk/platform-tools"
@@ -62,19 +53,14 @@ path_dirs=(
     "$HOME/git/ii"
     "$HOME/git/nettop"
     "$HOME/git/2048.c"
-    "$HOME/git/tuxi"
     "$HOME/git/pass2csv"
     
     # Virtual environments
-    "$HOME/venv/pelican/bin"
     "$HOME/venv/vizex/bin"
-    "$HOME/venv/emailproxy/bin"
-    "$HOME/venv/mineru/bin"
     
     # Other tools
     "$HOME/.firefox"
     "$HOME/machines/qemu-scripts"
-    "$GOPATH/bin"
 )
 
 # Append each directory to PATH, skipping ones that don't exist
