@@ -6,9 +6,8 @@
 #   1. ii IRC client (start/stop, chat viewers, quick messaging)
 #   2. Personal notes management (notes.sh)
 #   3. System information script (sysinfo.py)
-#   4. Disk usage analyzer (disk_analyzer.sh)
-#   5. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
-#   6. Borg full-system backup (borg-system-backup.sh)
+#   4. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
+#   5. Borg full-system backup (borg-system-backup.sh)
 
 # ============================================================================
 # 1. ii IRC aliases
@@ -606,7 +605,7 @@ EOF
 # echo "BTRFS backup aliases loaded. Type 'bb-aliases' for help."
 
 # =============================================================================
-# 6. Borg full-system backup aliases (borg-system-backup.sh)
+# 5. Borg full-system backup aliases (borg-system-backup.sh)
 # =============================================================================
 # Version: 2.0 - Borg-based versioned backup to the EXT4 external drive.
 # Backs up FROM the read-only btrfs snapshots that btrfs-snapshot-backup.sh creates
