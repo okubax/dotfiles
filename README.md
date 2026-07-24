@@ -128,6 +128,14 @@ adding a new dotfile to confirm the map still matches reality.
     └── plugins/         # Syntax highlighting themes
 ```
 
+### Adding a dotfile / keeping the map honest
+The symlink map lives in a single `LINKS` block inside `bootstrap.sh`. When you
+add a new config, drop the file in the repo, add one `repo/path|$HOME/path` line
+to that block, then run `./bootstrap.sh check`. It compares the map against the
+symlinks actually present in `$HOME` and flags anything missing (so the map can
+never silently drift from reality), plus any map entry whose repo source is gone.
+Follow with `./bootstrap.sh link` to create the new symlink.
+
 ### Notable Scripts in `bin/`
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
