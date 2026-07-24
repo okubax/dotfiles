@@ -5,7 +5,7 @@
 # Sections:
 #   1. ii IRC client (start/stop, chat viewers, quick messaging)
 #   2. Personal notes management (notes.sh)
-#   3. System information script (sysinfo.py)
+#   3. System overview (sysglance.sh)
 #   4. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
 #   5. Borg full-system backup (borg-system-backup.sh)
 #   6. Disk & package space report (space-report.sh)
@@ -211,13 +211,10 @@ alias confnote="ns config"               # Find configuration notes
 alias cmdnote="ns command"               # Find command notes
 
 # ============================================================================
-# 3. System Information Script aliases (sysinfo.py)
+# 3. System overview aliases (sysglance.sh)
 # ============================================================================
-alias sysinfo="sysinfo.py"                            # Full system report
-alias sysinfo-brief="sysinfo.py --brief"              # Brief system report
-alias sysinfo-verbose="sysinfo.py --verbose"          # Verbose output with extra details
-alias sysinfo-json="sysinfo.py --json"                # JSON output format
-alias sysinfo-brief-json="sysinfo.py --brief --json"  # Brief JSON report
+alias sysglance="sysglance.sh"                        # System overview at a glance
+alias sysinfo="sysglance.sh"                           # kept for muscle memory
 
 # =============================================================================
 # 4. BTRFS Snapshot Backup aliases (btrfs-snapshot-backup.sh)

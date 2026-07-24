@@ -140,7 +140,8 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
-- `filesearch.py`, `sysinfo.py` - system inspection tools
+- `filesearch.py` - file search tool
+- `sysglance.sh` - system overview at a glance (host/CPU/memory/GPU/storage/network/power)
 - `space-report.sh` - disk usage (top dirs/files) + installed-package sizes (repo vs AUR)
 - `news_reader.py` - terminal RSS reader
 - `catppuccin_wallpaper.py` - wallpaper generator
