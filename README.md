@@ -50,15 +50,15 @@ Arch Linux (other distributions require package name adjustments)
 
 ### Quick Setup
 ```bash
-git clone https://github.com/okubax/dotfiles.git ~/dotfiles && ~/dotfiles/dotfiles.sh install
+git clone https://github.com/okubax/dotfiles.git ~/dotfiles && ~/dotfiles/bootstrap.sh
 ```
 
 ### Manual Installation
 ```bash
 git clone https://github.com/okubax/dotfiles.git ~/dotfiles
 cd ~/dotfiles
-./dotfiles.sh status    # Check what will be installed
-./dotfiles.sh install   # Install configurations
+./bootstrap.sh status   # See what will be linked
+./bootstrap.sh link     # Create the symlinks (default command)
 ```
 
 ## Required Packages
@@ -80,14 +80,18 @@ yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ## Commands
 
 ```bash
-./dotfiles.sh install          # Install all configurations
-./dotfiles.sh status           # Show installation status
-./dotfiles.sh uninstall        # Remove symlinks
-./dotfiles.sh backup           # Create backup
-./dotfiles.sh restore          # Restore from backup
-./dotfiles.sh install --dry-run    # Preview changes
-./dotfiles.sh install --force      # Overwrite existing files
+./bootstrap.sh                 # Link all configs (default command)
+./bootstrap.sh status          # Show LINKED / WRONG / CONFLICT / MISSING per entry
+./bootstrap.sh check           # Drift check: warn about live symlinks missing from the map
+./bootstrap.sh unlink          # Remove the symlinks it manages
+./bootstrap.sh --dry-run       # Preview actions without changing anything
+./bootstrap.sh --force         # Replace existing files without keeping a backup
+./bootstrap.sh --quiet         # Only print warnings and errors
+./bootstrap.sh help            # Full usage
 ```
+
+`link` is the single source of truth for what gets symlinked; run `check` after
+adding a new dotfile to confirm the map still matches reality.
 
 ## Post-Installation
 
@@ -107,7 +111,7 @@ yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ### Directory Structure
 ```
 ~/dotfiles/
-├── dotfiles.sh          # Installation script
+├── bootstrap.sh         # Symlink manager (link/unlink/status/check)
 ├── aliases/             # Shell aliases (system/dev/personal/scripts)
 ├── bin/                 # Custom scripts (see below)
 ├── ii/                  # ii IRC credentials template
@@ -129,6 +133,7 @@ yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
 - `filesearch.py`, `sysinfo.py` - system inspection tools
+- `space-report.sh` - disk usage (top dirs/files) + installed-package sizes (repo vs AUR)
 - `news_reader.py` - terminal RSS reader
 - `catppuccin_wallpaper.py` - wallpaper generator
 
@@ -146,11 +151,12 @@ Includes Catppuccin syntax highlighting themes (frappe, latte, macchiato, mocha)
 
 ## Backup System
 
-The installation script includes automatic backup functionality:
-- Creates backups before overwriting existing configurations
-- Manual backup/restore operations available
-- Tracks backup metadata and file lists
-- Graceful handling of missing files
+`bootstrap.sh link` never clobbers your data. Anything real that is in the way of
+a symlink is first moved into a timestamped `~/.dotfiles-backup-<timestamp>/`
+directory (preserving its relative path), then the symlink is created. Wrong-target
+symlinks are simply replaced. To undo an install, run `./bootstrap.sh unlink` and,
+if needed, move the originals back from that backup directory. Pass `--force` to
+skip the backup and overwrite in place, or `--dry-run` to preview first.
 
 ## What's Not Included
 
@@ -164,15 +170,15 @@ Files like `ii/credentials`, `gitconfig`, and the server-related scripts ship wi
 
 ## Troubleshooting
 
-**Missing file warnings**: Normal for public repositories. Use `./dotfiles.sh status` to see available files.
+**Missing file warnings**: Normal for public repositories. Run `./bootstrap.sh status` (a missing source shows as `NO-SRC`) or `./bootstrap.sh check` to audit the map.
 
-**Undo installation**: Use `./dotfiles.sh restore` or `./dotfiles.sh uninstall`
+**Undo installation**: Run `./bootstrap.sh unlink`, then restore any originals from `~/.dotfiles-backup-<timestamp>/`
 
 **Sway won't start**: Check dependencies and logs with `journalctl --user -u sway`
 
 **Waybar shows no icons**: Install `ttf-font-awesome` (the bar uses Font Awesome 6 glyphs)
 
-**Permission errors**: Run `chmod +x ./dotfiles.sh`
+**Permission errors**: Run `chmod +x ./bootstrap.sh`
 
 ## Customization
 
