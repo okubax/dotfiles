@@ -8,6 +8,7 @@
 #   3. System information script (sysinfo.py)
 #   4. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
 #   5. Borg full-system backup (borg-system-backup.sh)
+#   6. Disk & package space report (space-report.sh)
 
 # ============================================================================
 # 1. ii IRC aliases
@@ -684,3 +685,17 @@ WORKFLOW:
   Prereq: sudo pacman -S borg   (one-time)
 EOF
 }
+
+# ============================================================================
+# 6. Disk & Package Space Report aliases (space-report.sh)
+# ============================================================================
+# Disk-usage overview + installed-package sizes (repo vs AUR). See the script's
+# `help` for all modes. Deps: pacman, expac, coreutils (optional: ncdu).
+SPACE_REPORT_PATH="$HOME/bin/space-report.sh"
+
+alias space="$SPACE_REPORT_PATH"                # disk ($HOME) + top 20 packages
+alias disk="$SPACE_REPORT_PATH disk"            # biggest dirs/files in $HOME (depth 1)
+alias disk-root="$SPACE_REPORT_PATH disk /"     # whole root filesystem (uses sudo)
+alias bigfiles="$SPACE_REPORT_PATH files"       # largest individual files under $HOME
+alias pkgsize="$SPACE_REPORT_PATH pkgs"         # installed packages by size (repo vs AUR)
+alias diskui="$SPACE_REPORT_PATH ncdu"          # interactive ncdu browser
