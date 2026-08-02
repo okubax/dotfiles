@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# btrfs-pre-snapshot — pacman PreTransaction hook worker.
+#
+# Creates a WRITABLE @rollback snapshot of the current root subvol (@) and copies
+# the matching kernel+initramfs into the ESP, so the systemd-boot entry
+# "Arch Linux (rollback ...)" boots the exact pre-update system.
+#
+# Refreshed on every pacman transaction => a single rolling one-step undo.
+# Deeper history is covered by the weekly read-only snapshots + `btrfs-rollback`.
+#
+# Deployed to /usr/local/bin ; invoked by
+#   /etc/pacman.d/hooks/00-btrfs-pre-snapshot.hook  (When = PreTransaction)
+#
+# Design notes:
+#  - Never aborts the pacman transaction: on any failure it logs loudly and
+#    exits 0 (a missing rollback point should not block your ability to update).
+#  - @ has nested subvolumes (@/var/cache, @/var/log, ...). `btrfs subvolume
+#    snapshot` does NOT recurse into them, so @rollback gets EMPTY var/cache and
+#    var/log dirs. That is fine for a recovery boot (fresh logs/cache) and keeps
+#    @rollback small. It also means @rollback has no child subvols, so it can be
+#    deleted with a plain `btrfs subvolume delete`.
+set -uo pipefail
+
+POOL="/mnt/btr_pool"
+SRC="$POOL/@"
+DST="$POOL/@rollback"
+BOOT="/boot"
+LOG="/var/log/btrfs_backup.log"
+ESP_MIN_FREE_MB=80          # need headroom for vmlinuz + initramfs copies
+
+ts()  { date '+%Y-%m-%d %H:%M:%S'; }
+log() { echo "$(ts) [pre-snapshot] $*" | tee -a "$LOG" >&2; }
+
+[[ $EUID -eq 0 ]] || { log "ERROR: must run as root"; exit 0; }
+
+mountpoint -q "$POOL" || log "WARN: $POOL is not a mountpoint; continuing anyway"
+
+if [[ ! -d "$SRC" ]]; then
+    log "ERROR: source subvol $SRC not found; skipping (no rollback point created)"
+    exit 0
+fi
+
+# If we are currently BOOTED on @rollback (user booted the rollback entry and is
+# updating from within it), don't try to delete/recreate the live root.
+booted="$(findmnt -no FSROOT / 2>/dev/null | sed 's#^/##')"
+if [[ "$booted" == "@rollback" ]]; then
+    log "NOTE: booted on @rollback; leaving it untouched for this transaction"
+    exit 0
+fi
+
+# Drop the previous @rollback, then snapshot the current root.
+if btrfs subvolume show "$DST" >/dev/null 2>&1; then
+    if btrfs subvolume delete "$DST" >>"$LOG" 2>&1; then
+        log "deleted previous $DST"
+    else
+        log "ERROR: could not delete previous $DST; keeping it (rollback point NOT refreshed)"
+        exit 0
+    fi
+fi
+
+if btrfs subvolume snapshot "$SRC" "$DST" >>"$LOG" 2>&1; then
+    log "created writable snapshot $DST from $SRC"
+else
+    log "ERROR: snapshot creation failed; NO rollback point for this transaction"
+    exit 0
+fi
+
+# Copy the pre-update kernel+initramfs aside so the rollback entry boots a
+# MATCHING kernel (/boot is vfat, not on btrfs, so it is never snapshotted).
+copy_kernel() {
+    local avail_mb
+    avail_mb="$(df -Pm "$BOOT" 2>/dev/null | awk 'NR==2{print $4}')"
+    if [[ -z "$avail_mb" || "$avail_mb" -lt "$ESP_MIN_FREE_MB" ]]; then
+        log "WARN: ESP free ${avail_mb:-?}MB < ${ESP_MIN_FREE_MB}MB; skipping kernel copy"
+        return 0
+    fi
+    if [[ ! -f "$BOOT/vmlinuz-linux" || ! -f "$BOOT/initramfs-linux.img" ]]; then
+        log "WARN: /boot/vmlinuz-linux or initramfs-linux.img missing; skipping kernel copy"
+        return 0
+    fi
+    # Skip if the current kernel+initramfs already match the saved rollback copy.
+    if [[ -f "$BOOT/vmlinuz-linux-rollback" && -f "$BOOT/initramfs-linux-rollback.img" ]] \
+        && cmp -s "$BOOT/vmlinuz-linux"       "$BOOT/vmlinuz-linux-rollback" \
+        && cmp -s "$BOOT/initramfs-linux.img" "$BOOT/initramfs-linux-rollback.img"; then
+        log "kernel+initramfs unchanged since last rollback point; skipping copy"
+        return 0
+    fi
+    if cp -f "$BOOT/vmlinuz-linux"       "$BOOT/vmlinuz-linux-rollback" \
+       && cp -f "$BOOT/initramfs-linux.img" "$BOOT/initramfs-linux-rollback.img"; then
+        log "copied matching kernel+initramfs to *-rollback"
+    else
+        log "WARN: kernel copy failed; rollback entry may use a mismatched kernel"
+    fi
+}
+copy_kernel
+
+log "pre-update rollback point ready (@rollback)"
+exit 0

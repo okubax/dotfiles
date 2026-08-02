@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# btrfs-rollback — manage booting/promoting Btrfs snapshots.
+#
+# Companion to:
+#   - btrfs-snapshot-backup.sh  (weekly read-only snapshots in .snapshots/root)
+#   - btrfs-pre-snapshot        (writable @rollback made before every pacman txn)
+#
+# System model: systemd-boot; the root subvol is chosen by the kernel cmdline
+# `rootflags=subvol=...`. /etc/fstab is subvolid-free (name-based subvol=@), so a
+# snapshot can be booted just by naming it on the cmdline. The default entry boots
+# subvol=@; "Arch Linux (rollback ...)" boots subvol=@rollback.
+set -uo pipefail
+
+POOL="/mnt/btr_pool"
+SNAPDIR="$POOL/.snapshots/root"
+
+die()  { echo "ERROR: $*" >&2; exit 1; }
+need_root() { [[ $EUID -eq 0 ]] || die "run as root (sudo btrfs-rollback $*)"; }
+booted_subvol() { findmnt -no FSROOT / 2>/dev/null | sed 's#^/##'; }
+
+usage() {
+cat <<'EOF'
+btrfs-rollback — Btrfs snapshot rollback helper (systemd-boot)
+
+Usage: sudo btrfs-rollback <command> [args]
+
+  status              Show booted subvol, @, @rollback and available snapshots.
+  list                List read-only weekly snapshots (.snapshots/root).
+  clone <snapshot>    Make a writable @rollback from a weekly snapshot (path or
+                      name under .snapshots/root) so you can boot it via the
+                      "rollback" menu entry. Replaces the current @rollback.
+                      Run this from a NORMAL boot (subvol=@).
+  promote             Make the CURRENTLY BOOTED subvol permanent as @. Only valid
+                      when you are NOT running @ (i.e. after booting the rollback
+                      entry). Renames the old @ -> @broken_<ts>.
+
+Everyday recovery after a bad update:
+  1. Reboot, pick "Arch Linux (rollback — pre-update snapshot)".
+  2. If the system is good:  sudo btrfs-rollback promote
+  3. Reboot into the default entry. Done.
+
+See ~/README-btrfs-rollback.md for the full guide and caveats.
+EOF
+}
+
+resolve_snap() {
+    local s="$1"
+    [[ -d "$s" ]] && { echo "$s"; return; }
+    [[ -d "$SNAPDIR/$s" ]] && { echo "$SNAPDIR/$s"; return; }
+    die "snapshot not found: $s (looked in \$PWD and $SNAPDIR)"
+}
+
+cmd_status() {
+    echo "Booted subvol : $(booted_subvol)"
+    echo "Pool          : $POOL"
+    echo
+    echo "Relevant subvolumes:"
+    btrfs subvolume list "$POOL" 2>/dev/null \
+        | grep -E "path (@|@rollback|@home|@broken)" | sed 's/^/  /' || echo "  (none)"
+    echo
+    if btrfs subvolume show "$POOL/@rollback" >/dev/null 2>&1; then
+        echo "@rollback (pre-update state):"
+        btrfs subvolume show "$POOL/@rollback" 2>/dev/null \
+            | grep -E "Creation time" | sed 's/^/  /'
+    else
+        echo "@rollback: (none yet — created by the pacman hook on the next transaction)"
+    fi
+    echo
+    echo "Weekly read-only snapshots ($SNAPDIR):"
+    ls -1 "$SNAPDIR" 2>/dev/null | sed 's/^/  /' || echo "  (none)"
+}
+
+cmd_list() {
+    ls -1 "$SNAPDIR" 2>/dev/null || echo "(no snapshots in $SNAPDIR)"
+}
+
+cmd_clone() {
+    need_root
+    [[ $# -ge 1 ]] || die "usage: btrfs-rollback clone <snapshot>"
+    [[ "$(booted_subvol)" == "@" ]] || \
+        die "run 'clone' from a normal boot (subvol=@); you are on '$(booted_subvol)'"
+    local snap; snap="$(resolve_snap "$1")"
+    btrfs subvolume show "$snap" >/dev/null 2>&1 || die "not a subvolume: $snap"
+
+    if btrfs subvolume show "$POOL/@rollback" >/dev/null 2>&1; then
+        echo "Replacing existing @rollback ..."
+        btrfs subvolume delete "$POOL/@rollback" || die "could not delete current @rollback"
+    fi
+    echo "Creating writable @rollback from: $snap"
+    btrfs subvolume snapshot "$snap" "$POOL/@rollback" || die "snapshot failed"
+    echo
+    echo "Done. Reboot and choose 'Arch Linux (rollback ...)' to boot this state."
+    echo "CAVEAT: weekly snapshots do NOT include /boot. If this snapshot's kernel"
+    echo "        differs from the current one, boot the LTS entry instead, or after"
+    echo "        promoting reinstall the matching kernel (pacman -S linux)."
+}
+
+cmd_promote() {
+    need_root
+    local cur; cur="$(booted_subvol)"
+    [[ "$cur" != "@" ]] || die "you are running @ itself. Boot the rollback entry \
+first (or use a live USB) so @ is free to be replaced. Refusing to touch the live root."
+    echo "Currently booted subvol : $cur"
+    echo "This will rename @ -> @broken_<ts> and make a new @ from '$cur'."
+    read -rp "Proceed? [y/N] " ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { echo "aborted."; exit 1; }
+
+    local tstamp; tstamp="$(date +%Y%m%d_%H%M%S)"
+    if btrfs subvolume show "$POOL/@" >/dev/null 2>&1; then
+        mv "$POOL/@" "$POOL/@broken_$tstamp" || die "could not rename @ (is it in use?)"
+        echo "old @ preserved as @broken_$tstamp"
+    fi
+    btrfs subvolume snapshot "$POOL/$cur" "$POOL/@" || die "could not create new @ from $cur"
+    echo "new @ created from $cur."
+    echo
+    echo "Reboot into the default entry now (it boots subvol=@)."
+    echo "Later, once happy, reclaim the old root with:"
+    echo "  sudo btrfs subvolume delete $POOL/@broken_$tstamp/var/log \\"
+    echo "                              $POOL/@broken_$tstamp/var/cache \\"
+    echo "                              $POOL/@broken_$tstamp/var/lib/portables \\"
+    echo "                              $POOL/@broken_$tstamp/var/lib/machines \\"
+    echo "                              $POOL/@broken_$tstamp"
+    echo "(the nested subvols must be deleted before the parent)"
+    echo
+    echo "NOTE: the new @ has plain var/log & var/cache directories (not nested"
+    echo "      subvolumes). That is harmless; recreate them as subvolumes later if"
+    echo "      you want the old separation back."
+}
+
+main() {
+    local cmd="${1:-}"; shift || true
+    case "$cmd" in
+        status)  cmd_status "$@" ;;
+        list)    cmd_list "$@" ;;
+        clone)   cmd_clone "$@" ;;
+        promote) cmd_promote "$@" ;;
+        ""|-h|--help|help) usage ;;
+        *) echo "unknown command: $cmd" >&2; echo; usage; exit 1 ;;
+    esac
+}
+main "$@"
