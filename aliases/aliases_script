@@ -4,11 +4,10 @@
 #
 # Sections:
 #   1. ii IRC client (start/stop, chat viewers, quick messaging)
-#   2. Personal notes management (notes.sh)
-#   3. System overview (sysglance.sh)
-#   4. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
-#   5. Borg full-system backup (borg-system-backup.sh)
-#   6. Disk & package space report (space-report.sh)
+#   2. System overview (sysglance.sh)
+#   3. BTRFS snapshot backup script (btrfs-snapshot-backup.sh)
+#   4. Borg full-system backup (borg-system-backup.sh)
+#   5. Disk & package space report (space-report.sh)
 
 # ============================================================================
 # 1. ii IRC aliases
@@ -110,114 +109,13 @@ ii-setup() {
 
 
 # ============================================================================
-# 2. Personal Notes Management aliases (notes.sh)
-# ============================================================================
-
-# Base notes directory (notes.sh and personal_notes.md live here)
-export NOTES_DIR="$HOME/jb01/Notes/General"
-
-# Quick aliases for notes management
-alias n="$NOTES_DIR/notes.sh"                    # Main notes command
-alias ne="$NOTES_DIR/notes.sh edit"              # Edit notes
-alias nv="$NOTES_DIR/notes.sh view"              # View notes
-alias nh="$NOTES_DIR/notes.sh html"              # Generate HTML
-alias no="$NOTES_DIR/notes.sh open"              # Open HTML in browser
-alias nb="$NOTES_DIR/notes.sh backup"            # Create backup
-alias ns="$NOTES_DIR/notes.sh search"            # Search notes
-alias na="$NOTES_DIR/notes.sh add"               # Add quick note
-alias nt="$NOTES_DIR/notes.sh todo"              # Show TODOs
-alias nsync="$NOTES_DIR/notes.sh sync"           # Sync with git
-
-# note "some text"  - add a quick note
-# find_note "term"  - search notes
-note() {
-    $NOTES_DIR/notes.sh add "$*"
-}
-
-find_note() {
-    $NOTES_DIR/notes.sh search "$1"
-}
-
-# Grep specific sections of the notes file directly
-alias nfinance="grep -A 10 -B 2 'Financial\|Banking\|Investment' $NOTES_DIR/personal_notes.md"
-alias ntech="grep -A 10 -B 2 'Technical\|Development\|Commands' $NOTES_DIR/personal_notes.md"
-alias nwork="grep -A 10 -B 2 'Work\|Professional\|Employment' $NOTES_DIR/personal_notes.md"
-alias npersonal="grep -A 10 -B 2 'Personal\|Family\|Important' $NOTES_DIR/personal_notes.md"
-
-# One-time initialisation: creates the notes file/backup dir and optionally
-# sets up git version control and a daily 2AM backup cron job
-setup_notes() {
-    echo "Setting up Personal Notes Management System..."
-    
-    # Create directory structure
-    mkdir -p "$NOTES_DIR/backups"
-    
-    # Copy the organized notes template (you'll need to save it manually)
-    if [ ! -f "$NOTES_DIR/personal_notes.md" ]; then
-        echo "# Personal Knowledge Base" > "$NOTES_DIR/personal_notes.md"
-        echo "" >> "$NOTES_DIR/personal_notes.md"
-        echo "## 📝 Getting Started" >> "$NOTES_DIR/personal_notes.md"
-        echo "" >> "$NOTES_DIR/personal_notes.md"
-        echo "Welcome to your organized notes system!" >> "$NOTES_DIR/personal_notes.md"
-        echo "Use 'ne' to edit, 'nv' to view, 'nh' to generate HTML." >> "$NOTES_DIR/personal_notes.md"
-        echo "Notes file created: $NOTES_DIR/personal_notes.md"
-    fi
-    
-    # Initialize git if requested (compatible with both bash and zsh)
-    echo -n "Initialize git repository for version control? (y/N): "
-    read REPLY
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        cd "$NOTES_DIR"
-        if ! git status >/dev/null 2>&1; then
-            git init
-            git add .
-            git commit -m "Initial notes setup"
-            echo "Git repository initialized"
-        else
-            echo "Git repository already exists"
-        fi
-    fi
-    
-    # Create cron job for automatic backups
-    echo -n "Set up automatic daily backups? (y/N): "
-    read REPLY
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        # Add to crontab: daily backup at 2 AM
-        backup_job="0 2 * * * $NOTES_DIR/notes.sh backup"
-        if ! crontab -l 2>/dev/null | grep -q "$NOTES_DIR/notes.sh backup"; then
-            (crontab -l 2>/dev/null; echo "$backup_job") | crontab -
-            echo "Daily backup scheduled for 2 AM"
-        else
-            echo "Backup job already exists in crontab"
-        fi
-    fi
-    
-    echo "Setup complete! Use 'n help' to see available commands."
-    echo "Next steps:"
-    echo "1. Edit your notes: ne"
-    echo "2. Save the management scripts in $NOTES_DIR/"
-    echo "3. Make notes.sh executable: chmod +x $NOTES_DIR/notes.sh"
-}
-
-# Prefixed quick-note shortcuts
-alias today="note 'Today: $(date +%Y-%m-%d)'"
-alias meeting="note 'Meeting: '"
-alias idea="note 'Idea: '"
-alias reminder="note 'Reminder: '"
-
-# Quick search aliases
-alias passnote="ns password | head -20"  # Find password-related notes (reminder to use password manager!)
-alias confnote="ns config"               # Find configuration notes
-alias cmdnote="ns command"               # Find command notes
-
-# ============================================================================
-# 3. System overview aliases (sysglance.sh)
+# 2. System overview aliases (sysglance.sh)
 # ============================================================================
 alias sysglance="sysglance.sh"                        # System overview at a glance
 alias sysinfo="sysglance.sh"                           # kept for muscle memory
 
 # =============================================================================
-# 4. BTRFS Snapshot Backup aliases (btrfs-snapshot-backup.sh)
+# 3. BTRFS Snapshot Backup aliases (btrfs-snapshot-backup.sh)
 # =============================================================================
 # Version: 2.3 - Single-parent policy with maximum space efficiency
 # Loaded automatically as part of ~/.aliases_script.
@@ -603,7 +501,7 @@ EOF
 # echo "BTRFS backup aliases loaded. Type 'bb-aliases' for help."
 
 # =============================================================================
-# 5. Borg full-system backup aliases (borg-system-backup.sh)
+# 4. Borg full-system backup aliases (borg-system-backup.sh)
 # =============================================================================
 # Version: 2.0 - Borg-based versioned backup to the EXT4 external drive.
 # Backs up FROM the read-only btrfs snapshots that btrfs-snapshot-backup.sh creates
@@ -684,7 +582,7 @@ EOF
 }
 
 # ============================================================================
-# 6. Disk & Package Space Report aliases (space-report.sh)
+# 5. Disk & Package Space Report aliases (space-report.sh)
 # ============================================================================
 # Disk-usage overview + installed-package sizes (repo vs AUR). See the script's
 # `help` for all modes. Deps: pacman, expac, coreutils (optional: ncdu).
