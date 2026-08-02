@@ -3,7 +3,7 @@
 # by install-btrfs-rollback.sh. Restores your original fstab and removes every
 # file/subvol the setup added.
 #
-#   Run: sudo bash ~/undo-btrfs-rollback.sh
+#   Run: sudo bash ~/bin/undo-btrfs-rollback.sh
 set -uo pipefail
 [[ $EUID -eq 0 ]] || { echo "Please run with sudo."; exit 1; }
 
