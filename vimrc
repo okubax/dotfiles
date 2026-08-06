@@ -36,7 +36,7 @@ set termguicolors
 set number              " show line numbers
 set showcmd             " show command in bottom bar
 "set cursorline          " highlight current line
-filetype plugin indent on  " load filetype-specific plugin + indent files
+filetype indent on      " load filetype-specific indent files
 set wildmenu            " visual autocomplete for command menu
 set lazyredraw          " redraw only when we need to.
 set showmatch           " highlight matching [{()}]
@@ -107,25 +107,6 @@ set statusline+=\ %3p%%\                " percentage
 map w1 :.w >>\#archlinux/in
 map w2 :.w >>\#bash/in
 map w3 :.w >>\#f1/in
-
-"beancount (vim-beancount plugin)
-"--------------------------------
-" vim's embedded python3 is the system python, which can't import beancount when
-" it lives in a venv. Add that venv's site-packages to sys.path so account name
-" omni-completion (insert-mode <C-x><C-o>) works. The version dir is derived from
-" vim's own python, so a python point-bump self-heals once the venv is rebuilt.
-augroup beancount_setup
-    autocmd!
-    if has('python3')
-        autocmd FileType beancount python3 import sys, os; _bp = os.path.expanduser('~/venv/vizex/lib/python%d.%d/site-packages' % sys.version_info[:2]); (os.path.isdir(_bp) and _bp not in sys.path) and sys.path.insert(0, _bp)
-    endif
-    " Point completion at your ledger root so it sees every account across the
-    " includes — set b:beancount_root to your own main file, e.g.:
-    " autocmd BufRead,BufNewFile */ledger/*.beancount let b:beancount_root = expand('%:p:h') . '/main.beancount'
-    " <leader>= aligns the commodity/amount column (works on a line or a selection).
-    autocmd FileType beancount nnoremap <buffer> <leader>= :AlignCommodity<CR>
-    autocmd FileType beancount xnoremap <buffer> <leader>= :AlignCommodity<CR>
-augroup END
 
 " jump to last edited position when reopening a file
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
