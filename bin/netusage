@@ -114,8 +114,15 @@ report() {
 }
 
 if [ "$WATCH" -eq 1 ]; then
-  trap 'exit 0' INT
-  while :; do clear; report; sleep 1; done
+  # Build the whole frame BEFORE clearing, so the previous frame stays on screen
+  # during the multi-second sampling — then swap it in instantly (no blank flash).
+  tput civis 2>/dev/null                                   # hide cursor
+  trap 'tput cnorm 2>/dev/null; exit 0' INT TERM           # restore on Ctrl-C
+  while :; do
+    frame=$(report)
+    clear
+    printf '%s\n' "$frame"
+  done
 else
   report
 fi
