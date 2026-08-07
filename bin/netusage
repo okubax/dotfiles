@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+# netusage — who's using the network, plus current and overall up/down.
+#
+#   • Overall (since boot) + live rate : pure /proc/net/dev — no root needed.
+#   • Per-process up/down              : nethogs (needs root → uses sudo).
+#     Falls back to `ss` (active connections, no rates) if root isn't available.
+#
+# Usage: netusage [-i IFACE] [-s SECS] [-p SECS] [-n TOPN] [-w] [-h]
+set -uo pipefail
+
+IFACE=""        # empty = auto-detect (default-route device)
+SAMPLE=2        # live interface-rate sample window (seconds)
+PROC_SECS=5     # per-process capture window (seconds, nethogs)
+TOPN=12         # show top N processes
+WATCH=0         # -w : loop until Ctrl-C
+
+usage() { sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; }
+
+while getopts ":i:s:p:n:wh" o; do
+  case "$o" in
+    i) IFACE=$OPTARG ;; s) SAMPLE=$OPTARG ;; p) PROC_SECS=$OPTARG ;;
+    n) TOPN=$OPTARG ;;  w) WATCH=1 ;;      h) usage; exit 0 ;;
+    :) echo "netusage: -$OPTARG needs an argument" >&2; exit 2 ;;
+    \?) echo "netusage: unknown option -$OPTARG" >&2; usage; exit 2 ;;
+  esac
+done
+
+# ---- colours (only if stdout is a terminal) ----
+if [ -t 1 ]; then B=$'\e[1m'; DIM=$'\e[2m'; CY=$'\e[36m'; GRN=$'\e[32m'; YEL=$'\e[33m'; NC=$'\e[0m'
+else B=; DIM=; CY=; GRN=; YEL=; NC=; fi
+
+# ---- helpers ----
+hbytes() { awk -v b="${1:-0}" 'BEGIN{split("B KiB MiB GiB TiB PiB",u," ");i=1;while(b>=1024&&i<6){b/=1024;i++}printf "%.2f %s",b,u[i]}'; }
+hrate()  { awk -v b="${1:-0}" 'BEGIN{split("B KiB MiB GiB",u," ");i=1;while(b>=1024&&i<4){b/=1024;i++}printf "%.1f %s/s",b,u[i]}'; }
+
+# rx+tx bytes for an interface from /proc/net/dev -> "rx tx"
+if_bytes() {
+  local line; line=$(grep -E "^[[:space:]]*$1:" /proc/net/dev 2>/dev/null) || return 1
+  line=${line#*:}; set -- $line; echo "$1 $9"
+}
+
+detect_iface() {
+  local i; i=$(ip route show default 2>/dev/null | awk '/default/{print $5; exit}')
+  [ -z "$i" ] && i=$(ip -br link 2>/dev/null | awk '$1!="lo" && $2=="UP"{print $1; exit}')
+  echo "$i"
+}
+
+per_process() {
+  if ! command -v nethogs >/dev/null 2>&1; then fallback_ss; return; fi
+  local SUDO=""
+  if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+    if [ -t 0 ]; then SUDO="sudo"; else SUDO="sudo -n"; fi
+  fi
+  local out
+  out=$($SUDO nethogs -t -C -b -c "$PROC_SECS" -d 1 "$IFACE" 2>/dev/null)
+  if [ -z "$out" ]; then fallback_ss; return; fi
+  # nethogs -t lines: "<name>/<pid>/<uid>\t<sent KB/s>\t<recv KB/s>" (reprinted each
+  # refresh). Keep the LAST value per pid, then sum by program name.
+  local rows
+  rows=$(printf '%s\n' "$out" | awk '
+    { s=""; r=""; full=""
+      n=split($0,a,"\t")
+      if(n>=3 && a[2]+0==a[2] && a[3]+0==a[3]){full=a[1]; s=a[2]; r=a[3]}
+      else{ m=split($0,b,/[ \t]+/)
+            if(m>=3 && b[m]+0==b[m] && b[m-1]+0==b[m-1]){r=b[m]; s=b[m-1];
+              for(i=1;i<=m-2;i++) full=full (i>1?" ":"") b[i]} else next }
+      LS[full]=s; LR[full]=r }
+    END{ for(k in LS){ name=k
+           sub(/\/[0-9]+\/[0-9]+$/,"",name); sub(/^.*\//,"",name); if(name=="")name="?"
+           S[name]+=LS[k]; R[name]+=LR[k] }
+         for(nm in S) if(S[nm]+R[nm]>0) printf "%s\t%.1f\t%.1f\n", nm, R[nm], S[nm] }' \
+    | sort -t$'\t' -k2 -rn | head -n "$TOPN")
+  if [ -z "$rows" ]; then
+    echo "   ${DIM}(no per-process traffic seen during the ${PROC_SECS}s window)${NC}"; return
+  fi
+  printf "   ${B}%-24s %12s %12s${NC}\n" "PROCESS" "DOWN" "UP"
+  printf '%s\n' "$rows" | awk -F'\t' -v g="$GRN" -v y="$YEL" -v n="$NC" \
+    '{printf "   %-24s %s%10.1f KB/s%s %s%8.1f KB/s%s\n",$1,g,$2,n,y,$3,n}'
+}
+
+fallback_ss() {
+  echo "   ${DIM}(per-process rates need root — run: ${NC}${B}sudo netusage${NC}${DIM})${NC}"
+  echo "   ${DIM}processes with active connections (via ss):${NC}"
+  ss -tunpH state established 2>/dev/null \
+    | grep -oE 'users:\(\("[^"]+"' \
+    | sed -E 's/.*\("//; s/"$//' \
+    | sort | uniq -c | sort -rn | head -n "$TOPN" \
+    | awk -v c="$CY" -v n="$NC" '{cnt=$1;$1="";sub(/^ /,"");printf "     %s%-22s%s — %s conn\n",c,$0,n,cnt}'
+  [ -z "$(ss -tunpH state established 2>/dev/null)" ] && echo "     ${DIM}(no established connections)${NC}"
+}
+
+report() {
+  [ -z "$IFACE" ] && IFACE=$(detect_iface)
+  if [ -z "$IFACE" ] || ! grep -qE "^[[:space:]]*$IFACE:" /proc/net/dev; then
+    echo "netusage: no usable interface (got '${IFACE:-none}')" >&2; exit 1
+  fi
+  local ipaddr; ipaddr=$(ip -4 -br addr show "$IFACE" 2>/dev/null | awk '{print $3}')
+
+  # overall since boot
+  set -- $(if_bytes "$IFACE"); local rx0=$1 tx0=$2
+  # live sample
+  sleep "$SAMPLE"
+  set -- $(if_bytes "$IFACE"); local rx1=$1 tx1=$2
+  local drx=$(( (rx1-rx0)/SAMPLE )) dtx=$(( (tx1-tx0)/SAMPLE ))
+
+  echo
+  echo "${B}${CY}━━ Network usage — ${IFACE}${ipaddr:+ ($ipaddr)} ━━━━━━━━━━━━━━━━━━━━${NC}"
+  printf "  ${B}Overall (since boot)${NC}   ${GRN}↓ %-14s${NC} ${YEL}↑ %s${NC}\n" "$(hbytes "$rx1")" "$(hbytes "$tx1")"
+  printf "  ${B}Current (%ss avg)${NC}      ${GRN}↓ %-14s${NC} ${YEL}↑ %s${NC}\n" "$SAMPLE" "$(hrate "$drx")" "$(hrate "$dtx")"
+  echo
+  echo "  ${B}Per-process${NC} ${DIM}(${PROC_SECS}s sample)${NC}"
+  per_process
+  echo
+}
+
+if [ "$WATCH" -eq 1 ]; then
+  trap 'exit 0' INT
+  while :; do clear; report; sleep 1; done
+else
+  report
+fi
