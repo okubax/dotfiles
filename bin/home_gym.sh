@@ -5,7 +5,7 @@
 set -o pipefail
 
 # Configuration
-readonly DATA_DIR="$HOME/.home_gym"
+readonly DATA_DIR="$HOME/.local/share/home_gym"
 readonly HISTORY_FILE="$DATA_DIR/workout_history.csv"
 readonly RECORDS_FILE="$DATA_DIR/personal_records.json"
 readonly SETTINGS_FILE="$DATA_DIR/settings.conf"
