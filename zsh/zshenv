@@ -41,7 +41,6 @@ path_dirs=(
     # User binaries
     "$HOME/bin"
     "$HOME/.cargo/bin"
-    "$HOME/.npm-global/bin"
     "$HOME/.local/bin"
     
    # Android development
