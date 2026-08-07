@@ -1,3 +1,6 @@
 # nwg-displays writes these at runtime (machine-specific monitor layout)
 swaywm/sway/outputs
 swaywm/sway/workspaces
+
+# compiled build artifact (ship source, not the binary)
+bin/lottogen
