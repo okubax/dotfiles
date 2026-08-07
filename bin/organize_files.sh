@@ -171,7 +171,7 @@ show_usage() {
     echo "  $0                     # Organize current directory"
     echo "  $0 ~/Downloads         # Organize Downloads folder"
     echo "  $0 -d ~/Downloads      # Preview organization"
-    echo "  $0 -r ~/Documents      # Organize recursively"
+    echo "  $0 -r ~/documents      # Organize recursively"
 }
 
 # Show supported file types

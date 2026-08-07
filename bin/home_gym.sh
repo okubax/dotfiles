@@ -5,9 +5,9 @@
 set -o pipefail
 
 # Configuration
-readonly DATA_DIR="$HOME/.local/share/home_gym"
-readonly HISTORY_FILE="$DATA_DIR/workout_history.csv"
-readonly RECORDS_FILE="$DATA_DIR/personal_records.json"
+readonly DATA_DIR="$HOME/.local/share/home-gym"
+readonly HISTORY_FILE="$DATA_DIR/workout-history.csv"
+readonly RECORDS_FILE="$DATA_DIR/personal-records.json"
 readonly SETTINGS_FILE="$DATA_DIR/settings.conf"
 readonly GOALS_FILE="$DATA_DIR/goals.json"
 readonly BACKUP_DIR="$DATA_DIR/backups"
@@ -162,7 +162,7 @@ auto_backup() {
     if [[ ! -f "$backup_file" ]]; then
         tar -czf "$backup_file" -C "$DATA_DIR" \
             --exclude='backups' \
-            workout_history.csv personal_records.json goals.json settings.conf 2>/dev/null || true
+            workout-history.csv personal-records.json goals.json settings.conf 2>/dev/null || true
 
         # Clean old backups (keep last 7 days)
         find "$BACKUP_DIR" -name "backup_*.tar.gz" -mtime +7 -delete 2>/dev/null || true
@@ -1063,7 +1063,7 @@ create_manual_backup() {
 
     tar -czf "$backup_file" -C "$DATA_DIR" \
         --exclude='backups' \
-        workout_history.csv personal_records.json goals.json settings.conf 2>/dev/null
+        workout-history.csv personal-records.json goals.json settings.conf 2>/dev/null
 
     echo ""
     echo -e "${GREEN}Backup created: $backup_file${NC}"
