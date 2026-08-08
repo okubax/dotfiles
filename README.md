@@ -74,6 +74,7 @@ sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome n
 sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
 sudo pacman -S gsimplecal qalculate-gtk thunar neofetch              # Desktop utilities
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools
+sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
@@ -143,6 +144,8 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `filesearch.py` - file search tool
 - `sysglance.sh` - system overview at a glance (host/CPU/memory/GPU/storage/network/power)
 - `space-report.sh` - disk usage (top dirs/files) + installed-package sizes (repo vs AUR)
+- `netusage` - who's using the network: overall + live up/down, plus per-process rates (via nethogs)
+- `sweep` - safe cleaner for caches / trash / journal / pacman cache (dry-run by default; system parts use sudo)
 - `news_reader.py` - terminal RSS reader
 - `catppuccin_wallpaper.py` - wallpaper generator
 
