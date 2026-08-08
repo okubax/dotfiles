@@ -1,0 +1,167 @@
+#!/usr/bin/env bash
+# sweep — safe cleaner for caches, trash, redundant files, system pkg cache & journal.
+#
+#   DRY-RUN BY DEFAULT — shows what it *would* remove. Add -y/--yes to actually delete.
+#   Home is always cleaned (primary). System & journal are opt-in and use sudo.
+#   Never removes orphan packages, and never nukes the whole pacman cache (keeps N).
+#
+# Usage: sweep [-y] [-s] [-j[=SPEC]] [-a] [--age DAYS] [--junk] [--no-home] [-h]
+#   -y, --yes            actually delete (default is a dry run)
+#   -s, --system         also trim pacman cache + system coredumps (sudo)
+#   -j, --journal[=SPEC] also vacuum systemd journal (sudo). SPEC: time(2weeks),
+#                        size(200M) or a count(10). default: 2weeks
+#   -a, --all            home + system + journal
+#       --age DAYS       for ~/.cache: only remove files older than DAYS
+#       --pkg-keep N     pacman cache: keep N versions per pkg (default 2; 0 = purge all)
+#       --junk           also sweep editor/OS junk (*.swp *~ .DS_Store …) under ~
+#       --no-home        skip the home section (e.g. journal-only)
+#   -h, --help           this help
+set -uo pipefail
+
+# ---------- config (edit to taste) ----------
+CACHE_KEEP=(evolution borg vim cliphist)   # ~/.cache subdirs to PRESERVE
+PACCACHE_KEEP=2                            # keep N most-recent versions of installed pkgs
+JOURNAL_DEFAULT="2weeks"                   # default journal retention
+DU=/usr/bin/du                            # bypass the du->gdu alias/function
+
+# ---------- flags ----------
+DO_HOME=1 DO_SYS=0 DO_JOURNAL=0 RUN=0 AGE="" JUNK=0 JSPEC="$JOURNAL_DEFAULT"
+TOTAL=0
+
+if [ -t 1 ]; then B=$'\e[1m';DIM=$'\e[2m';RED=$'\e[31m';GRN=$'\e[32m';YEL=$'\e[33m';CY=$'\e[36m';NC=$'\e[0m'
+else B=;DIM=;RED=;GRN=;YEL=;CY=;NC=; fi
+
+usage(){ awk 'NR>1 && /^#/{sub(/^# ?/,"");print} /^set /{exit}' "$0"; }
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -y|--yes|--run) RUN=1 ;;
+    -s|--system) DO_SYS=1 ;;
+    -j|--journal) DO_JOURNAL=1; if [ -n "${2:-}" ] && [ "${2:0:1}" != "-" ]; then JSPEC="$2"; shift; fi ;;
+    --journal=*) DO_JOURNAL=1; JSPEC="${1#*=}" ;;
+    -a|--all) DO_SYS=1; DO_JOURNAL=1 ;;
+    --age) AGE="${2:-}"; shift ;;
+    --age=*) AGE="${1#*=}" ;;
+    --pkg-keep) PACCACHE_KEEP="${2:-}"; shift ;;
+    --pkg-keep=*) PACCACHE_KEEP="${1#*=}" ;;
+    --junk) JUNK=1 ;;
+    --no-home) DO_HOME=0 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "sweep: unknown argument '$1'" >&2; usage; exit 2 ;;
+  esac
+  shift
+done
+
+# Guard: home cleanup must run as the real user, not root.
+if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+  echo "${RED}Run sweep as your normal user — it invokes sudo only where needed.${NC}" >&2; exit 1
+fi
+if ! [[ "$AGE" =~ ^[0-9]*$ ]]; then echo "sweep: --age must be a number of days" >&2; exit 2; fi
+if ! [[ "$PACCACHE_KEEP" =~ ^[0-9]+$ ]]; then echo "sweep: --pkg-keep must be a number" >&2; exit 2; fi
+
+# ---------- helpers ----------
+hsize(){ awk -v b="${1:-0}" 'BEGIN{split("B KiB MiB GiB TiB",u," ");i=1;while(b>=1024&&i<5){b/=1024;i++}printf "%.1f %s",b,u[i]}'; }
+bytesof(){ [ -e "$1" ] && $DU -s -B1 "$@" 2>/dev/null | awk '{s+=$1}END{print s+0}' || echo 0; }
+add(){ TOTAL=$((TOTAL + ${1:-0})); }
+
+# ---------- home ----------
+clean_cache(){
+  local base="$HOME/.cache" entry name k keep sz
+  [ -d "$base" ] || { echo "  ${DIM}no ~/.cache${NC}"; return; }
+  echo "${B}~/.cache${NC} ${DIM}(keeping: ${CACHE_KEEP[*]}${AGE:+; only files >${AGE}d})${NC}"
+  shopt -s dotglob nullglob
+  for entry in "$base"/*; do
+    name=$(basename "$entry"); keep=0
+    for k in "${CACHE_KEEP[@]}"; do [ "$name" = "$k" ] && { keep=1; break; }; done
+    if [ "$keep" -eq 1 ]; then
+      printf "   ${DIM}keep   %-20s %s${NC}\n" "$name" "$(hsize "$(bytesof "$entry")")"; continue
+    fi
+    if [ -n "$AGE" ]; then
+      sz=$(find "$entry" -type f -mtime +"$AGE" -printf '%s\n' 2>/dev/null | awk '{s+=$1}END{print s+0}')
+      add "$sz"; printf "   ${YEL}trim   %-20s %s${NC}\n" "$name" "$(hsize "$sz")"
+      if [ "$RUN" -eq 1 ]; then find "$entry" -type f -mtime +"$AGE" -delete 2>/dev/null
+                                find "$entry" -mindepth 1 -type d -empty -delete 2>/dev/null; fi
+    else
+      sz=$(bytesof "$entry"); add "$sz"; printf "   ${YEL}clear  %-20s %s${NC}\n" "$name" "$(hsize "$sz")"
+      [ "$RUN" -eq 1 ] && rm -rf -- "$entry"
+    fi
+  done
+  shopt -u dotglob nullglob
+}
+
+clean_trash(){
+  local t="$HOME/.local/share/Trash" sz
+  if [ ! -d "$t" ]; then echo "${B}Trash${NC} ${DIM}(none)${NC}"; return; fi
+  sz=$(bytesof "$t"); add "$sz"
+  echo "${B}Trash${NC} ${YEL}$(hsize "$sz")${NC} ${DIM}($(find "$t/files" -mindepth 1 -maxdepth 1 2>/dev/null | wc -l) items)${NC}"
+  if [ "$RUN" -eq 1 ]; then find "$t"/files "$t"/info "$t"/expunged -mindepth 1 -delete 2>/dev/null; fi
+}
+
+clean_junk(){
+  echo "${B}Editor/OS junk under ~${NC} ${DIM}(*.swp *.swo *~ .DS_Store Thumbs.db)${NC}"
+  local hits sz=0 f
+  # prune big/irrelevant trees; only look in config/doc-ish areas
+  mapfile -t hits < <(find "$HOME" \
+    \( -path "$HOME/.cache" -o -path "$HOME/jb01" -o -path "$HOME/music" -o -path "$HOME/videos" \
+       -o -path "$HOME/machines" -o -path "$HOME/downloads" -o -path "$HOME/.local/share/Trash" \
+       -o -path "$HOME/.mozilla" -o -path "$HOME/.steam" -o -path "$HOME/.var" -o -name .git \) -prune -o \
+    -type f \( -name '*.swp' -o -name '*.swo' -o -name '*~' -o -name '.DS_Store' -o -name 'Thumbs.db' \) -print 2>/dev/null)
+  if [ "${#hits[@]}" -eq 0 ]; then echo "   ${DIM}none found${NC}"; return; fi
+  for f in "${hits[@]}"; do sz=$((sz + $(stat -c%s "$f" 2>/dev/null || echo 0)))
+    [ "$RUN" -eq 0 ] && printf "   ${DIM}%s${NC}\n" "${f/#$HOME/\~}"; done
+  add "$sz"; printf "   ${YEL}%s junk files, %s${NC}\n" "${#hits[@]}" "$(hsize "$sz")"
+  if [ "$RUN" -eq 1 ]; then printf '%s\0' "${hits[@]}" | xargs -0 rm -f --; fi
+}
+
+# ---------- system (sudo) ----------
+clean_system(){
+  echo; echo "${B}${CY}══ System caches (sudo) ══${NC}"
+  if command -v paccache >/dev/null 2>&1; then
+    echo "${B}Pacman cache${NC} ${DIM}(keep last $PACCACHE_KEEP of installed; drop all of uninstalled)${NC}"
+    if [ "$RUN" -eq 1 ]; then
+      sudo paccache -rk"$PACCACHE_KEEP"; sudo paccache -ruk0
+    else
+      paccache -dk"$PACCACHE_KEEP" 2>/dev/null | tail -1 | sed 's/^/   installed: /'
+      paccache -duk0 2>/dev/null | tail -1 | sed 's/^/   uninstalled: /'
+    fi
+  else echo "   ${DIM}paccache not found (install pacman-contrib)${NC}"; fi
+  # system coredumps (avoid a sudo prompt during dry-run)
+  local cdir=/var/lib/systemd/coredump sz
+  if [ "$RUN" -eq 1 ]; then sz=$(sudo $DU -s -B1 "$cdir" 2>/dev/null | awk '{print $1+0}')
+  else sz=$($DU -s -B1 "$cdir" 2>/dev/null | awk '{print $1+0}'); fi
+  if [ "${sz:-0}" -gt 0 ]; then
+    echo "${B}Coredumps${NC} ${YEL}$(hsize "$sz")${NC}"
+    [ "$RUN" -eq 1 ] && sudo find "$cdir" -mindepth 1 -delete 2>/dev/null
+  fi
+  echo "${DIM}   (orphan packages are NOT touched — review manually: pacman -Qdt)${NC}"
+}
+
+# ---------- journal (sudo) ----------
+journal_flag(){ local s=$1
+  if   [[ "$s" =~ ^[0-9]+$ ]]; then echo "--vacuum-files=$s"
+  elif [[ "$s" =~ ^[0-9]+[KMG]$ ]]; then echo "--vacuum-size=$s"
+  else echo "--vacuum-time=$s"; fi; }
+clean_journal(){
+  echo; echo "${B}${CY}══ Systemd journal (sudo) ══${NC}"
+  journalctl --disk-usage 2>/dev/null | sed 's/^/   now: /'
+  local flag; flag=$(journal_flag "$JSPEC")
+  echo "   ${YEL}keep: $JSPEC  ->  journalctl $flag${NC}"
+  [ "$RUN" -eq 1 ] && sudo journalctl "$flag" 2>&1 | tail -2 | sed 's/^/   /'
+}
+
+# ---------- run ----------
+if [ "$RUN" -eq 1 ]; then echo "${B}${RED}● EXECUTING — deletions are real${NC}"
+else echo "${B}${GRN}● DRY RUN — nothing will be deleted (add -y to apply)${NC}"; fi
+# prime sudo once if we'll need it
+if [ "$RUN" -eq 1 ] && { [ "$DO_SYS" -eq 1 ] || [ "$DO_JOURNAL" -eq 1 ]; }; then sudo -v || exit 1; fi
+
+if [ "$DO_HOME" -eq 1 ]; then
+  echo; echo "${B}${CY}══ Home (~) ══${NC}"
+  clean_cache; clean_trash; [ "$JUNK" -eq 1 ] && clean_junk
+fi
+[ "$DO_SYS" -eq 1 ] && clean_system
+[ "$DO_JOURNAL" -eq 1 ] && clean_journal
+
+echo
+if [ "$RUN" -eq 1 ]; then echo "${B}${GRN}✔ Reclaimed ~$(hsize "$TOTAL")${NC} ${DIM}(home/trash; pkg-cache & journal freed shown above)${NC}"
+else echo "${B}Would reclaim ~$(hsize "$TOTAL")${NC} ${DIM}(home/trash; + pkg-cache/journal shown above). Re-run with ${NC}${B}-y${NC}${DIM} to apply.${NC}"; fi
