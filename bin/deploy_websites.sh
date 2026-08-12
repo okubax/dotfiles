@@ -69,7 +69,7 @@ warning() {
 load_config() {
     if [[ -f "$CONFIG_FILE" ]]; then
         # Validate config file permissions
-        local perms=$(stat -c "%a" "$CONFIG_FILE" 2>/dev/null)
+        local perms=$(stat -L -c "%a" "$CONFIG_FILE" 2>/dev/null)
         if [[ "$perms" != "600" && "$perms" != "400" && "$perms" != "644" ]]; then
             warning "Config file $CONFIG_FILE has unusual permissions: $perms"
         fi
