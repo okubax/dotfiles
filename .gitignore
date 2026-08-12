@@ -4,3 +4,6 @@ swaywm/sway/workspaces
 
 # compiled build artifact (ship source, not the binary)
 bin/lottogen
+
+# private-only local tool (drafts articles from ncircular headlines via claude -p)
+bin/newsdraft
