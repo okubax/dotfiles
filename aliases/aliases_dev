@@ -23,13 +23,6 @@ alias ytd="yt-dlp -f 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/mp4'"  # Download be
 alias ytdm="yt-dlp -x --audio-format mp3"  # Download as MP3
 alias play="mplayer -msgcolor -msgmodule"   # Play media with colored output
 
-## Jekyll (Static Site Generator) ##
-alias j="bundle exec jekyll"               # Jekyll command shortcut
-
-## Web Development Server ##
-alias starth="sudo /opt/lampp/lampp start"  # Start XAMPP
-alias stoph="sudo /opt/lampp/lampp stop"    # Stop XAMPP
-
 ## Development Utilities ##
 # Quick calculator: calc "2*3.5" (3 decimal places, via bc)
 calc() {

@@ -7,7 +7,7 @@
   "position": "top",
   "modules-center": ["sway/workspaces", "sway/mode", "mpd", "idle_inhibitor",
   "cpu", "memory", "backlight", "pulseaudio", "network", "sway/language",
-  "battery", "tray", "clock"],
+  "battery", "clock"],
 
   // Workspace switcher: Japanese numerals for workspaces 1-6.
   // Only existing workspaces (focused or with windows) are shown.
@@ -131,10 +131,10 @@
   },
 
   // System tray (nextcloud, etc.)
-  "tray": {
-    "icon-size": 16,
-    "spacing": 8
-  },
+  //"tray": {
+    //"icon-size": 16,
+    //"spacing": 8
+  //},
 
   // Clock: time by default, full date on click, calendar in tooltip,
   // gsimplecal on right-click
