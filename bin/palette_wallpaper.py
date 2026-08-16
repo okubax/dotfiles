@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Catppuccin Wallpaper Generator
-Generates beautiful tiled wallpapers using the Catppuccin color palette
+Palette Wallpaper Generator
+Generates beautiful tiled wallpapers using a named color palette
+(Catppuccin's four flavors, or Zephyr's light/dark Breeze-matched scheme)
 """
 
 import random
@@ -33,8 +34,8 @@ PIXEL_NOISE_DENSITY = 0.3
 WAVE_COUNT = 5
 LARGE_IMAGE_THRESHOLD = 3840 * 2160  # 4K resolution
 
-# Catppuccin color palettes
-CATPPUCCIN_PALETTES = {
+# Color palettes (Catppuccin flavors + Zephyr)
+PALETTES = {
     'mocha': {
         'rosewater': '#f5e0dc',
         'flamingo': '#f2cdcd',
@@ -252,7 +253,7 @@ def generate_geometric_pattern(width: int, height: int, palette_name: str = 'moc
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
 
@@ -313,7 +314,7 @@ def generate_gradient_waves(width: int, height: int, palette_name: str = 'mocha'
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
 
@@ -342,7 +343,7 @@ def generate_abstract_circles(width: int, height: int, palette_name: str = 'moch
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
     draw = ImageDraw.Draw(img)
 
@@ -372,7 +373,7 @@ def generate_pixel_noise(width: int, height: int, palette_name: str = 'mocha',
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     img = Image.new('RGB', (width, height), hex_to_rgb(palette['base']))
 
     colors = [palette['pink'], palette['mauve'], palette['blue'], palette['green'],
@@ -396,7 +397,7 @@ def generate_plain_background(width: int, height: int, palette_name: str = 'moch
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
 
     if color_name not in palette:
         print(f"Warning: Color '{color_name}' not found in {palette_name} palette. Using 'base' instead.", file=sys.stderr)
@@ -413,7 +414,7 @@ def generate_gradient_background(width: int, height: int, palette_name: str = 'm
     validate_dimensions(width, height)
     validate_darkness(darkness)
 
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
 
     # Validate colors
     if color1 not in palette:
@@ -529,7 +530,7 @@ def add_text_overlay(img, text, palette_name='mocha', text_color='text', font_si
     if not text.strip():
         return img
     
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     
     # Validate text color
     if text_color not in palette:
@@ -612,7 +613,7 @@ def generate_random_wallpaper(width, height):
     """Generate a completely random wallpaper with random settings"""
     # Random palette
     palette_name = random.choice(['mocha', 'macchiato', 'frappe', 'latte'])
-    palette = CATPPUCCIN_PALETTES[palette_name]
+    palette = PALETTES[palette_name]
     
     # Random pattern
     pattern = random.choice(['hexagon', 'triangle', 'diamond', 'waves', 'circles', 'noise', 'plain', 'gradient'])
@@ -725,17 +726,18 @@ def save_image(img: Image.Image, output_path: str, format_override: Optional[str
 
 def main():
     # Get all available colors from any palette (they're consistent across palettes)
-    available_colors = list(CATPPUCCIN_PALETTES['mocha'].keys())
+    available_colors = list(PALETTES['mocha'].keys())
     color_help = f"Color name for plain backgrounds. Available colors: {', '.join(available_colors)}"
     color1_help = f"First color for gradient backgrounds. Available colors: {', '.join(available_colors)}"
     color2_help = f"Second color for gradient backgrounds. Available colors: {', '.join(available_colors)}"
     text_color_help = f"Color for text overlay. Available colors: {', '.join(available_colors)}"
 
     parser = argparse.ArgumentParser(
-        description='Generate beautiful Catppuccin wallpapers with various patterns, gradients, and text overlays',
+        description='Generate beautiful themed wallpapers with various patterns, gradients, and text overlays',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
-Available Catppuccin Colors:
+Available Palette Colors (key names are shared across all palettes,
+including zephyr_light/zephyr_dark - see --palette below for the full list):
   Background colors: base, mantle, crust, surface0, surface1, surface2
   Text colors: text, subtext1, subtext0, overlay2, overlay1, overlay0
   Accent colors: rosewater, flamingo, pink, mauve, red, maroon, peach, 
@@ -760,11 +762,11 @@ Darkness Examples:
   --darkness 0.1: Ultra-dark (subtle colors)
 
 Random Examples:
-  catppuccin_wallpaper.py --random
-  catppuccin_wallpaper.py --random --width 1920 --height 1080 --output surprise.png
+  palette_wallpaper.py --random
+  palette_wallpaper.py --random --width 1920 --height 1080 --output surprise.png
   
   # Generate 5 random wallpapers
-  for i in {{1..5}}; do catppuccin_wallpaper.py --random --output random_$i.png; done
+  for i in {{1..5}}; do palette_wallpaper.py --random --output random_$i.png; done
 
 Output Formats:
   --format png: Lossless PNG (default, largest file size)
@@ -777,12 +779,12 @@ Output Formats:
 
 Complete Examples:
   # High-quality PNG with radial gradient
-  catppuccin_wallpaper.py --width 2560 --height 1600 --pattern gradient \\
+  palette_wallpaper.py --width 2560 --height 1600 --pattern gradient \\
     --color1 rosewater --color2 teal --direction radial --darkness 0.3 \\
     --text "Hello World" --text-color lavender --output beautiful.png
 
   # Smaller JPEG for quick backgrounds
-  catppuccin_wallpaper.py --pattern hexagon --darkness 0.4 \\
+  palette_wallpaper.py --pattern hexagon --darkness 0.4 \\
     --output ~/Pictures/wallpaper.jpg --quality 85
         """)
     
@@ -805,8 +807,8 @@ Complete Examples:
                        help='Darkness factor: 0.1=very dark, 1.0=normal brightness (default: 1.0)')
     parser.add_argument('--random', action='store_true',
                        help='Generate completely random wallpaper (ignores most other options)')
-    parser.add_argument('--output', default='catppuccin_wallpaper.png',
-                       help='Output filename (default: catppuccin_wallpaper.png)')
+    parser.add_argument('--output', default='wallpaper.png',
+                       help='Output filename (default: wallpaper.png)')
     parser.add_argument('--format', choices=['png', 'jpeg', 'jpg', 'webp'],
                        help='Output format (auto-detected from filename if not specified)')
     parser.add_argument('--quality', type=int, default=95,

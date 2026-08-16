@@ -35,7 +35,7 @@ Full swatch list: see `light/palette.md` and `dark/palette.md`.
 ## Wallpapers
 
 Desktop wallpaper and swaylock's lock-screen background are also
-Zephyr-matched, generated with `~/dotfiles/bin/catppuccin_wallpaper.py`
+Zephyr-matched, generated with `~/dotfiles/bin/palette_wallpaper.py`
 (extended with `zephyr_light`/`zephyr_dark` palettes — same provenance as
 above) and stored in `~/.img/wallpapers/zephyr_{light,dark}_{desktop,
 lockscreen}.png`. Wired per-variant: `zephyr/{light,dark}/sway.conf` sets

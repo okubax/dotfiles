@@ -38,7 +38,7 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 - **Todo**: todo.txt with a conky overlay (`todo/`)
 
 **Theming**
-- **Wallpaper**: Generated using `bin/catppuccin_wallpaper.py` script
+- **Wallpaper**: Generated using `bin/palette_wallpaper.py` script (Catppuccin's four flavors, or Zephyr's Breeze-matched light/dark)
 - **GTK**: Catppuccin theme via [catppuccin/gtk](https://github.com/catppuccin/gtk)
 - **Qt**: Configured using qt5ct and qt6ct
 - **Theme Tools**: nwg-look for GTK3/4 theme management
@@ -147,7 +147,7 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `netusage` - who's using the network: overall + live up/down, plus per-process rates (via nethogs)
 - `sweep` - safe cleaner for caches / trash / journal / pacman cache (dry-run by default; system parts use sudo)
 - `news_reader.py` - terminal RSS reader
-- `catppuccin_wallpaper.py` - wallpaper generator
+- `palette_wallpaper.py` - wallpaper generator (Catppuccin flavors, or Zephyr light/dark)
 
 ## ZSH Configuration
 
