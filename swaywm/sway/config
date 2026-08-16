@@ -39,8 +39,13 @@ set $right l
 
 # Wallpaper is set per-theme-variant, see zephyr/{light,dark}/sway.conf
 # (eDP-1 = laptop panel, HDMI-A-1 = external monitor)
-output eDP-1 scale 2.1
-output HDMI-A-1 scale 1.5
+# Scale picked from each panel's real EDID PPI (eDP-1: LG 14.5" 2560x1600,
+# ~208 PPI; HDMI-A-1: HP M22f 21.5" 1920x1080, ~102 PPI, standard density
+# so it needs none). 2.25 puts the laptop at ~93 effective PPI, noticeably
+# larger than the previous 2.1 (~99 effective PPI, close to unscaled-96-PPI
+# feel, which read too small).
+output eDP-1 scale 2.25
+output HDMI-A-1 scale 1.0
 
 # -----------------------------------------------------------------------------
 # INPUT CONFIGURATION
