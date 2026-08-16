@@ -4,14 +4,12 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 ## Screenshots
 
-*The desktop shot below is current (Zephyr Light). The three app screenshots
-(Vim, VS Code, Firefox) still show the previous all-Catppuccin theme — the
-general layout is unchanged, but colors will look different on a fresh
-install.*
+All current (Zephyr Light — Kate picks it up natively as a KDE app; Firefox's
+own chrome isn't Zephyr-themed).
 
 ![Desktop](screenshot.png)
 ![Vim](screenshot2.png)
-![Vs Code](screenshot3.png)
+![Kate](screenshot3.png)
 ![Firefox](screenshot4.png)
 
 ## Components
@@ -38,7 +36,7 @@ install.*
 **Applications**
 - **Web Browsers**: Firefox, Firefox Developer Edition, Google Chrome, Tor Browser
 - **File Managers**: ranger (terminal), Thunar (GUI)
-- **Text Editors**: vim (native packages, `vim/pack`), VS Code
+- **Text Editors**: vim (native packages, `vim/pack`), Kate
 - **Music**: MPD + ncmpcpp + mpc
 - **Email**: Evolution
 - **Calendar / Calculator**: gsimplecal, qalculate-gtk
@@ -90,10 +88,11 @@ sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome n
 ```bash
 sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
 sudo pacman -S gsimplecal qalculate-gtk thunar evolution neofetch    # Desktop utilities
+sudo pacman -S kate                                                  # Text editor (GUI)
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 sudo pacman -S python-pillow python-numpy                            # palette_wallpaper.py
-yay -S multitail swayshot sway-audio-idle-inhibit-git visual-studio-code-bin   # AUR
+yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
 ## Commands
