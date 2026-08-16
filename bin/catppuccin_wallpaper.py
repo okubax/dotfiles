@@ -146,6 +146,68 @@ CATPPUCCIN_PALETTES = {
         'base': '#eff1f5',
         'mantle': '#e6e9ef',
         'crust': '#dce0e8'
+    },
+    # Zephyr: Breeze-matched scheme, see swaywm/zephyr/README.md.
+    # Neutrals come from BreezeLight/BreezeDark.colors; accents are Breeze's
+    # own semantic colors extended with Flat UI Colors for the slots Breeze
+    # doesn't define (rosewater/flamingo/pink/lavender are interpolated
+    # tints, not real Breeze/Flat-UI colors - Catppuccin's schema has more
+    # color slots than Zephyr's 6-hue palette, see zephyr/*/palette.md).
+    'zephyr_light': {
+        'rosewater': '#e6848e',
+        'flamingo': '#d2746a',
+        'pink': '#9e60b9',
+        'mauve': '#9B59B6',
+        'red': '#DA4453',
+        'maroon': '#C0392B',
+        'peach': '#F67400',
+        'yellow': '#F1C40F',
+        'green': '#27AE60',
+        'teal': '#1ABC9C',
+        'sky': '#2980B9',
+        'sapphire': '#16A085',
+        'blue': '#3DAEE9',
+        'lavender': '#6c84d0',
+        'text': '#232629',
+        'subtext1': '#3e444b',
+        'subtext0': '#707D8A',
+        'overlay2': '#8e98a2',
+        'overlay1': '#C7CBCF',
+        'overlay0': '#d5d8db',
+        'surface2': '#E3E5E7',
+        'surface1': '#EFF0F1',
+        'surface0': '#F7F7F7',
+        'base': '#FCFCFC',
+        'mantle': '#f4f4f4',
+        'crust': '#E3E5E7'
+    },
+    'zephyr_dark': {
+        'rosewater': '#e16975',
+        'flamingo': '#cc6055',
+        'pink': '#9e60b9',
+        'mauve': '#9B59B6',
+        'red': '#DA4453',
+        'maroon': '#C0392B',
+        'peach': '#F67400',
+        'yellow': '#F1C40F',
+        'green': '#27AE60',
+        'teal': '#1ABC9C',
+        'sky': '#1D99F3',
+        'sapphire': '#16A085',
+        'blue': '#3DAEE9',
+        'lavender': '#6c84d0',
+        'text': '#FCFCFC',
+        'subtext1': '#dcdfe2',
+        'subtext0': '#A1A9B1',
+        'overlay2': '#7d848b',
+        'overlay1': '#3B4045',
+        'overlay0': '#32363a',
+        'surface2': '#292C30',
+        'surface1': '#202326',
+        'surface0': '#1D1F22',
+        'base': '#141618',
+        'mantle': '#0f1012',
+        'crust': '#0b0c0d'
     }
 }
 
@@ -537,7 +599,7 @@ def add_text_overlay(img, text, palette_name='mocha', text_color='text', font_si
     
     # Draw text with slight shadow for better visibility
     shadow_offset = max(1, font_size // 24)
-    shadow_color = (0, 0, 0) if palette_name == 'latte' else (255, 255, 255)
+    shadow_color = (0, 0, 0) if palette_name in ('latte', 'zephyr_light') else (255, 255, 255)
     
     # Draw shadow
     draw.text((x + shadow_offset, y + shadow_offset), text, font=font, fill=shadow_color)
@@ -726,8 +788,8 @@ Complete Examples:
     
     parser.add_argument('--width', type=int, default=2560, help='Width of wallpaper (default: 2560)')
     parser.add_argument('--height', type=int, default=1600, help='Height of wallpaper (default: 1600)')
-    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte'], 
-                       default='mocha', help='Catppuccin palette to use (default: mocha)')
+    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dark'],
+                       default='mocha', help='Palette to use (default: mocha)')
     parser.add_argument('--pattern', choices=['hexagon', 'triangle', 'diamond', 'waves', 'circles', 'noise', 'plain', 'gradient'], 
                        default='hexagon', help='Pattern type (default: hexagon)')
     parser.add_argument('--color', default='base', help=color_help)

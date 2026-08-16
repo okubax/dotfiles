@@ -1,18 +1,19 @@
-# Mako notification daemon (Catppuccin theme)
+# Mako notification daemon
 # Started from the sway config: exec /usr/bin/mako
 
 font=Ubuntu Mono 9
-background-color=#1e1e2e
-text-color=#f5e0dc
 max-icon-size=48
 icon-location=right
 margin=0,25,20
 padding=10,5,10
 width=200
 border-size=2
-border-color=#eba0ac
 border-radius=15
 default-timeout=10000
+
+# Color scheme: Zephyr (Breeze-matched, see ../zephyr/README.md).
+# active is a symlink to light/ or dark/ — flip both with `zephyr-theme`.
+include=~/dotfiles/swaywm/zephyr/active/mako.conf
 
 # Show notifications above fullscreen windows
 layer=overlay

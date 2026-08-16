@@ -1,26 +1,13 @@
-/* Wofi launcher styling (Catppuccin palette)
- * Full palette defined below for reference; only some colors are used. */
+/* Wofi launcher styling (Zephyr theme — see ../zephyr/README.md) */
 
-@define-color bg #161320;
-@define-color bg-hover #1E1E2E;
-@define-color blue #96CDFB;
-@define-color sky #89DCEB;
-@define-color red #F28FAD;
-@define-color pink #F5C2E7;
-@define-color lavender #C9CBFF;
-@define-color rosewater #F5E0DC;
-@define-color flamingo #F2CDCD;
-@define-color fg #D9E0EE;
-@define-color green #ABE9B3;
-@define-color dark-fg #161320;
-@define-color peach #F8BD96;
-@define-color border @blue;
-@define-color gray2 #6E6C7E;
-@define-color black4 #575268;
-@define-color black3 #302D41;
-@define-color maroon #E8A2AF;
+/* Must be an absolute path: ~/.config/wofi is a symlink, and GTK resolves
+ * @import relative to the symlinked path it opened rather than the real
+ * one, so a relative "../zephyr/..." lands in the wrong (non-existent)
+ * directory. GTK CSS also doesn't expand ~ or $HOME, so on a real machine
+ * replace the path below with your own absolute path to this repo. */
+@import url("/home/YOUR_USERNAME/dotfiles/swaywm/zephyr/active/wofi.css");
 
-/* Outer launcher window: blue border, subtle horizontal gradient */
+/* Outer launcher window: accent border, subtle gradient */
 #window {
   margin: 0px;
   border: 2px solid @border;
@@ -28,31 +15,30 @@
   background-color: @bg;
   font-family: "Ubuntu Mono";
   font-size: 13px;
-  background: rgb(30,30,46);
-  background: linear-gradient(90deg, rgba(30,30,46,1) 26%, rgba(26,24,38,1) 55%, rgba(22,19,32,1) 91%); 
+  background: @bg;
+  background-image: linear-gradient(90deg, @bg 26%, @bg-alt 91%);
 }
 
 /* Search box */
 #input {
   margin: 15px;
-  border: 2px solid @flamingo;
+  border: 2px solid @input-border;
   border-radius: 10px;
-  color: @lavender;
-  background: rgb(30,30,46);
-  background: linear-gradient(90deg, rgba(30,30,46,1) 43%, rgba(26,24,38,1) 82%, rgba(22,19,32,1) 91%); 
+  color: @fg;
+  background: @bg;
+  background-image: linear-gradient(90deg, @bg 43%, @bg-alt 91%);
 }
 
 #input:focus {
-  background: rgb(48,45,65);
-  background: linear-gradient(90deg, rgba(48,45,65,1) 19%, rgba(30,30,46,1) 77%, rgba(26,24,38,1) 100%); 
+  background: @bg-alt;
 }
 
 #input:focus image {
-  color: @flamingo;
+  color: @input-border;
 }
 
 #input image {
-  color: @lavender;
+  color: @fg;
 }
 
 #inner-box {
@@ -82,15 +68,15 @@
   color: @fg;
 }
 
-/* Highlighted result row: light gradient with dark text */
+/* Highlighted result row: accent gradient with contrasting text */
 #entry:selected {
   border-radius: 10px;
-  background: rgb(201,203,255);
-  background: linear-gradient(90deg, rgba(201,203,255,1) 28%, rgba(245,224,220,1) 85%, rgba(242,205,205,1) 100%); 
+  background: @bg-selected;
+  background-image: linear-gradient(90deg, @bg-selected 28%, @bg-selected-soft 100%);
 }
 
 #text:selected {
   background-color: inherit;
-  color: @dark-fg;
+  color: @fg-selected;
   font-weight: normal;
 }

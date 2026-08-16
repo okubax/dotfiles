@@ -1,0 +1,14 @@
+/* Zephyr Light — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #EFF0F1;
+@define-color bg-tooltip #FCFCFC;
+@define-color fg #232629;
+@define-color fg-muted #707D8A;
+@define-color border #3DAEE9;
+@define-color accent #3DAEE9;
+@define-color red #DA4453;
+@define-color green #27AE60;
+@define-color yellow #F67400;
+@define-color purple #9B59B6;
+@define-color cyan #1ABC9C;
+@define-color link #2980B9;

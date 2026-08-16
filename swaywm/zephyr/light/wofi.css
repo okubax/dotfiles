@@ -1,0 +1,11 @@
+/* Zephyr Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #FCFCFC;
+@define-color bg-alt #F7F7F7;
+@define-color bg-selected #3DAEE9;
+@define-color bg-selected-soft #A3D4FA;
+@define-color fg #232629;
+@define-color fg-selected #FCFCFC;
+@define-color fg-muted #707D8A;
+@define-color border #3DAEE9;
+@define-color input-border #DA4453;

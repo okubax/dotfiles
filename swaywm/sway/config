@@ -18,12 +18,9 @@ default_border pixel 3
 default_floating_border pixel 3
 gaps inner 9
 
-# Color scheme (Catppuccin-inspired)
-# class                  border  backgr. text    flag    child_border
-client.focused           #ABE9B3 #ABE9B3 #1e1e2e #ABE9B3 #ABE9B3
-client.focused_inactive  #C9CBFF #C9CBFF #1e1e2e #C9CBFF #C9CBFF
-client.unfocused         #988BA2 #988BA2 #1e1e2e #988BA2 #988BA2
-client.urgent            #F28FAD #F28FAD #1e1e2e #F28FAD #F28FAD
+# Color scheme: Zephyr (Breeze-matched, see ../zephyr/README.md).
+# `active` is a symlink to light/ or dark/ — flip both with `zephyr-theme`.
+include ~/dotfiles/swaywm/zephyr/active/sway.conf
 
 # -----------------------------------------------------------------------------
 # VARIABLES
@@ -40,9 +37,8 @@ set $right l
 # OUTPUT CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# Wallpaper on all outputs, per-output scaling
+# Wallpaper is set per-theme-variant, see zephyr/{light,dark}/sway.conf
 # (eDP-1 = laptop panel, HDMI-A-1 = external monitor)
-output * bg ~/.img/wallpapers/catppuccin_wallpaper_1.png fill
 output eDP-1 scale 2.1
 output HDMI-A-1 scale 1.5
 

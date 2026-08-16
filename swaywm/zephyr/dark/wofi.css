@@ -1,0 +1,11 @@
+/* Zephyr Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #202326;
+@define-color bg-alt #292C30;
+@define-color bg-selected #3DAEE9;
+@define-color bg-selected-soft #1E5774;
+@define-color fg #FCFCFC;
+@define-color fg-selected #FCFCFC;
+@define-color fg-muted #A1A9B1;
+@define-color border #3DAEE9;
+@define-color input-border #DA4453;

@@ -25,8 +25,9 @@
 #     -h, --help         Show this help
 #
 # Auth note: the key is used via the ssh-agent. If it lives in a desktop
-# (gcr/gnome-keyring) agent, this script reuses that socket, so the key must be
-# unlocked in your session for an unattended run to succeed.
+# agent (gpg-agent ssh-emulation, or gcr/gnome-keyring), this script reuses
+# that socket, so the key must be unlocked in your session for an
+# unattended run to succeed.
 
 set -o pipefail
 
@@ -86,12 +87,15 @@ load_config() {
     LOCAL_BACKUP_DIR="${GODADDY_BACKUP_DIR:-$LOCAL_BACKUP_DIR}"
 }
 
-# Reuse an existing agent; else fall back to a desktop gcr/keyring socket.
+# Reuse an existing agent; else fall back to a desktop ssh-agent socket.
+# gpg-agent's ssh-emulation socket is tried first (current setup, kwallet-
+# based); gcr/gnome-keyring paths are kept as fallbacks in case that agent
+# is ever used again.
 resolve_agent() {
     [[ -n "${SSH_AUTH_SOCK:-}" && -S "${SSH_AUTH_SOCK:-}" ]] && return 0
     local rt="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
     local sock
-    for sock in "$rt/gcr/.ssh" "$rt/keyring/ssh" "$rt/gcr/ssh"; do
+    for sock in "$rt/gnupg/S.gpg-agent.ssh" "$rt/gcr/.ssh" "$rt/keyring/ssh" "$rt/gcr/ssh"; do
         [[ -S "$sock" ]] && { export SSH_AUTH_SOCK="$sock"; return 0; }
     done
 }

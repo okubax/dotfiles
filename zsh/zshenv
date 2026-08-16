@@ -7,8 +7,8 @@ export XDG_CONFIG_HOME="$HOME/.config"
 export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/state"
 
-# Application homes
-export ANDROID_HOME="$HOME/development/android/sdk"
+# GPG
+export GPG_TTY=$(tty)
 
 # Default applications
 export BROWSER="firefox"
@@ -42,12 +42,7 @@ path_dirs=(
     "$HOME/bin"
     "$HOME/.cargo/bin"
     "$HOME/.local/bin"
-    
-   # Android development
-    "$HOME/development/android/sdk/cmdline-tools/12.0/bin"
-    "$HOME/development/android/sdk/cmdline-tools/12.0"
-    "$HOME/development/android/sdk/platform-tools"
-    
+
     # Personal projects
     "$HOME/git/ii"
     "$HOME/git/nettop"

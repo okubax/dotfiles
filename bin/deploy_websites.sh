@@ -188,13 +188,21 @@ check_dependencies() {
         exit 1
     fi
 
-    # Fall back to the desktop keyring's ssh-agent when run without one
-    # (e.g. from cron or a non-login shell) so the passphrase-protected
-    # key can still be used
-    local gcr_sock="/run/user/$(id -u)/gcr/ssh"
-    if [[ -z "${SSH_AUTH_SOCK:-}" && -S "$gcr_sock" ]]; then
-        export SSH_AUTH_SOCK="$gcr_sock"
-        log "Using keyring ssh-agent: $gcr_sock"
+    # Fall back to a desktop ssh-agent when run without one (e.g. from cron
+    # or a non-login shell) so the passphrase-protected key can still be
+    # used. gpg-agent's ssh-emulation socket is checked first (current
+    # setup, kwallet-based); the old gcr/gnome-keyring sockets are kept as
+    # fallbacks in case that agent is ever used again.
+    if [[ -z "${SSH_AUTH_SOCK:-}" ]]; then
+        local rt="/run/user/$(id -u)"
+        local sock
+        for sock in "$rt/gnupg/S.gpg-agent.ssh" "$rt/gcr/ssh" "$rt/gcr/.ssh" "$rt/keyring/ssh"; do
+            if [[ -S "$sock" ]]; then
+                export SSH_AUTH_SOCK="$sock"
+                log "Using desktop ssh-agent: $sock"
+                break
+            fi
+        done
     fi
 }
 

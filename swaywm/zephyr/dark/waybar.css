@@ -1,0 +1,14 @@
+/* Zephyr Dark — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #202326;
+@define-color bg-tooltip #141618;
+@define-color fg #FCFCFC;
+@define-color fg-muted #A1A9B1;
+@define-color border #3DAEE9;
+@define-color accent #3DAEE9;
+@define-color red #DA4453;
+@define-color green #27AE60;
+@define-color yellow #F67400;
+@define-color purple #9B59B6;
+@define-color cyan #1ABC9C;
+@define-color link #1D99F3;

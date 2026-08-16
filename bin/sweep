@@ -19,7 +19,7 @@
 set -uo pipefail
 
 # ---------- config (edit to taste) ----------
-CACHE_KEEP=(evolution borg vim cliphist)   # ~/.cache subdirs to PRESERVE
+CACHE_KEEP=(borg vim cliphist)              # ~/.cache subdirs to PRESERVE
 PACCACHE_KEEP=2                            # keep N most-recent versions of installed pkgs
 JOURNAL_DEFAULT="2weeks"                   # default journal retention
 DU=/usr/bin/du                            # bypass the du->gdu alias/function

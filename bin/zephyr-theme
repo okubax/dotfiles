@@ -1,0 +1,80 @@
+#!/bin/bash
+# zephyr-theme - switch the sway desktop (sway, mako, waybar, wofi, swaylock,
+# kitty) between the Zephyr Light and Zephyr Dark colorschemes in one go.
+# See ~/dotfiles/swaywm/zephyr/README.md for how the theme is wired up.
+#
+# Usage: zephyr-theme light|dark|toggle|status
+
+set -euo pipefail
+
+ZEPHYR_DIR="$HOME/dotfiles/swaywm/zephyr"
+ACTIVE_LINK="$ZEPHYR_DIR/active"
+SWAYLOCK_CFG="$HOME/dotfiles/swaywm/swaylock/config"
+KITTY_CONF="$HOME/dotfiles/kitty/kitty.conf"
+
+current_variant() {
+    readlink "$ACTIVE_LINK" 2>/dev/null || echo "light"
+}
+
+usage() {
+    echo "Usage: zephyr-theme light|dark|toggle|status"
+    exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+
+case "$1" in
+    light|dark)
+        target="$1"
+        ;;
+    toggle)
+        [[ "$(current_variant)" == "light" ]] && target="dark" || target="light"
+        ;;
+    status)
+        echo "Zephyr: $(current_variant)"
+        exit 0
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+if [[ "$(current_variant)" == "$target" ]]; then
+    echo "Zephyr is already $target."
+    exit 0
+fi
+
+echo "Switching Zephyr to $target..."
+
+# 1. Repoint the active symlink (drives sway, mako, waybar, wofi includes)
+ln -sfn "$target" "$ACTIVE_LINK"
+
+# 2. swaylock has no include mechanism - copy the variant's config in place
+cp "$ZEPHYR_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
+
+# 3. kitty: flip which colors/zephyr_*.conf is included
+sed -i \
+    -e "s|^include \./colors/zephyr_light\.conf|#include ./colors/zephyr_light.conf|" \
+    -e "s|^include \./colors/zephyr_dark\.conf|#include ./colors/zephyr_dark.conf|" \
+    -e "s|^#include \./colors/zephyr_${target}\.conf|include ./colors/zephyr_${target}.conf|" \
+    "$KITTY_CONF"
+
+# 4. Reload the running apps
+if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
+    swaymsg reload >/dev/null
+    echo "  sway reloaded"
+fi
+
+if command -v makoctl >/dev/null 2>&1 && pgrep -x mako >/dev/null 2>&1; then
+    makoctl reload >/dev/null 2>&1 || true
+    echo "  mako reloaded"
+fi
+
+if pgrep -x waybar >/dev/null 2>&1; then
+    pkill -SIGUSR2 waybar
+    echo "  waybar reloaded"
+fi
+
+echo "Zephyr is now $target."
+echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
+echo "vim: run :colorscheme zephyr_${target} in open sessions."

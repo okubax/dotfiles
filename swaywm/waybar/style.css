@@ -1,6 +1,13 @@
-/* Waybar styling (Catppuccin palette)
+/* Waybar styling (Zephyr theme — see ../zephyr/README.md)
  * Bar is transparent; the module strip sits in a pill shape:
  * rounded on the left at #workspaces, rounded on the right at #clock. */
+
+/* Must be an absolute path: ~/.config/waybar is a symlink, and GTK resolves
+ * @import relative to the symlinked path it opened rather than the real
+ * one, so a relative "../zephyr/..." lands in the wrong (non-existent)
+ * directory. GTK CSS also doesn't expand ~ or $HOME, so on a real machine
+ * replace the path below with your own absolute path to this repo. */
+@import url("/home/YOUR_USERNAME/dotfiles/swaywm/zephyr/active/waybar.css");
 
 * {
   border-radius: 0;
@@ -11,7 +18,7 @@
 
 window#waybar {
   background: transparent;
-  color: #DADAE8;
+  color: @fg;
 }
 
 /* 'tooltip.background' matches the GTK theme's selector specificity;
@@ -19,13 +26,13 @@ window#waybar {
  * square-cornered background poking out at the corners. */
 tooltip,
 tooltip.background {
-  background-color: #1e1e2e;
-  border: 2px solid #96cdfb;
+  background-color: @bg-tooltip;
+  border: 2px solid @accent;
   border-radius: 7px;
 }
 
 tooltip label {
-  color: #DADAE8;
+  color: @fg;
 }
 
 /* Left end of the pill */
@@ -37,49 +44,49 @@ tooltip label {
   padding-left: 10px;
   padding-right: 10px;
   min-width: 0;
-  color: #f2cdcd;
+  color: @fg-muted;
 }
 
 #workspaces button.focused {
-  color: #96cdfb;
+  color: @accent;
 }
 
 #workspaces button.urgent {
-  color: #89dceb;
+  color: @red;
 }
 
 #workspaces button:hover {
-  color: #96cdfb;
+  color: @accent;
 }
 
 /* Shared background/spacing for every module */
 #clock, #battery, #network, #pulseaudio, #mpd, #workspaces,
 #idle_inhibitor, #mode, #cpu, #memory, #backlight, #language, #tray {
   padding: 2px 5px;
-  background: #494D64;
+  background: @bg-panel;
   margin-top: 9px;
   margin-bottom: 3px;
 }
 
 /* Per-module accent colors */
-#mode { color: #F28FAD; }
-#mpd { color: #96cdfb; }
-#idle_inhibitor { color: #96cdfb; }
-#cpu { color: #ABE9B3; }
-#memory { color: #F5C2E7; }
-#backlight { color: #FAE3B0; }
-#pulseaudio { color: #94E2D5; }
-#network { color: #f8bd96; }
-#language { color: #C9CBFF; }
-#battery { color: #f2cdcd; }
+#mode { color: @red; }
+#mpd { color: @accent; }
+#idle_inhibitor { color: @accent; }
+#cpu { color: @green; }
+#memory { color: @purple; }
+#backlight { color: @yellow; }
+#pulseaudio { color: @cyan; }
+#network { color: @link; }
+#language { color: @fg-muted; }
+#battery { color: @fg; }
 
 /* Battery alert states */
-#battery.warning { color: #FAE3B0; }
-#battery.critical { color: #F28FAD; }
+#battery.warning { color: @yellow; }
+#battery.critical { color: @red; }
 
 /* Right end of the pill */
 #clock {
-  color: #96cdfb;
+  color: @accent;
   border-radius: 0px 15px 15px 0px;
   padding-right: 10px;
 }
