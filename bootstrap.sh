@@ -49,7 +49,6 @@ ncmpcpp|.ncmpcpp
 neofetch|.config/neofetch
 ranger|.config/ranger
 startpage|.startpage
-todo|.todo
 urlview|.urlview
 vim|.vim
 vimrc|.vimrc

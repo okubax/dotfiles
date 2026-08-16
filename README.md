@@ -35,14 +35,12 @@ own chrome isn't Zephyr-themed).
 
 **Applications**
 - **Web Browsers**: Firefox, Firefox Developer Edition, Google Chrome, Tor Browser
-- **File Managers**: ranger (terminal), Thunar (GUI)
+- **File Managers**: ranger (terminal), Dolphin (GUI)
 - **Text Editors**: vim (native packages, `vim/pack`), Kate
 - **Music**: MPD + ncmpcpp + mpc
-- **Email**: Evolution
-- **Calendar / Calculator**: gsimplecal, qalculate-gtk
+- **Calendar / Calculator**: gsimplecal, qalculate-qt
 - **Cloud Sync**: Nextcloud client
 - **IRC**: ii + stunnel + multitail (see `bin/ii-start`, `bin/ii-sway`)
-- **Todo**: todo.txt with a conky overlay (`todo/`)
 
 **Theming**
 - **Colorscheme**: [Zephyr](swaywm/zephyr/README.md) (default) — light and dark variants matched to KDE's Breeze color schemes, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch both variants at once with `zephyr-theme light|dark|toggle` (installed to `~/bin` — see `bin/zephyr-theme`), or set `vim`/`kitty` independently by editing their own config.
@@ -89,7 +87,7 @@ sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # Zephyr
 ### Optional
 ```bash
 sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
-sudo pacman -S gsimplecal qalculate-gtk thunar evolution neofetch    # Desktop utilities
+sudo pacman -S gsimplecal qalculate-qt dolphin neofetch              # Desktop utilities
 sudo pacman -S kate                                                  # Text editor (GUI)
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
@@ -153,7 +151,6 @@ zephyr-theme light|dark|toggle|status   # Switch the whole desktop's colorscheme
 ├── startpage/           # Browser start page
 ├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
 │   └── zephyr/          # Zephyr colorscheme: light/, dark/, active -> one of them
-├── todo/                # todo.txt + conky overlay
 ├── vim/                 # Editor configuration (native packages; colors/ has Zephyr + Catppuccin)
 └── zsh/                 # Shell configuration
     ├── config/          # Modular ZSH configs

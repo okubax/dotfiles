@@ -129,7 +129,7 @@ bindsym mod1+w exec $HOME/.firefox-developer/firefox
 bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
 
 # File managers
-bindsym mod1+shift+f exec thunar
+bindsym mod1+shift+f exec dolphin
 bindsym $mod+Shift+r exec kitty -e ranger
 
 # Development and productivity
@@ -137,10 +137,9 @@ bindsym mod1+c exec kate
 
 # System monitoring and utilities
 bindsym $mod+shift+t exec kitty -e htop
-bindsym mod1+e exec evolution
 bindsym $mod+a exec gsimplecal
 bindsym mod1+n exec nextcloud
-bindsym $mod+c exec qalculate-gtk
+bindsym $mod+c exec qalculate-qt
 
 # Screenshot tools
 bindsym $mod+p exec swayshot
@@ -260,7 +259,7 @@ assign [app_id="libreoffice-calc"] 4
 for_window [app_id="imv"] floating enable
 for_window [app_id="pwvucontrol"] floating enable
 for_window [app_id="nwg-displays"] floating enable
-for_window [app_id="qalculate-gtk"] floating enable
+for_window [app_id="qalculate-qt"] floating enable
 for_window [window_type="dialog"] floating enable
 for_window [window_role="dialog"] floating enable
 
