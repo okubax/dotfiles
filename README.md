@@ -4,7 +4,10 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 ## Screenshots
 
-*Captured under the previous all-Catppuccin theme, before the Zephyr switch — the general layout is unchanged, but colors will look different on a fresh install (Zephyr Light by default).*
+*The desktop shot below is current (Zephyr Light). The three app screenshots
+(Vim, VS Code, Firefox) still show the previous all-Catppuccin theme — the
+general layout is unchanged, but colors will look different on a fresh
+install.*
 
 ![Desktop](screenshot.png)
 ![Vim](screenshot2.png)
