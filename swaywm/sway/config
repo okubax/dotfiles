@@ -37,7 +37,7 @@ set $right l
 # OUTPUT CONFIGURATION
 # -----------------------------------------------------------------------------
 
-# Wallpaper is set per-theme-variant, see zephyr/{light,dark}/sway.conf
+# Wallpaper is set per-theme-variant, see zephyr/{light,dusk,dark}/sway.conf
 # (eDP-1 = laptop panel, HDMI-A-1 = external monitor)
 # Scale picked from each panel's real EDID PPI (eDP-1: LG 14.5" 2560x1600,
 # ~208 PPI; HDMI-A-1: HP M22f 21.5" 1920x1080, ~102 PPI, standard density

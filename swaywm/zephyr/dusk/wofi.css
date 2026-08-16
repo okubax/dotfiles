@@ -1,0 +1,11 @@
+/* Zephyr Dusk — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #262B2E;
+@define-color bg-alt #313639;
+@define-color bg-selected #3DAEE9;
+@define-color bg-selected-soft #2E5D7D;
+@define-color fg #EDEFF1;
+@define-color fg-selected #FCFCFC;
+@define-color fg-muted #A9AFB4;
+@define-color border #3DAEE9;
+@define-color input-border #DA4453;

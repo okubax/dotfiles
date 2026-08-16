@@ -209,6 +209,39 @@ PALETTES = {
         'base': '#141618',
         'mantle': '#0f1012',
         'crust': '#0b0c0d'
+    },
+    # Zephyr Dusk: a dim mid-tone between zephyr_light and zephyr_dark, no
+    # official Breeze equivalent - neutrals hand-interpolated (leaning dark,
+    # since "dusk" reads as early-night dimness rather than a neutral
+    # midpoint gray), accent hues unchanged. See
+    # swaywm/zephyr/dusk/palette.md.
+    'zephyr_dusk': {
+        'rosewater': '#e37380',
+        'flamingo': '#cf6960',
+        'pink': '#9e60b9',
+        'mauve': '#9B59B6',
+        'red': '#DA4453',
+        'maroon': '#C0392B',
+        'peach': '#F67400',
+        'yellow': '#F1C40F',
+        'green': '#27AE60',
+        'teal': '#1ABC9C',
+        'sky': '#4FB3E8',
+        'sapphire': '#16A085',
+        'blue': '#3DAEE9',
+        'lavender': '#6c84d0',
+        'text': '#EDEFF1',
+        'subtext1': '#CBCFD2',
+        'subtext0': '#A9AFB4',
+        'overlay2': '#838A90',
+        'overlay1': '#6B7278',
+        'overlay0': '#565D62',
+        'surface2': '#454B4F',
+        'surface1': '#383D40',
+        'surface0': '#313639',
+        'base': '#262B2E',
+        'mantle': '#22262A',
+        'crust': '#1E2225'
     }
 }
 
@@ -737,7 +770,7 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Available Palette Colors (key names are shared across all palettes,
-including zephyr_light/zephyr_dark - see --palette below for the full list):
+including zephyr_light/zephyr_dusk/zephyr_dark - see --palette below for the full list):
   Background colors: base, mantle, crust, surface0, surface1, surface2
   Text colors: text, subtext1, subtext0, overlay2, overlay1, overlay0
   Accent colors: rosewater, flamingo, pink, mauve, red, maroon, peach, 
@@ -790,7 +823,7 @@ Complete Examples:
     
     parser.add_argument('--width', type=int, default=2560, help='Width of wallpaper (default: 2560)')
     parser.add_argument('--height', type=int, default=1600, help='Height of wallpaper (default: 1600)')
-    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dark'],
+    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dusk', 'zephyr_dark'],
                        default='mocha', help='Palette to use (default: mocha)')
     parser.add_argument('--pattern', choices=['hexagon', 'triangle', 'diamond', 'waves', 'circles', 'noise', 'plain', 'gradient'], 
                        default='hexagon', help='Pattern type (default: hexagon)')

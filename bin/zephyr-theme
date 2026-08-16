@@ -1,9 +1,10 @@
 #!/bin/bash
 # zephyr-theme - switch the sway desktop (sway, mako, waybar, wofi, swaylock,
-# kitty) between the Zephyr Light and Zephyr Dark colorschemes in one go.
-# See ~/dotfiles/swaywm/zephyr/README.md for how the theme is wired up.
+# kitty) between the Zephyr Light, Zephyr Dusk and Zephyr Dark colorschemes
+# in one go. See ~/dotfiles/swaywm/zephyr/README.md for how the theme is
+# wired up.
 #
-# Usage: zephyr-theme light|dark|toggle|status
+# Usage: zephyr-theme light|dusk|dark|toggle|status
 
 set -euo pipefail
 
@@ -17,18 +18,24 @@ current_variant() {
 }
 
 usage() {
-    echo "Usage: zephyr-theme light|dark|toggle|status"
+    echo "Usage: zephyr-theme light|dusk|dark|toggle|status"
     exit 1
 }
 
 [[ $# -eq 1 ]] || usage
 
 case "$1" in
-    light|dark)
+    light|dusk|dark)
         target="$1"
         ;;
     toggle)
-        [[ "$(current_variant)" == "light" ]] && target="dark" || target="light"
+        # Cycles light -> dusk -> dark -> light
+        case "$(current_variant)" in
+            light) target="dusk" ;;
+            dusk)  target="dark" ;;
+            dark)  target="light" ;;
+            *)     target="light" ;;
+        esac
         ;;
     status)
         echo "Zephyr: $(current_variant)"
@@ -55,6 +62,7 @@ cp "$ZEPHYR_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
 # 3. kitty: flip which colors/zephyr_*.conf is included
 sed -i \
     -e "s|^include \./colors/zephyr_light\.conf|#include ./colors/zephyr_light.conf|" \
+    -e "s|^include \./colors/zephyr_dusk\.conf|#include ./colors/zephyr_dusk.conf|" \
     -e "s|^include \./colors/zephyr_dark\.conf|#include ./colors/zephyr_dark.conf|" \
     -e "s|^#include \./colors/zephyr_${target}\.conf|include ./colors/zephyr_${target}.conf|" \
     "$KITTY_CONF"

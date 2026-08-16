@@ -1,6 +1,6 @@
 # Dotfiles - Sway Desktop Environment
 
-A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps. [Catppuccin](https://github.com/catppuccin) flavors (Mocha, Macchiato, Frappé, Latte) ship alongside it as drop-in alternatives for kitty, vim, and ZSH syntax highlighting.
+A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dusk/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps. [Catppuccin](https://github.com/catppuccin) flavors (Mocha, Macchiato, Frappé, Latte) ship alongside it as drop-in alternatives for kitty, vim, and ZSH syntax highlighting.
 
 ## Screenshots
 
@@ -43,7 +43,7 @@ own chrome isn't Zephyr-themed).
 - **IRC**: ii + stunnel + multitail (see `bin/ii-start`, `bin/ii-sway`)
 
 **Theming**
-- **Colorscheme**: [Zephyr](swaywm/zephyr/README.md) (default) — light and dark variants matched to KDE's Breeze color schemes, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch both variants at once with `zephyr-theme light|dark|toggle` (installed to `~/bin` — see `bin/zephyr-theme`), or set `vim`/`kitty` independently by editing their own config.
+- **Colorscheme**: [Zephyr](swaywm/zephyr/README.md) (default) — light, dusk and dark variants matched to KDE's Breeze color schemes (dusk is a hand-tuned dim mid-tone with no official Breeze equivalent), applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch all variants at once with `zephyr-theme light|dusk|dark|toggle` (installed to `~/bin` — see `bin/zephyr-theme`), or set `vim`/`kitty` independently by editing their own config.
 - **Alternatives**: Catppuccin's four flavors remain available for kitty (`kitty/colors/`) and vim (`vim/colors/`); ZSH syntax highlighting is Catppuccin-only (`zsh/plugins/`).
 - **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports both Zephyr's palettes and all four Catppuccin flavors. Zephyr's desktop wallpapers and swaylock backgrounds ship pre-generated in `img/wallpapers/`.
 - **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3) — already matches Zephyr/Breeze natively, no porting needed. Set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`)
@@ -112,7 +112,7 @@ yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 adding a new dotfile to confirm the map still matches reality.
 
 ```bash
-zephyr-theme light|dark|toggle|status   # Switch the whole desktop's colorscheme
+zephyr-theme light|dusk|dark|toggle|status   # Switch the whole desktop's colorscheme
 ```
 
 ## Post-Installation
@@ -132,7 +132,7 @@ zephyr-theme light|dark|toggle|status   # Switch the whole desktop's colorscheme
 - **Swaylock**: `swaywm/swaylock/config`
 - **Terminal**: `kitty/kitty.conf`
 - **Vim colorscheme**: set near the bottom of `vimrc`
-- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dark switch is wired)
+- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dusk/dark switch is wired)
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
 
@@ -150,7 +150,7 @@ zephyr-theme light|dark|toggle|status   # Switch the whole desktop's colorscheme
 ├── ranger/              # File manager
 ├── startpage/           # Browser start page
 ├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
-│   └── zephyr/          # Zephyr colorscheme: light/, dark/, active -> one of them
+│   └── zephyr/          # Zephyr colorscheme: light/, dusk/, dark/, active -> one of them
 ├── vim/                 # Editor configuration (native packages; colors/ has Zephyr + Catppuccin)
 └── zsh/                 # Shell configuration
     ├── config/          # Modular ZSH configs
@@ -171,8 +171,8 @@ never silently drift from reality), plus any map entry whose repo source is gone
 Follow with `./bootstrap.sh link` to create the new symlink.
 
 ### Notable Scripts in `bin/`
-- `zephyr-theme` - switch the whole desktop between Zephyr Light and Dark in one command
-- `palette_wallpaper.py` - wallpaper generator (Zephyr's light/dark palette, or any of the four Catppuccin flavors)
+- `zephyr-theme` - switch the whole desktop between Zephyr Light, Dusk and Dark in one command
+- `palette_wallpaper.py` - wallpaper generator (Zephyr's light/dusk/dark palettes, or any of the four Catppuccin flavors)
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
@@ -238,7 +238,7 @@ MIT License. Use, modify, and distribute freely.
 
 ## Links
 
-- [Zephyr colorscheme README](swaywm/zephyr/README.md) - palette provenance and how the light/dark switch works
+- [Zephyr colorscheme README](swaywm/zephyr/README.md) - palette provenance and how the light/dusk/dark switch works
 - [Sway Documentation](https://github.com/swaywm/sway/wiki)
 - [Waybar Configuration](https://github.com/Alexays/Waybar/wiki)
 - [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)
