@@ -48,8 +48,9 @@ own chrome isn't Zephyr-themed).
 - **Colorscheme**: [Zephyr](swaywm/zephyr/README.md) (default) — light and dark variants matched to KDE's Breeze color schemes, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch both variants at once with `zephyr-theme light|dark|toggle` (installed to `~/bin` — see `bin/zephyr-theme`), or set `vim`/`kitty` independently by editing their own config.
 - **Alternatives**: Catppuccin's four flavors remain available for kitty (`kitty/colors/`) and vim (`vim/colors/`); ZSH syntax highlighting is Catppuccin-only (`zsh/plugins/`).
 - **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports both Zephyr's palettes and all four Catppuccin flavors. Zephyr's desktop wallpapers and swaylock backgrounds ship pre-generated in `img/wallpapers/`.
-- **GTK**: Catppuccin theme via [catppuccin/gtk](https://github.com/catppuccin/gtk) (not yet ported to Zephyr — GTK app chrome will look Catppuccin-flavored even with Zephyr active elsewhere)
-- **Qt**: Configured using qt5ct and qt6ct
+- **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3) — already matches Zephyr/Breeze natively, no porting needed. Set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`)
+- **Qt**: `breeze5` (Qt5 Breeze style) via qt5ct/qt6ct
+- **Icons / Cursors**: `breeze-icons`, `breeze-cursors`
 - **Theme Tools**: nwg-look for GTK3/4 theme management
 
 ## Installation
@@ -82,6 +83,7 @@ this repo — waybar will fail to start (CSS parse error) until you do.
 ```bash
 sudo pacman -S sway waybar mako swaylock swayidle wofi wl-clipboard cliphist kitty zsh ranger vim
 sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome noto-fonts noto-fonts-emoji
+sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # Zephyr needs these for GTK/Qt apps to match
 ```
 
 ### Optional
@@ -89,7 +91,7 @@ sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome n
 sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
 sudo pacman -S gsimplecal qalculate-gtk thunar evolution neofetch    # Desktop utilities
 sudo pacman -S kate                                                  # Text editor (GUI)
-sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools
+sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 sudo pacman -S python-pillow python-numpy                            # palette_wallpaper.py
 yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
