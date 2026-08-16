@@ -20,7 +20,7 @@ own chrome isn't Zephyr-themed).
 - **Launcher / Menus**: Wofi (app launcher, power menu, clipboard picker)
 - **Terminal**: Kitty
 - **Notifications**: Mako
-- **Lock Screen**: Swaylock (blurred wallpaper + clock) with swayidle (auto-lock, lock on suspend)
+- **Lock Screen**: Swaylock (plain wallpaper, typed-character feedback in the accent color) with swayidle (auto-lock, lock on suspend). Uses vanilla swaylock — blur/clock require the swaylock-effects fork instead.
 - **Clipboard**: cliphist + wl-clipboard (history picker bound to Alt+h)
 - **Screenshots**: swayshot (full screen / window / region)
 - **Shell**: ZSH with modular configuration
