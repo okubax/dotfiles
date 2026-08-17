@@ -1,0 +1,14 @@
+/* Nord Light — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #D8DEE9;
+@define-color bg-tooltip #ECEFF4;
+@define-color fg #2E3440;
+@define-color fg-muted #4C566A;
+@define-color border #5E81AC;
+@define-color accent #88C0D0;
+@define-color red #BF616A;
+@define-color green #A3BE8C;
+@define-color yellow #EBCB8B;
+@define-color purple #B48EAD;
+@define-color cyan #8FBCBB;
+@define-color link #5E81AC;

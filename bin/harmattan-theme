@@ -2,7 +2,8 @@
 # harmattan-theme - switch the sway desktop (sway, mako, waybar, wofi,
 # swaylock, kitty) between the Harmattan Light, Harmattan Dusk and Harmattan
 # Dark colorschemes in one go. See ~/dotfiles/swaywm/harmattan/README.md
-# for how the theme is wired up, and how it coexists with Zephyr.
+# for how the theme is wired up, and how it coexists with the other theme
+# families (zephyr/solarized/nord/catppuccin).
 #
 # Usage: harmattan-theme light|dusk|dark|toggle|status
 
@@ -56,23 +57,19 @@ echo "Switching to Harmattan $target..."
 ln -sfn "$target" "$ACTIVE_LINK"
 
 # 2. Make Harmattan the active theme *family* for sway/mako/waybar/wofi
-#    (only one of zephyr/active or harmattan/active drives the WM chrome
-#    at a time — see README.md "Coexisting with Zephyr")
-sed -i "s|swaywm/zephyr/active|swaywm/harmattan/active|" "$SWAY_CONF" "$MAKO_CONF" "$WAYBAR_CSS" "$WOFI_CSS"
+#    (only one family's active/ dir drives the WM chrome at a time — see
+#    README.md "Coexisting with other themes". The [a-z]+ regex matches
+#    any family name, so this doesn't need updating when a new theme is
+#    added elsewhere.)
+sed -i -E "s|swaywm/[a-z]+/active|swaywm/harmattan/active|" "$SWAY_CONF" "$MAKO_CONF" "$WAYBAR_CSS" "$WOFI_CSS"
 
 # 3. swaylock has no include mechanism - copy the variant's config in place
 cp "$HARMATTAN_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
 
-# 4. kitty: flip which colors/*.conf is included (covers both theme families)
-sed -i \
-    -e "s|^include \./colors/zephyr_light\.conf|#include ./colors/zephyr_light.conf|" \
-    -e "s|^include \./colors/zephyr_dusk\.conf|#include ./colors/zephyr_dusk.conf|" \
-    -e "s|^include \./colors/zephyr_dark\.conf|#include ./colors/zephyr_dark.conf|" \
-    -e "s|^include \./colors/harmattan_light\.conf|#include ./colors/harmattan_light.conf|" \
-    -e "s|^include \./colors/harmattan_dusk\.conf|#include ./colors/harmattan_dusk.conf|" \
-    -e "s|^include \./colors/harmattan_dark\.conf|#include ./colors/harmattan_dark.conf|" \
-    -e "s|^#include \./colors/harmattan_${target}\.conf|include ./colors/harmattan_${target}.conf|" \
-    "$KITTY_CONF"
+# 4. kitty: comment out whichever colors/*.conf is currently active (any
+#    theme family), then activate this one
+sed -i -E "s|^include (\./colors/.+\.conf)|#include \1|" "$KITTY_CONF"
+sed -i -E "s|^#include (\./colors/harmattan_${target}\.conf)|include \1|" "$KITTY_CONF"
 
 # 5. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then

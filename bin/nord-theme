@@ -1,0 +1,91 @@
+#!/bin/bash
+# nord-theme - switch the sway desktop (sway, mako, waybar, wofi, swaylock,
+# kitty) between Nord Light, Nord Dusk and Nord Dark in one go. See
+# ~/dotfiles/swaywm/nord/README.md for how the theme is wired up, and
+# how it coexists with the other theme families.
+#
+# Usage: nord-theme light|dusk|dark|toggle|status
+
+set -euo pipefail
+
+NORD_DIR="$HOME/dotfiles/swaywm/nord"
+ACTIVE_LINK="$NORD_DIR/active"
+SWAYLOCK_CFG="$HOME/dotfiles/swaywm/swaylock/config"
+KITTY_CONF="$HOME/dotfiles/kitty/kitty.conf"
+SWAY_CONF="$HOME/dotfiles/swaywm/sway/config"
+MAKO_CONF="$HOME/dotfiles/swaywm/mako/config"
+WAYBAR_CSS="$HOME/dotfiles/swaywm/waybar/style.css"
+WOFI_CSS="$HOME/dotfiles/swaywm/wofi/style.css"
+
+current_variant() {
+    readlink "$ACTIVE_LINK" 2>/dev/null || echo "dark"
+}
+
+usage() {
+    echo "Usage: nord-theme light|dusk|dark|toggle|status"
+    exit 1
+}
+
+[[ $# -eq 1 ]] || usage
+
+case "$1" in
+    light|dusk|dark)
+        target="$1"
+        ;;
+    toggle)
+        # Cycles light -> dusk -> dark -> light
+        case "$(current_variant)" in
+            light) target="dusk" ;;
+            dusk)  target="dark" ;;
+            dark)  target="light" ;;
+            *)     target="dark" ;;
+        esac
+        ;;
+    status)
+        echo "Nord: $(current_variant)"
+        exit 0
+        ;;
+    *)
+        usage
+        ;;
+esac
+
+echo "Switching to Nord $target..."
+
+# 1. Repoint the active symlink (drives sway, mako, waybar, wofi includes)
+ln -sfn "$target" "$ACTIVE_LINK"
+
+# 2. Make Nord the active theme *family* for sway/mako/waybar/wofi
+#    (only one family's active/ dir drives the WM chrome at a time — see
+#    README.md "Coexisting with other themes". The [a-z]+ regex matches
+#    any family name, so this doesn't need updating when a new theme is
+#    added elsewhere.)
+sed -i -E "s|swaywm/[a-z]+/active|swaywm/nord/active|" "$SWAY_CONF" "$MAKO_CONF" "$WAYBAR_CSS" "$WOFI_CSS"
+
+# 3. swaylock has no include mechanism - copy the variant's config in place
+cp "$NORD_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
+
+# 4. kitty: comment out whichever colors/*.conf is currently active (any
+#    theme family), then activate this one
+sed -i -E "s|^include (\./colors/.+\.conf)|#include \1|" "$KITTY_CONF"
+sed -i -E "s|^#include (\./colors/nord_${target}\.conf)|include \1|" "$KITTY_CONF"
+
+# 5. Reload the running apps
+if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
+    swaymsg reload >/dev/null
+    echo "  sway reloaded"
+fi
+
+if command -v makoctl >/dev/null 2>&1 && pgrep -x mako >/dev/null 2>&1; then
+    makoctl reload >/dev/null 2>&1 || true
+    echo "  mako reloaded"
+fi
+
+if pgrep -x waybar >/dev/null 2>&1; then
+    pkill -SIGUSR2 waybar
+    echo "  waybar reloaded"
+fi
+
+echo "Nord is now $target."
+echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
+echo "vim: run :colorscheme nord_${target} in open sessions."

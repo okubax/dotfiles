@@ -1,0 +1,11 @@
+/* Catppuccin Dusk (Macchiato) — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #24273A;
+@define-color bg-alt #1E2030;
+@define-color bg-selected #8AADF4;
+@define-color bg-selected-soft #3D4B6E;
+@define-color fg #CAD3F5;
+@define-color fg-selected #24273A;
+@define-color fg-muted #A5ADCB;
+@define-color border #8AADF4;
+@define-color input-border #ED8796;

@@ -1,6 +1,6 @@
-/* Waybar styling (Zephyr — see ../zephyr/README.md — or Harmattan, see
- * ../harmattan/README.md; only one family drives this @import at a time,
- * switched by `zephyr-theme`/`harmattan-theme`).
+/* Waybar styling — one of five theme families (Zephyr, Harmattan,
+ * Solarized, Nord, Catppuccin — see swaywm/<family>/README.md); only one
+ * drives this @import at a time, switched by `<family>-theme <variant>`.
  * Bar is transparent; the module strip sits in a pill shape:
  * rounded on the left at #workspaces, rounded on the right at #clock. */
 

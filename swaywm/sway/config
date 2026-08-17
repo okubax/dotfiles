@@ -18,11 +18,12 @@ default_border pixel 3
 default_floating_border pixel 3
 gaps inner 9
 
-# Color scheme: Zephyr (Breeze-matched, see ../zephyr/README.md) by default,
-# or Harmattan (original warm scheme, see ../harmattan/README.md) — only one
-# family drives this include at a time. `active` is a symlink to
-# light/dusk/dark within whichever family is live; flip variants with
-# `zephyr-theme`/`harmattan-theme`, switch families by running either.
+# Color scheme: one of five theme families (Zephyr, Harmattan, Solarized,
+# Nord, Catppuccin — see swaywm/<family>/README.md) — only one drives this
+# include at a time. `active` is a symlink to light/dusk/dark (or dark/
+# light for Solarized) within whichever family is live; flip variants with
+# `<family>-theme <variant>`, switch families by running any of the five
+# scripts.
 include ~/dotfiles/swaywm/zephyr/active/sway.conf
 
 # -----------------------------------------------------------------------------

@@ -1,0 +1,11 @@
+/* Catppuccin Dark (Mocha) — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #1E1E2E;
+@define-color bg-alt #181825;
+@define-color bg-selected #89B4FA;
+@define-color bg-selected-soft #3A4B6E;
+@define-color fg #CDD6F4;
+@define-color fg-selected #1E1E2E;
+@define-color fg-muted #A6ADC8;
+@define-color border #89B4FA;
+@define-color input-border #F38BA8;

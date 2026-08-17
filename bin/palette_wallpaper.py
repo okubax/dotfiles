@@ -334,6 +334,157 @@ PALETTES = {
         'base': '#14120D',
         'mantle': '#100E09',
         'crust': '#0B0906'
+    },
+    # Solarized: Ethan Schoonover's original, unmodified palette — see
+    # ~/dotfiles/swaywm/solarized/README.md. Accent hues are identical
+    # between dark/light per Solarized's own design; only base03-base3
+    # neutral tones swap roles. rosewater/flamingo/pink/lavender have no
+    # Solarized equivalent and are interpolated blends, same caveat as
+    # Zephyr's.
+    'solarized_dark': {
+        'rosewater': '#C97A6B',
+        'flamingo': '#CB5A3D',
+        'pink': '#CB4A72',
+        'mauve': '#D33682',
+        'red': '#DC322F',
+        'maroon': '#CB4B16',
+        'peach': '#CB4B16',
+        'yellow': '#B58900',
+        'green': '#859900',
+        'teal': '#2AA198',
+        'sky': '#6C71C4',
+        'sapphire': '#268BD2',
+        'blue': '#268BD2',
+        'lavender': '#8FA1D9',
+        'text': '#839496',
+        'subtext1': '#657B83',
+        'subtext0': '#586E75',
+        'overlay2': '#839496',
+        'overlay1': '#657B83',
+        'overlay0': '#5F757C',
+        'surface2': '#586E75',
+        'surface1': '#30525C',
+        'surface0': '#073642',
+        'base': '#002B36',
+        'mantle': '#00232C',
+        'crust': '#001920'
+    },
+    'solarized_light': {
+        'rosewater': '#C97A6B',
+        'flamingo': '#CB5A3D',
+        'pink': '#CB4A72',
+        'mauve': '#D33682',
+        'red': '#DC322F',
+        'maroon': '#CB4B16',
+        'peach': '#CB4B16',
+        'yellow': '#B58900',
+        'green': '#859900',
+        'teal': '#2AA198',
+        'sky': '#6C71C4',
+        'sapphire': '#268BD2',
+        'blue': '#268BD2',
+        'lavender': '#8FA1D9',
+        'text': '#657B83',
+        'subtext1': '#839496',
+        'subtext0': '#93A1A1',
+        'overlay2': '#657B83',
+        'overlay1': '#839496',
+        'overlay0': '#8B9B9C',
+        'surface2': '#93A1A1',
+        'surface1': '#C1C5BB',
+        'surface0': '#EEE8D5',
+        'base': '#FDF6E3',
+        'mantle': '#F7EFDA',
+        'crust': '#EEE8D5'
+    },
+    # Nord: nordtheme.com's own, unmodified palette — see
+    # ~/dotfiles/swaywm/nord/README.md. Frost/Aurora accents are
+    # identical across all three variants; only Polar Night/Snow Storm
+    # neutral tones swap roles. rosewater/flamingo/pink/lavender have no
+    # Nord equivalent and are interpolated blends, same caveat as Zephyr's.
+    'nord_light': {
+        'rosewater': '#D48A85',
+        'flamingo': '#CB7A6E',
+        'pink': '#C79FC2',
+        'mauve': '#B48EAD',
+        'red': '#BF616A',
+        'maroon': '#D08770',
+        'peach': '#D08770',
+        'yellow': '#EBCB8B',
+        'green': '#A3BE8C',
+        'teal': '#8FBCBB',
+        'sky': '#5E81AC',
+        'sapphire': '#88C0D0',
+        'blue': '#88C0D0',
+        'lavender': '#A9B7E0',
+        'text': '#2E3440',
+        'subtext1': '#434C5E',
+        'subtext0': '#4C566A',
+        'overlay2': '#4C566A',
+        'overlay1': '#4C566A',
+        'overlay0': '#4C566A',
+        'surface2': '#4C566A',
+        'surface1': '#929AA9',
+        'surface0': '#D8DEE9',
+        'base': '#ECEFF4',
+        'mantle': '#E5E9F0',
+        'crust': '#D8DEE9'
+    },
+    'nord_dusk': {
+        'rosewater': '#D48A85',
+        'flamingo': '#CB7A6E',
+        'pink': '#C79FC2',
+        'mauve': '#B48EAD',
+        'red': '#BF616A',
+        'maroon': '#D08770',
+        'peach': '#D08770',
+        'yellow': '#EBCB8B',
+        'green': '#A3BE8C',
+        'teal': '#8FBCBB',
+        'sky': '#81A1C1',
+        'sapphire': '#88C0D0',
+        'blue': '#88C0D0',
+        'lavender': '#A9B7E0',
+        'text': '#ECEFF4',
+        'subtext1': '#D8DEE9',
+        'subtext0': '#D8DEE9',
+        'overlay2': '#929AA9',
+        'overlay1': '#929AA9',
+        'overlay0': '#4C566A',
+        'surface2': '#4C566A',
+        'surface1': '#434C5E',
+        'surface0': '#3B4252',
+        'base': '#3B4252',
+        'mantle': '#343B4A',
+        'crust': '#2D3340'
+    },
+    'nord_dark': {
+        'rosewater': '#D48A85',
+        'flamingo': '#CB7A6E',
+        'pink': '#C79FC2',
+        'mauve': '#B48EAD',
+        'red': '#BF616A',
+        'maroon': '#D08770',
+        'peach': '#D08770',
+        'yellow': '#EBCB8B',
+        'green': '#A3BE8C',
+        'teal': '#8FBCBB',
+        'sky': '#81A1C1',
+        'sapphire': '#88C0D0',
+        'blue': '#88C0D0',
+        'lavender': '#A9B7E0',
+        'text': '#ECEFF4',
+        'subtext1': '#E5E9F0',
+        'subtext0': '#D8DEE9',
+        'overlay2': '#D8DEE9',
+        'overlay1': '#929AA9',
+        'overlay0': '#4C566A',
+        'surface2': '#4C566A',
+        'surface1': '#434C5E',
+        'surface0': '#3B4252',
+        'base': '#2E3440',
+        'mantle': '#272C36',
+        'crust': '#20242D'
     }
 }
 
@@ -725,7 +876,7 @@ def add_text_overlay(img, text, palette_name='mocha', text_color='text', font_si
     
     # Draw text with slight shadow for better visibility
     shadow_offset = max(1, font_size // 24)
-    shadow_color = (0, 0, 0) if palette_name in ('latte', 'zephyr_light', 'harmattan_light') else (255, 255, 255)
+    shadow_color = (0, 0, 0) if palette_name in ('latte', 'zephyr_light', 'harmattan_light', 'solarized_light') else (255, 255, 255)
     
     # Draw shadow
     draw.text((x + shadow_offset, y + shadow_offset), text, font=font, fill=shadow_color)
@@ -862,8 +1013,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Available Palette Colors (key names are shared across all palettes,
-including zephyr_light/zephyr_dusk/zephyr_dark and
-harmattan_light/harmattan_dusk/harmattan_dark - see --palette below for the full list):
+including zephyr_light/zephyr_dusk/zephyr_dark,
+harmattan_light/harmattan_dusk/harmattan_dark, solarized_dark/solarized_light,
+and nord_light/nord_dusk/nord_dark - see --palette below for the full list.
+The catppuccin-theme light/dusk/dark variants reuse the existing
+latte/macchiato/mocha palettes directly, no separate catppuccin_* entries):
   Background colors: base, mantle, crust, surface0, surface1, surface2
   Text colors: text, subtext1, subtext0, overlay2, overlay1, overlay0
   Accent colors: rosewater, flamingo, pink, mauve, red, maroon, peach, 
@@ -916,7 +1070,7 @@ Complete Examples:
     
     parser.add_argument('--width', type=int, default=2560, help='Width of wallpaper (default: 2560)')
     parser.add_argument('--height', type=int, default=1600, help='Height of wallpaper (default: 1600)')
-    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dusk', 'zephyr_dark', 'harmattan_light', 'harmattan_dusk', 'harmattan_dark'],
+    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dusk', 'zephyr_dark', 'harmattan_light', 'harmattan_dusk', 'harmattan_dark', 'solarized_dark', 'solarized_light', 'nord_light', 'nord_dusk', 'nord_dark'],
                        default='mocha', help='Palette to use (default: mocha)')
     parser.add_argument('--pattern', choices=['hexagon', 'triangle', 'diamond', 'waves', 'circles', 'noise', 'plain', 'gradient'], 
                        default='hexagon', help='Pattern type (default: hexagon)')

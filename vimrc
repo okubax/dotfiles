@@ -41,8 +41,10 @@ set wildmenu            " visual autocomplete for command menu
 set lazyredraw          " redraw only when we need to.
 set showmatch           " highlight matching [{()}]
 " Zephyr theme from ~/.vim/colors (Breeze-matched, see
-" swaywm/zephyr/README.md in this repo). Swap to zephyr_dark to match
-" Zephyr Dark / Breeze Dark; other flavors (catppuccin_*) still available.
+" swaywm/zephyr/README.md in this repo). Other flavors also available:
+" zephyr_{light,dusk,dark}, harmattan_{light,dusk,dark},
+" solarized_{dark,light}, nord_{light,dusk,dark},
+" catppuccin_{light,dusk,dark}.
 colorscheme zephyr_light
 
 "search

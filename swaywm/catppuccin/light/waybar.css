@@ -1,0 +1,14 @@
+/* Catppuccin Light (Latte) — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #CCD0DA;
+@define-color bg-tooltip #EFF1F5;
+@define-color fg #4C4F69;
+@define-color fg-muted #6C6F85;
+@define-color border #1E66F5;
+@define-color accent #1E66F5;
+@define-color red #D20F39;
+@define-color green #40A02B;
+@define-color yellow #DF8E1D;
+@define-color purple #8839EF;
+@define-color cyan #179299;
+@define-color link #209FB5;

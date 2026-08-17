@@ -11,10 +11,10 @@ border-size=2
 border-radius=15
 default-timeout=10000
 
-# Color scheme: Zephyr (see ../zephyr/README.md) or Harmattan (see
-# ../harmattan/README.md) — only one family drives this include at a time.
-# Flip variants with `zephyr-theme`/`harmattan-theme`; switch families by
-# running either.
+# Color scheme: one of five theme families (Zephyr, Harmattan, Solarized,
+# Nord, Catppuccin — see swaywm/<family>/README.md) — only one family
+# drives this include at a time. Flip variants with `<family>-theme
+# <variant>`; switch families by running any of the five scripts.
 include=~/dotfiles/swaywm/zephyr/active/mako.conf
 
 # Show notifications above fullscreen windows

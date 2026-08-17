@@ -1,0 +1,11 @@
+/* Catppuccin Light (Latte) — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #EFF1F5;
+@define-color bg-alt #E6E9EF;
+@define-color bg-selected #1E66F5;
+@define-color bg-selected-soft #B7CCFB;
+@define-color fg #4C4F69;
+@define-color fg-selected #EFF1F5;
+@define-color fg-muted #6C6F85;
+@define-color border #1E66F5;
+@define-color input-border #D20F39;

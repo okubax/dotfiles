@@ -1,6 +1,6 @@
 # Dotfiles - Sway Desktop Environment
 
-A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dusk/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps, with **[Harmattan](swaywm/harmattan/README.md)** — an original warm, dust-toned light/dusk/dark scheme with no external source palette — as a from-scratch alternative. [Catppuccin](https://github.com/catppuccin) flavors (Mocha, Macchiato, Frappé, Latte) ship alongside both as drop-in alternatives for kitty, vim, and ZSH syntax highlighting.
+A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dusk/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps, alongside four full alternative theme families with the same sway/waybar/mako/wofi/swaylock/kitty/vim coverage: **[Harmattan](swaywm/harmattan/README.md)** (an original warm, dust-toned scheme with no external source palette), **[Solarized](swaywm/solarized/README.md)** (Ethan Schoonover's precision palette, dark/light only), **[Nord](swaywm/nord/README.md)** (the arctic Polar Night/Snow Storm/Frost/Aurora palette), and **[Catppuccin](swaywm/catppuccin/README.md)** (Latte/Macchiato/Mocha, mapped to light/dusk/dark). Catppuccin's ZSH syntax-highlighting plugin ships separately (`zsh/plugins/`) and isn't tied to any one of these five.
 
 ## Screenshots
 
@@ -20,7 +20,7 @@ own chrome isn't Zephyr-themed).
 - **Launcher / Menus**: Wofi (app launcher, power menu, clipboard picker)
 - **Terminal**: Kitty
 - **Notifications**: Mako
-- **Lock Screen**: Swaylock (plain wallpaper, Zephyr-colored indicator ring — blue typing, orange verifying, red wrong password, purple Caps Lock) with swayidle (auto-lock, lock on suspend). Uses vanilla swaylock — blur/clock require the swaylock-effects fork instead.
+- **Lock Screen**: Swaylock (plain wallpaper, theme-colored indicator ring matching whichever of the five colorschemes is active — accent typing, warning-color verifying, red wrong password, purple/violet Caps Lock) with swayidle (auto-lock, lock on suspend). Uses vanilla swaylock — blur/clock require the swaylock-effects fork instead.
 - **Clipboard**: cliphist + wl-clipboard (history picker bound to Alt+h)
 - **Screenshots**: swayshot (full screen / window / region)
 - **Shell**: ZSH with modular configuration
@@ -44,9 +44,15 @@ own chrome isn't Zephyr-themed).
 
 **Theming**
 - **Colorscheme**: [Zephyr](swaywm/zephyr/README.md) (default) — light, dusk and dark variants matched to KDE's Breeze color schemes (dusk is a hand-tuned dim mid-tone with no official Breeze equivalent), applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch all variants at once with `zephyr-theme light|dusk|dark|toggle` (installed to `~/bin` — see `bin/zephyr-theme`), or set `vim`/`kitty` independently by editing their own config.
-- **Alternative theme**: [Harmattan](swaywm/harmattan/README.md) — an original warm, dust-toned scheme (indigo accent, terracotta/ochre/olive/bougainvillea state colors) with no external source palette, also with light/dusk/dark variants across the same apps. Switch with `harmattan-theme light|dusk|dark|toggle` (`bin/harmattan-theme`); only one of Zephyr/Harmattan drives sway/mako/waybar/wofi at a time (whichever script ran most recently), while kitty and vim can pick either theme's colorscheme independently as ordinary toggle options.
-- **Other alternatives**: Catppuccin's four flavors remain available for kitty (`kitty/colors/`) and vim (`vim/colors/`); ZSH syntax highlighting is Catppuccin-only (`zsh/plugins/`).
-- **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports Zephyr's and Harmattan's palettes plus all four Catppuccin flavors. Desktop wallpapers and swaylock backgrounds for both ship pre-generated in `img/wallpapers/`.
+- **Alternative themes**, same full coverage and shape as Zephyr:
+  - [Harmattan](swaywm/harmattan/README.md) — an original warm, dust-toned scheme (indigo accent, terracotta/ochre/olive/bougainvillea state colors) with no external source palette. `harmattan-theme light|dusk|dark|toggle`.
+  - [Solarized](swaywm/solarized/README.md) — Ethan Schoonover's palette, unmodified. **Dark/light only** — no dusk equivalent, by design. `solarized-theme dark|light|toggle`.
+  - [Nord](swaywm/nord/README.md) — the arctic Polar Night/Snow Storm/Frost/Aurora palette. No official Nord Light exists, so `light` inverts which range plays background vs. text (a common community approach); `dusk` shifts Polar Night one step lighter than classic Nord Dark. `nord-theme light|dusk|dark|toggle`.
+  - [Catppuccin](swaywm/catppuccin/README.md) — Latte/Macchiato/Mocha mapped to light/dusk/dark (Frappé, the fourth official flavor, isn't part of this mapping). Unlike the other four themes here, Catppuccin's accents genuinely differ per variant upstream, not just its neutrals. `catppuccin-theme light|dusk|dark|toggle`.
+
+  Only one theme *family* drives sway/mako/waybar/wofi's chrome at a time — whichever `<family>-theme` script ran most recently rewrites the shared include paths to point at itself. kitty and vim are unaffected: every family's variants sit side by side as ordinary toggle/colorscheme options, so kitty/vim can be on a different family than the rest of the desktop.
+- **ZSH syntax highlighting**: Catppuccin-only (`zsh/plugins/`), independent of which of the five desktop themes is active.
+- **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports all five themes' palettes (Catppuccin's light/dusk/dark reuse the existing `latte`/`macchiato`/`mocha`/`frappe` palettes directly). Desktop wallpapers and swaylock backgrounds for all five ship pre-generated in `img/wallpapers/`.
 - **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3) — already matches Zephyr/Breeze natively, no porting needed. Set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`)
 - **Qt**: `breeze5` (Qt5 Breeze style) via qt5ct/qt6ct
 - **Icons / Cursors**: `breeze-icons`, `breeze-cursors`
@@ -70,12 +76,12 @@ cd ~/dotfiles
 ./bootstrap.sh link     # Create the symlinks (default command)
 ```
 
-**Zephyr/Harmattan need one manual fix after cloning.** GTK CSS's `@import`
+**The theme system needs one manual fix after cloning.** GTK CSS's `@import`
 doesn't expand `~` or `$HOME`, so `swaywm/waybar/style.css` and
 `swaywm/wofi/style.css` each carry a placeholder absolute path
-(`/home/YOUR_USERNAME/dotfiles/...`) that's shared by both theme families —
-which family's subdirectory it resolves into just depends on whether
-`zephyr-theme` or `harmattan-theme` last ran. Edit both `@import url(...)`
+(`/home/YOUR_USERNAME/dotfiles/...`) that's shared by all five theme
+families — which family's subdirectory it resolves into just depends on
+which `<family>-theme` script last ran. Edit both `@import url(...)`
 lines to point at wherever you actually cloned this repo — waybar will fail
 to start (CSS parse error) until you do.
 
@@ -118,13 +124,16 @@ adding a new dotfile to confirm the map still matches reality.
 ```bash
 zephyr-theme light|dusk|dark|toggle|status      # Switch the whole desktop to Zephyr
 harmattan-theme light|dusk|dark|toggle|status   # Switch the whole desktop to Harmattan
+solarized-theme dark|light|toggle|status        # Switch the whole desktop to Solarized
+nord-theme light|dusk|dark|toggle|status        # Switch the whole desktop to Nord
+catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Catppuccin
 ```
 
 ## Post-Installation
 
 1. Set ZSH as default shell: `chsh -s $(which zsh)`
 2. Log in on tty1 — `zsh/zprofile` starts Sway automatically (or run `sway` manually)
-3. Fix the two Zephyr/Harmattan `@import` placeholder paths described above under Installation
+3. Fix the two theme-system `@import` placeholder paths described above under Installation
 4. Machine-local secrets (API keys etc.) go in `~/.zshrc.local`, which is sourced by `zsh/zshrc` but not tracked here
 
 ## Configuration
@@ -137,8 +146,11 @@ harmattan-theme light|dusk|dark|toggle|status   # Switch the whole desktop to Ha
 - **Swaylock**: `swaywm/swaylock/config`
 - **Terminal**: `kitty/kitty.conf`
 - **Vim colorscheme**: set near the bottom of `vimrc`
-- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dusk/dark switch is wired)
-- **Harmattan theme**: `swaywm/harmattan/` (see its own [README](swaywm/harmattan/README.md); also covers how the two theme families coexist)
+- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dusk/dark switch is wired, and how all five theme families coexist)
+- **Harmattan theme**: `swaywm/harmattan/README.md`
+- **Solarized theme**: `swaywm/solarized/README.md`
+- **Nord theme**: `swaywm/nord/README.md`
+- **Catppuccin theme**: `swaywm/catppuccin/README.md`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
 
@@ -149,25 +161,29 @@ harmattan-theme light|dusk|dark|toggle|status   # Switch the whole desktop to Ha
 ├── aliases/             # Shell aliases (system/dev/personal/scripts)
 ├── bin/                 # Custom scripts (see below)
 ├── ii/                  # ii IRC credentials template
-├── img/wallpapers/      # Desktop + swaylock wallpapers (Zephyr, Harmattan, Catppuccin)
-├── kitty/               # Terminal config (colors/ has Zephyr + Harmattan + Catppuccin flavors)
+├── img/wallpapers/      # Desktop + swaylock wallpapers, all five themes
+├── kitty/               # Terminal config (colors/ has all five themes' flavors)
 ├── mpd/                 # Music Player Daemon
 ├── ncmpcpp/             # Music player client
 ├── ranger/              # File manager
 ├── startpage/           # Browser start page
 ├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
 │   ├── zephyr/          # Zephyr colorscheme: light/, dusk/, dark/, active -> one of them
-│   └── harmattan/       # Harmattan colorscheme: light/, dusk/, dark/, active -> one of them
-├── vim/                 # Editor configuration (native packages; colors/ has Zephyr + Harmattan + Catppuccin)
+│   ├── harmattan/       # Harmattan colorscheme: light/, dusk/, dark/, active -> one of them
+│   ├── solarized/       # Solarized colorscheme: dark/, light/, active -> one of them
+│   ├── nord/            # Nord colorscheme: light/, dusk/, dark/, active -> one of them
+│   └── catppuccin/      # Catppuccin colorscheme: light/, dusk/, dark/, active -> one of them
+├── vim/                 # Editor configuration (native packages; colors/ has all five themes)
 └── zsh/                 # Shell configuration
     ├── config/          # Modular ZSH configs
     └── plugins/         # Catppuccin syntax highlighting themes
 ```
 
-`swaywm/zephyr/` and `swaywm/harmattan/` are deliberately **not** in
-`bootstrap.sh`'s symlink map — sway/mako/waybar/wofi reference whichever
-family is active directly at `~/dotfiles/swaywm/{zephyr,harmattan}/...`
-rather than through a `$HOME` symlink, so both only work correctly if the
+`swaywm/{zephyr,harmattan,solarized,nord,catppuccin}/` are deliberately
+**not** in `bootstrap.sh`'s symlink map — sway/mako/waybar/wofi reference
+whichever family is active directly at
+`~/dotfiles/swaywm/{zephyr,harmattan,solarized,nord,catppuccin}/...` rather
+than through a `$HOME` symlink, so all five only work correctly if the
 repo is cloned to `~/dotfiles` (as the Installation section above does).
 
 ### Adding a dotfile / keeping the map honest
@@ -181,7 +197,10 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 ### Notable Scripts in `bin/`
 - `zephyr-theme` - switch the whole desktop between Zephyr Light, Dusk and Dark in one command
 - `harmattan-theme` - switch the whole desktop between Harmattan Light, Dusk and Dark in one command
-- `palette_wallpaper.py` - wallpaper generator (Zephyr's or Harmattan's light/dusk/dark palettes, or any of the four Catppuccin flavors)
+- `solarized-theme` - switch the whole desktop between Solarized Dark and Light in one command
+- `nord-theme` - switch the whole desktop between Nord Light, Dusk and Dark in one command
+- `catppuccin-theme` - switch the whole desktop between Catppuccin Light (Latte), Dusk (Macchiato) and Dark (Mocha) in one command
+- `palette_wallpaper.py` - wallpaper generator for all five themes' palettes, or any of the four standalone Catppuccin flavors
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
@@ -202,7 +221,7 @@ Modular setup with separate configuration files:
 - `aliases.zsh` - ZSH-specific aliases
 - `plugins.zsh` - Plugin management
 
-Includes Catppuccin syntax highlighting themes (frappe, latte, macchiato, mocha) — not yet ported to Zephyr or Harmattan.
+Includes Catppuccin syntax highlighting themes (frappe, latte, macchiato, mocha) — independent of the sway/kitty/vim colorscheme, not yet ported to the other four themes.
 
 ## Backup System
 
@@ -249,6 +268,9 @@ MIT License. Use, modify, and distribute freely.
 
 - [Zephyr colorscheme README](swaywm/zephyr/README.md) - palette provenance and how the light/dusk/dark switch works
 - [Harmattan colorscheme README](swaywm/harmattan/README.md) - design rationale and how the light/dusk/dark switch works
+- [Solarized colorscheme README](swaywm/solarized/README.md) - palette provenance and how the dark/light switch works
+- [Nord colorscheme README](swaywm/nord/README.md) - palette provenance and how the light/dusk/dark switch works
+- [Catppuccin colorscheme README](swaywm/catppuccin/README.md) - flavor mapping and how the light/dusk/dark switch works
 - [Sway Documentation](https://github.com/swaywm/sway/wiki)
 - [Waybar Configuration](https://github.com/Alexays/Waybar/wiki)
 - [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)

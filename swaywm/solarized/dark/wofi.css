@@ -1,0 +1,11 @@
+/* Solarized Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #002B36;
+@define-color bg-alt #073642;
+@define-color bg-selected #268BD2;
+@define-color bg-selected-soft #0A4A5C;
+@define-color fg #839496;
+@define-color fg-selected #FDF6E3;
+@define-color fg-muted #586E75;
+@define-color border #268BD2;
+@define-color input-border #DC322F;

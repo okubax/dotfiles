@@ -1,0 +1,14 @@
+/* Solarized Dark — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #30525C;
+@define-color bg-tooltip #002B36;
+@define-color fg #839496;
+@define-color fg-muted #586E75;
+@define-color border #268BD2;
+@define-color accent #268BD2;
+@define-color red #DC322F;
+@define-color green #859900;
+@define-color yellow #B58900;
+@define-color purple #D33682;
+@define-color cyan #2AA198;
+@define-color link #6C71C4;

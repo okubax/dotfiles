@@ -1,0 +1,11 @@
+/* Nord Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #2E3440;
+@define-color bg-alt #3B4252;
+@define-color bg-selected #88C0D0;
+@define-color bg-selected-soft #3E5A66;
+@define-color fg #ECEFF4;
+@define-color fg-selected #2E3440;
+@define-color fg-muted #D8DEE9;
+@define-color border #88C0D0;
+@define-color input-border #BF616A;

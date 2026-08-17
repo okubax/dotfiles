@@ -1,0 +1,14 @@
+/* Catppuccin Dusk (Macchiato) — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #363A4F;
+@define-color bg-tooltip #24273A;
+@define-color fg #CAD3F5;
+@define-color fg-muted #A5ADCB;
+@define-color border #8AADF4;
+@define-color accent #8AADF4;
+@define-color red #ED8796;
+@define-color green #A6DA95;
+@define-color yellow #EED49F;
+@define-color purple #C6A0F6;
+@define-color cyan #8BD5CA;
+@define-color link #7DC4E4;

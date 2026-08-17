@@ -1,0 +1,11 @@
+/* Solarized Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #FDF6E3;
+@define-color bg-alt #EEE8D5;
+@define-color bg-selected #268BD2;
+@define-color bg-selected-soft #B7D9EF;
+@define-color fg #657B83;
+@define-color fg-selected #FDF6E3;
+@define-color fg-muted #93A1A1;
+@define-color border #268BD2;
+@define-color input-border #DC322F;
