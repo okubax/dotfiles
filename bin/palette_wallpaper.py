@@ -2,7 +2,8 @@
 """
 Palette Wallpaper Generator
 Generates beautiful tiled wallpapers using a named color palette
-(Catppuccin's four flavors, or Zephyr's light/dark Breeze-matched scheme)
+(Catppuccin's four flavors, Zephyr's Breeze-matched scheme, or Harmattan,
+an original warm dust-toned scheme)
 """
 
 import random
@@ -148,7 +149,7 @@ PALETTES = {
         'mantle': '#e6e9ef',
         'crust': '#dce0e8'
     },
-    # Zephyr: Breeze-matched scheme, see swaywm/zephyr/README.md.
+    # Zephyr: Breeze-matched scheme, see ~/dotfiles/swaywm/zephyr/README.md.
     # Neutrals come from BreezeLight/BreezeDark.colors; accents are Breeze's
     # own semantic colors extended with Flat UI Colors for the slots Breeze
     # doesn't define (rosewater/flamingo/pink/lavender are interpolated
@@ -214,7 +215,7 @@ PALETTES = {
     # official Breeze equivalent - neutrals hand-interpolated (leaning dark,
     # since "dusk" reads as early-night dimness rather than a neutral
     # midpoint gray), accent hues unchanged. See
-    # swaywm/zephyr/dusk/palette.md.
+    # ~/dotfiles/swaywm/zephyr/dusk/palette.md.
     'zephyr_dusk': {
         'rosewater': '#e37380',
         'flamingo': '#cf6960',
@@ -242,6 +243,97 @@ PALETTES = {
         'base': '#262B2E',
         'mantle': '#22262A',
         'crust': '#1E2225'
+    },
+    # Harmattan: an original warm, dust-toned scheme, no external source
+    # palette (unlike Zephyr/Catppuccin) — see
+    # ~/dotfiles/swaywm/harmattan/README.md for the design rationale.
+    # Accent hues (blue/red/green/peach/yellow/mauve/teal/sapphire) are
+    # identical across all three variants; only neutrals and sky (the
+    # "link" role) shift. lavender is a constant light indigo tint, not
+    # tied to any variant, same as Zephyr's.
+    'harmattan_light': {
+        'rosewater': '#D98872',
+        'flamingo': '#C97256',
+        'pink': '#A66B99',
+        'mauve': '#8B5A8C',
+        'red': '#C1502E',
+        'maroon': '#E06A45',
+        'peach': '#D98A2B',
+        'yellow': '#E8B84B',
+        'green': '#6E8C4E',
+        'teal': '#3E8E8A',
+        'sky': '#34468C',
+        'sapphire': '#5FADA8',
+        'blue': '#4C5FA6',
+        'lavender': '#8B98CC',
+        'text': '#2B2116',
+        'subtext1': '#4A3D2C',
+        'subtext0': '#7C6E56',
+        'overlay2': '#7C6E56',
+        'overlay1': '#C9BA96',
+        'overlay0': '#DED0B0',
+        'surface2': '#DED0B0',
+        'surface1': '#ECE2CC',
+        'surface0': '#F5EFE1',
+        'base': '#FBF7F0',
+        'mantle': '#F7F2E7',
+        'crust': '#DED0B0'
+    },
+    'harmattan_dusk': {
+        'rosewater': '#D0806A',
+        'flamingo': '#C06A50',
+        'pink': '#A66B99',
+        'mauve': '#8B5A8C',
+        'red': '#C1502E',
+        'maroon': '#E06A45',
+        'peach': '#D98A2B',
+        'yellow': '#E8B84B',
+        'green': '#6E8C4E',
+        'teal': '#3E8E8A',
+        'sky': '#7688C9',
+        'sapphire': '#5FADA8',
+        'blue': '#4C5FA6',
+        'lavender': '#8B98CC',
+        'text': '#F1E8D6',
+        'subtext1': '#D8CBAE',
+        'subtext0': '#B9AA87',
+        'overlay2': '#B9AA87',
+        'overlay1': '#5B4F38',
+        'overlay0': '#453A28',
+        'surface2': '#3C3325',
+        'surface1': '#332C1F',
+        'surface0': '#2D271B',
+        'base': '#262016',
+        'mantle': '#211B12',
+        'crust': '#1B160E'
+    },
+    'harmattan_dark': {
+        'rosewater': '#D07C64',
+        'flamingo': '#BC6549',
+        'pink': '#A66B99',
+        'mauve': '#8B5A8C',
+        'red': '#C1502E',
+        'maroon': '#E06A45',
+        'peach': '#D98A2B',
+        'yellow': '#E8B84B',
+        'green': '#6E8C4E',
+        'teal': '#3E8E8A',
+        'sky': '#8296D6',
+        'sapphire': '#5FADA8',
+        'blue': '#4C5FA6',
+        'lavender': '#8B98CC',
+        'text': '#F6EFDF',
+        'subtext1': '#D6C8A8',
+        'subtext0': '#B4A687',
+        'overlay2': '#B4A687',
+        'overlay1': '#473B29',
+        'overlay0': '#362C1D',
+        'surface2': '#2B2419',
+        'surface1': '#221C14',
+        'surface0': '#1C170F',
+        'base': '#14120D',
+        'mantle': '#100E09',
+        'crust': '#0B0906'
     }
 }
 
@@ -633,7 +725,7 @@ def add_text_overlay(img, text, palette_name='mocha', text_color='text', font_si
     
     # Draw text with slight shadow for better visibility
     shadow_offset = max(1, font_size // 24)
-    shadow_color = (0, 0, 0) if palette_name in ('latte', 'zephyr_light') else (255, 255, 255)
+    shadow_color = (0, 0, 0) if palette_name in ('latte', 'zephyr_light', 'harmattan_light') else (255, 255, 255)
     
     # Draw shadow
     draw.text((x + shadow_offset, y + shadow_offset), text, font=font, fill=shadow_color)
@@ -770,7 +862,8 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
 Available Palette Colors (key names are shared across all palettes,
-including zephyr_light/zephyr_dusk/zephyr_dark - see --palette below for the full list):
+including zephyr_light/zephyr_dusk/zephyr_dark and
+harmattan_light/harmattan_dusk/harmattan_dark - see --palette below for the full list):
   Background colors: base, mantle, crust, surface0, surface1, surface2
   Text colors: text, subtext1, subtext0, overlay2, overlay1, overlay0
   Accent colors: rosewater, flamingo, pink, mauve, red, maroon, peach, 
@@ -823,7 +916,7 @@ Complete Examples:
     
     parser.add_argument('--width', type=int, default=2560, help='Width of wallpaper (default: 2560)')
     parser.add_argument('--height', type=int, default=1600, help='Height of wallpaper (default: 1600)')
-    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dusk', 'zephyr_dark'],
+    parser.add_argument('--palette', choices=['mocha', 'macchiato', 'frappe', 'latte', 'zephyr_light', 'zephyr_dusk', 'zephyr_dark', 'harmattan_light', 'harmattan_dusk', 'harmattan_dark'],
                        default='mocha', help='Palette to use (default: mocha)')
     parser.add_argument('--pattern', choices=['hexagon', 'triangle', 'diamond', 'waves', 'circles', 'noise', 'plain', 'gradient'], 
                        default='hexagon', help='Pattern type (default: hexagon)')

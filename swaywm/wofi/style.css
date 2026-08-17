@@ -1,4 +1,6 @@
-/* Wofi launcher styling (Zephyr theme — see ../zephyr/README.md) */
+/* Wofi launcher styling (Zephyr — see ../zephyr/README.md — or Harmattan,
+ * see ../harmattan/README.md; only one family drives this @import at a
+ * time, switched by `zephyr-theme`/`harmattan-theme`). */
 
 /* Must be an absolute path: ~/.config/wofi is a symlink, and GTK resolves
  * @import relative to the symlinked path it opened rather than the real

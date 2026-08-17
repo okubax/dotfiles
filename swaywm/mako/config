@@ -11,8 +11,10 @@ border-size=2
 border-radius=15
 default-timeout=10000
 
-# Color scheme: Zephyr (Breeze-matched, see ../zephyr/README.md).
-# active is a symlink to light/ or dark/ — flip both with `zephyr-theme`.
+# Color scheme: Zephyr (see ../zephyr/README.md) or Harmattan (see
+# ../harmattan/README.md) — only one family drives this include at a time.
+# Flip variants with `zephyr-theme`/`harmattan-theme`; switch families by
+# running either.
 include=~/dotfiles/swaywm/zephyr/active/mako.conf
 
 # Show notifications above fullscreen windows

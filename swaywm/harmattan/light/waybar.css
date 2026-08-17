@@ -1,0 +1,14 @@
+/* Harmattan Light — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #ECE2CC;
+@define-color bg-tooltip #FBF7F0;
+@define-color fg #2B2116;
+@define-color fg-muted #7C6E56;
+@define-color border #4C5FA6;
+@define-color accent #4C5FA6;
+@define-color red #C1502E;
+@define-color green #6E8C4E;
+@define-color yellow #D98A2B;
+@define-color purple #8B5A8C;
+@define-color cyan #3E8E8A;
+@define-color link #34468C;

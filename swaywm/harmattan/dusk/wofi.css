@@ -1,0 +1,11 @@
+/* Harmattan Dusk — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #262016;
+@define-color bg-alt #2D271B;
+@define-color bg-selected #4C5FA6;
+@define-color bg-selected-soft #38416A;
+@define-color fg #F1E8D6;
+@define-color fg-selected #262016;
+@define-color fg-muted #B9AA87;
+@define-color border #4C5FA6;
+@define-color input-border #C1502E;

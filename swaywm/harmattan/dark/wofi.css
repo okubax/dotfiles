@@ -1,0 +1,11 @@
+/* Harmattan Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #14120D;
+@define-color bg-alt #1C170F;
+@define-color bg-selected #4C5FA6;
+@define-color bg-selected-soft #29335A;
+@define-color fg #F6EFDF;
+@define-color fg-selected #14120D;
+@define-color fg-muted #B4A687;
+@define-color border #4C5FA6;
+@define-color input-border #C1502E;

@@ -1,0 +1,11 @@
+/* Harmattan Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #FBF7F0;
+@define-color bg-alt #F5EFE1;
+@define-color bg-selected #4C5FA6;
+@define-color bg-selected-soft #C9D1EC;
+@define-color fg #2B2116;
+@define-color fg-selected #FBF7F0;
+@define-color fg-muted #7C6E56;
+@define-color border #4C5FA6;
+@define-color input-border #C1502E;
