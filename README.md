@@ -4,10 +4,11 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 ## Screenshots
 
-All current (Zephyr Light — Kate picks it up natively as a KDE app; Firefox's
-own chrome isn't Zephyr-themed).
+All current (Harmattan — Kate picks it up natively as a KDE app; Firefox's own
+chrome isn't Harmattan-themed). Desktop shown in both Light and Dark; the
+Vim/Kate/Firefox shots below are Light only.
 
-![Desktop](screenshot.png)
+![Desktop, Harmattan Light and Dark](screenshot.png)
 ![Vim](screenshot2.png)
 ![Kate](screenshot3.png)
 ![Firefox](screenshot4.png)
