@@ -9,7 +9,8 @@
   "cpu", "memory", "backlight", "pulseaudio", "network", "sway/language",
   "battery", "tray", "clock"],
 
-  // Workspace switcher: Japanese numerals for workspaces 1-6.
+  // Workspace switcher: plain digits for workspaces 1-6 (was CJK numerals,
+  // but no CJK-capable font is installed so they rendered as tofu boxes).
   // Only existing workspaces (focused or with windows) are shown.
   "sway/workspaces": {
     "disable-scroll": true,
@@ -18,12 +19,12 @@
     "format-icons": {
       "default": "",
       "focused": "",
-      "1": "一",
-      "2": "二",
-      "3": "三",
-      "4": "四",
-      "5": "五",
-      "6": "六",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6",
       "high-priority-named": [ "1", "2", "3", "4", "5", "6"]
     }
   },
@@ -37,8 +38,8 @@
   // Click to play/pause, right-click for next track.
   // Hidden when stopped or when mpd is not running.
   "mpd": {
-    "format": " {artist} - {title}",
-    "format-paused": " {artist} - {title}",
+    "format": " {artist} - {title}",
+    "format-paused": " {artist} - {title}",
     "format-stopped": "",
     "format-disconnected": "",
     "max-length": 40,

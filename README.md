@@ -26,7 +26,7 @@ own chrome isn't Zephyr-themed).
 - **Shell**: ZSH with modular configuration
 
 **Waybar modules**
-- Workspace switcher (Japanese numerals, only occupied workspaces shown)
+- Workspace switcher (only occupied workspaces shown)
 - MPD now-playing (hidden when nothing is queued; click to play/pause)
 - Idle inhibitor, CPU, memory, backlight (scroll to adjust)
 - PulseAudio/PipeWire volume (click to mute, scroll to adjust)
