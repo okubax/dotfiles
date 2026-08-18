@@ -90,7 +90,7 @@ to start (CSS parse error) until you do.
 ### Essential
 ```bash
 sudo pacman -S sway waybar mako swaylock swayidle wofi wl-clipboard cliphist kitty zsh ranger vim
-sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family ttf-font-awesome noto-fonts noto-fonts-emoji
+sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family woff2-font-awesome noto-fonts noto-fonts-emoji
 sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # Zephyr (default theme) needs these for GTK/Qt apps to match
 ```
 
@@ -252,7 +252,7 @@ Files like `ii/credentials`, `gitconfig`, and the server-related scripts ship wi
 
 **Waybar fails to start / CSS parse error**: You likely haven't fixed the two `@import` placeholder paths in `swaywm/waybar/style.css` and `swaywm/wofi/style.css` yet — see Installation above.
 
-**Waybar shows no icons**: Install `ttf-font-awesome` (the bar uses Font Awesome 6 glyphs)
+**Waybar shows no icons**: Install `woff2-font-awesome` (the older `ttf-font-awesome` was replaced upstream at Font Awesome 7.0 — `style.css` accepts either family name, but you need one of the two packages installed)
 
 **Permission errors**: Run `chmod +x ./bootstrap.sh`
 

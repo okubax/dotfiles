@@ -23,5 +23,5 @@ conky.config = {
 }
 
 conky.text = [[
-${if_match "${mpd_status}" =="Playing"}${color #4C566A}${font Font Awesome 5 Free:style=Regular:pixelsize=21}${font} $mpd_smart$endif${if_match "$mpd_status" == "Paused"}${color #4C566A}${font Font Awesome 5 Free:style=Regular:pixelsize=21}${font}  $mpd_smart$endif${if_match "$mpd_status" == "Stopped"}$endif\
+${if_match "${mpd_status}" =="Playing"}${color #4C566A}${font Font Awesome 7 Free,Font Awesome 6 Free:style=Solid:pixelsize=21}${font} $mpd_smart$endif${if_match "$mpd_status" == "Paused"}${color #4C566A}${font Font Awesome 7 Free,Font Awesome 6 Free:style=Solid:pixelsize=21}${font}  $mpd_smart$endif${if_match "$mpd_status" == "Stopped"}$endif\
 ]]

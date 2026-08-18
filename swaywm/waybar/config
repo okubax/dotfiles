@@ -1,8 +1,8 @@
 // Waybar configuration (launched by sway via 'swaybar_command waybar')
 // Styling lives in style.css next to this file.
 // All modules are centered; there are no left/right module groups.
-// Icons are Font Awesome 6 glyphs written as \uXXXX escapes so they
-// survive editors/tools that strip private-use-area characters.
+// Icons are Font Awesome solid/regular glyphs (private-use-area codepoints,
+// same across the 6.x/7.x family names style.css falls back between).
 {
   "position": "top",
   "modules-center": ["sway/workspaces", "sway/mode", "mpd", "idle_inhibitor",
@@ -141,7 +141,7 @@
   // gsimplecal on right-click
   "clock": {
     "format": " {:%H:%M}",
-    "format-alt": "{:%A, %B %d, %Y (%R)}  ",
+    "format-alt": "{:%A, %B %d, %Y (%R)}  ",
     "on-click-right": "gsimplecal",
     "tooltip-format": "<tt><small>{calendar}</small></tt>"
   }
