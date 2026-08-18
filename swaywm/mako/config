@@ -1,7 +1,7 @@
 # Mako notification daemon
 # Started from the sway config: exec /usr/bin/mako
 
-font=Ubuntu Mono 9
+font=Cascadia Mono 9
 max-icon-size=48
 icon-location=right
 margin=0,25,20

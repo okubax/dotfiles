@@ -16,7 +16,7 @@
   /* Upstream Font Awesome dropped .ttf delivery at 7.0 (ttf-font-awesome ->
    * woff2-font-awesome on Arch); list both family names so this keeps
    * working whichever package generation is actually installed. */
-  font-family: "Ubuntu Mono", "Font Awesome 7 Free", "Font Awesome 6 Free";
+  font-family: "Cascadia Mono", "Font Awesome 7 Free", "Font Awesome 6 Free";
   font-size: 11pt;
   min-height: 0;
 }

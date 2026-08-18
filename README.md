@@ -91,7 +91,7 @@ to start (CSS parse error) until you do.
 ### Essential
 ```bash
 sudo pacman -S sway waybar mako swaylock swayidle wofi wl-clipboard cliphist kitty zsh ranger vim
-sudo pacman -S brightnessctl playerctl ttf-ubuntu-font-family woff2-font-awesome noto-fonts noto-fonts-emoji
+sudo pacman -S brightnessctl playerctl ttf-cascadia-code woff2-font-awesome noto-fonts noto-fonts-emoji
 sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # Zephyr (default theme) needs these for GTK/Qt apps to match
 ```
 
