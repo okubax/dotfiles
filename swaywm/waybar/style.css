@@ -1,8 +1,15 @@
 /* Waybar styling — one of five theme families (Zephyr, Harmattan,
  * Solarized, Nord, Catppuccin — see swaywm/<family>/README.md); only one
  * drives this @import at a time, switched by `<family>-theme <variant>`.
- * Bar is transparent; the module strip sits in a pill shape:
- * rounded on the left at #workspaces, rounded on the right at #clock. */
+ * Bar is transparent. Modules are grouped into clusters that share one
+ * connected pill (a thin divider marks the seam between modules within a
+ * cluster), with a visible gap between clusters - workspaces and clock
+ * stand alone, clock additionally tinted with @accent as the bar's
+ * anchor. Rewritten 2026-08-19, second pass (first pass used one chip per
+ * module; this groups them instead - see git log for the chip version).
+ * All colors below come from the @define-color tokens in the imported
+ * per-theme waybar.css, so this file works unmodified across every theme
+ * family and light/dusk/dark variant. */
 
 /* Must be an absolute path: ~/.config/waybar is a symlink, and GTK resolves
  * @import relative to the symlinked path it opened rather than the real
@@ -13,16 +20,12 @@
 
 * {
   border-radius: 0;
-  /* Upstream Font Awesome dropped .ttf delivery at 7.0 (ttf-font-awesome ->
-   * woff2-font-awesome on Arch, now the only variant installed). Icons here
-   * are all Solid-style glyphs, but plain "Font Awesome 7 Free" is ambiguous
-   * between the Solid (weight 900) and Regular (weight 400) files, and with
-   * no font-weight set here it resolves to Regular, which lacks most of
-   * these glyphs. "Font Awesome 7 Free Solid" is a second family name the
-   * solid file registers that the regular file doesn't, so it resolves
-   * unambiguously without needing a font-weight override (which would also
-   * bold the Cascadia Mono text sharing this rule). */
-  font-family: "Cascadia Mono", "Font Awesome 7 Free Solid", "Font Awesome 6 Free";
+  /* Text and icons both come from JetBrainsMono Nerd Font Mono (already
+   * installed): a single font for both means icons and digits share the
+   * same design's metrics at the same size, so they're already the same
+   * visual scale and sit on the same baseline with no per-glyph markup
+   * needed. */
+  font-family: "JetBrainsMono Nerd Font Mono";
   font-size: 11pt;
   min-height: 0;
 }
@@ -46,20 +49,80 @@ tooltip label {
   color: @fg;
 }
 
-/* Left end of the pill */
+/* -- Cluster shape: every module gets the shared background and vertical
+ * inset; horizontal position within its cluster (left end / middle /
+ * right end / standalone) is layered on below via border-radius and
+ * margin-left, so clusters read as one pill with internal seams instead
+ * of separate floating chips. -- */
+#workspaces, #mode, #mpd, #idle_inhibitor, #cpu, #memory, #backlight,
+#pulseaudio, #network, #language, #battery, #tray, #clock {
+  background: @bg-panel;
+  padding: 4px 12px;
+  margin: 7px 0px;
+}
+
+/* mode and mpd are the only modules that hide/show conditionally (resize
+ * mode; mpd stopped/disconnected), which would leave idle_inhibitor's
+ * connected-pill edge mismatched whenever a neighbor it's supposed to
+ * share a seam with isn't there. Standalone chips sidestep that instead
+ * of chasing every visibility combination in static CSS. */
+#mode, #mpd, #idle_inhibitor {
+  border-radius: 10px;
+  margin: 7px 3px;
+}
+
+/* Cluster 2: system stats - cpu, memory, backlight */
+#cpu { border-radius: 10px 0px 0px 10px; margin-left: 3px; }
+#backlight { border-radius: 0px 10px 10px 0px; margin-right: 3px; }
+#memory, #backlight {
+  border-left: 1px solid alpha(@fg-muted, 0.3);
+}
+
+/* Cluster 3: I/O - pulseaudio, network, language */
+#pulseaudio { border-radius: 10px 0px 0px 10px; margin-left: 3px; }
+#language { border-radius: 0px 10px 10px 0px; margin-right: 3px; }
+#network, #language {
+  border-left: 1px solid alpha(@fg-muted, 0.3);
+}
+
+/* Cluster 4: power - battery, tray */
+#battery { border-radius: 10px 0px 0px 10px; margin-left: 3px; }
+#tray { border-radius: 0px 10px 10px 0px; margin-right: 3px; }
+#tray {
+  border-left: 1px solid alpha(@fg-muted, 0.3);
+}
+
+/* Standalone modules: rounded on every side, own gap on both sides */
 #workspaces {
-  border-radius: 15px 0px 0px 15px;
+  border-radius: 10px;
+  margin: 7px 3px;
+  padding: 4px 6px;
+}
+
+/* Clock anchors the bar: tinted rather than the plain panel background,
+ * and slightly wider padding, so it reads as a distinct focal point. */
+#clock {
+  border-radius: 10px;
+  margin: 7px 3px;
+  padding: 4px 14px;
+  background: alpha(@accent, 0.14);
+  color: @accent;
 }
 
 #workspaces button {
-  padding-left: 10px;
-  padding-right: 10px;
+  padding: 0px 7px;
   min-width: 0;
+  border-radius: 6px;
   color: @fg-muted;
 }
 
 #workspaces button.focused {
   color: @accent;
+  /* GTK buttons carry their own default border that swallows a plain
+   * border-bottom indicator, so mark focus with a tinted highlight badge
+   * instead - alpha() keeps it subtle and legible against @accent's
+   * highly varied hue across the five theme families. */
+  background-color: alpha(@accent, 0.18);
 }
 
 #workspaces button.urgent {
@@ -68,15 +131,6 @@ tooltip label {
 
 #workspaces button:hover {
   color: @accent;
-}
-
-/* Shared background/spacing for every module */
-#clock, #battery, #network, #pulseaudio, #mpd, #workspaces,
-#idle_inhibitor, #mode, #cpu, #memory, #backlight, #language, #tray {
-  padding: 2px 5px;
-  background: @bg-panel;
-  margin-top: 9px;
-  margin-bottom: 3px;
 }
 
 /* Per-module accent colors */
@@ -94,10 +148,3 @@ tooltip label {
 /* Battery alert states */
 #battery.warning { color: @yellow; }
 #battery.critical { color: @red; }
-
-/* Right end of the pill */
-#clock {
-  color: @accent;
-  border-radius: 0px 15px 15px 0px;
-  padding-right: 10px;
-}

@@ -1,8 +1,10 @@
 // Waybar configuration (launched by sway via 'swaybar_command waybar')
 // Styling lives in style.css next to this file.
 // All modules are centered; there are no left/right module groups.
-// Icons are Font Awesome solid/regular glyphs (private-use-area codepoints,
-// same across the 6.x/7.x family names style.css falls back between).
+//
+// Icons are JetBrainsMono Nerd Font Mono glyphs (private-use-area
+// codepoints). memory/ethernet use U+F0A0 (hdd) and U+F1E6 (plug) as
+// substitutes for icons not available in that font.
 {
   "position": "top",
   "modules-center": ["sway/workspaces", "sway/mode", "mpd", "idle_inhibitor",
@@ -67,11 +69,7 @@
     "tooltip": false
   },
 
-  // RAM usage; tooltip shows absolute numbers
-  // Icon is U+F0A0 (hdd), not the "memory" glyph (U+F538): the latter has a
-  // broken charstring in woff2-font-awesome 7.3.1-1 that HarfBuzz refuses to
-  // shape (renders as a hex-code tofu box) despite fontconfig/FreeType both
-  // reporting it as a valid glyph. Confirmed via direct pango-view testing.
+  // RAM usage; tooltip shows absolute numbers. Icon is hdd (see header note).
   "memory": {
     "format": " {percentage}%",
     "interval": 5,
@@ -103,9 +101,7 @@
 
   // Network (built-in module, replaces custom iwgetid script):
   // WiFi SSID + signal strength, ethernet fallback, IP in tooltip.
-  // format-ethernet uses U+F1E6 (plug), not the "ethernet" glyph (U+F796):
-  // same broken-charstring issue as the memory module below, confirmed via
-  // pango-view against woff2-font-awesome 7.3.1-1.
+  // format-ethernet icon is plug (see header note).
   "network": {
     "format-wifi": " {essid} {signalStrength}%",
     "format-ethernet": " {ifname}",
