@@ -4,14 +4,10 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 ## Screenshots
 
-All current (Harmattan — Kate picks it up natively as a KDE app; Firefox's own
-chrome isn't Harmattan-themed). Desktop shown in both Light and Dark; the
-Vim/Kate/Firefox shots below are Light only.
+Current theme (Harmattan), Light and Dark side by side.
 
 ![Desktop, Harmattan Light and Dark](screenshot.png)
-![Vim](screenshot2.png)
-![Kate](screenshot3.png)
-![Firefox](screenshot4.png)
+![Vim, Harmattan Light and Dark](screenshot2.png)
 
 ## Components
 
@@ -91,7 +87,7 @@ to start (CSS parse error) until you do.
 ### Essential
 ```bash
 sudo pacman -S sway waybar mako swaylock swayidle wofi wl-clipboard cliphist kitty zsh ranger vim
-sudo pacman -S brightnessctl playerctl ttf-cascadia-code woff2-font-awesome noto-fonts noto-fonts-emoji
+sudo pacman -S brightnessctl playerctl ttf-cascadia-code ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
 sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # Zephyr (default theme) needs these for GTK/Qt apps to match
 ```
 
@@ -253,7 +249,7 @@ Files like `ii/credentials`, `gitconfig`, and the server-related scripts ship wi
 
 **Waybar fails to start / CSS parse error**: You likely haven't fixed the two `@import` placeholder paths in `swaywm/waybar/style.css` and `swaywm/wofi/style.css` yet — see Installation above.
 
-**Waybar shows no icons**: Install `woff2-font-awesome` (the older `ttf-font-awesome` was replaced upstream at Font Awesome 7.0 — `style.css` accepts either family name, but you need one of the two packages installed)
+**Waybar shows no icons**: Install `ttf-jetbrains-mono-nerd` — waybar's icons are JetBrainsMono Nerd Font glyphs, not Font Awesome (an earlier version of this config used Font Awesome, but Arch's `woff2-font-awesome` package has corrupted glyphs for several codepoints this config uses, so it moved to a Nerd Font instead)
 
 **Permission errors**: Run `chmod +x ./bootstrap.sh`
 
