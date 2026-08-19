@@ -91,8 +91,8 @@
     "on-click": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
     "scroll-step": 5,
     "tooltip": false,
-    "format": "{icon} {volume}%",
-    "format-muted": " muted",
+    "format": "{icon}  {volume}%",
+    "format-muted": "  muted",
     "format-icons": {
       "headphone": "",
       "default": ["", ""]
@@ -103,9 +103,9 @@
   // WiFi SSID + signal strength, ethernet fallback, IP in tooltip.
   // format-ethernet icon is plug (see header note).
   "network": {
-    "format-wifi": " {essid} {signalStrength}%",
-    "format-ethernet": " {ifname}",
-    "format-disconnected": " offline",
+    "format-wifi": "  {essid} {signalStrength}%",
+    "format-ethernet": "  {ifname}",
+    "format-disconnected": "  offline",
     "tooltip-format-wifi": "{essid} ({frequency} GHz)\n{ipaddr}/{cidr} via {gwaddr}\n{bandwidthDownBits} down / {bandwidthUpBits} up",
     "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
     "tooltip-format-disconnected": "no connection",

@@ -20,12 +20,17 @@
 
 * {
   border-radius: 0;
-  /* Text and icons both come from JetBrainsMono Nerd Font Mono (already
+  /* Text and icons both come from JetBrainsMono Nerd Font (already
    * installed): a single font for both means icons and digits share the
    * same design's metrics at the same size, so they're already the same
    * visual scale and sit on the same baseline with no per-glyph markup
-   * needed. */
-  font-family: "JetBrainsMono Nerd Font Mono";
+   * needed. Using the proportional variant rather than "... Mono" - the
+   * Mono variant forces every glyph, icons included, into a strict
+   * single-character monospace cell, which shrinks the icons to fit.
+   * Some wider icon glyphs (speaker, wifi) eat into a single trailing
+   * space in this variant, so those two modules use a double space in
+   * config's format strings instead of one. */
+  font-family: "JetBrainsMono Nerd Font";
   font-size: 11pt;
   min-height: 0;
 }
