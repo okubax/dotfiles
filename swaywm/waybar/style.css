@@ -14,9 +14,15 @@
 * {
   border-radius: 0;
   /* Upstream Font Awesome dropped .ttf delivery at 7.0 (ttf-font-awesome ->
-   * woff2-font-awesome on Arch); list both family names so this keeps
-   * working whichever package generation is actually installed. */
-  font-family: "Cascadia Mono", "Font Awesome 7 Free", "Font Awesome 6 Free";
+   * woff2-font-awesome on Arch, now the only variant installed). Icons here
+   * are all Solid-style glyphs, but plain "Font Awesome 7 Free" is ambiguous
+   * between the Solid (weight 900) and Regular (weight 400) files, and with
+   * no font-weight set here it resolves to Regular, which lacks most of
+   * these glyphs. "Font Awesome 7 Free Solid" is a second family name the
+   * solid file registers that the regular file doesn't, so it resolves
+   * unambiguously without needing a font-weight override (which would also
+   * bold the Cascadia Mono text sharing this rule). */
+  font-family: "Cascadia Mono", "Font Awesome 7 Free Solid", "Font Awesome 6 Free";
   font-size: 11pt;
   min-height: 0;
 }

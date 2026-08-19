@@ -68,8 +68,12 @@
   },
 
   // RAM usage; tooltip shows absolute numbers
+  // Icon is U+F0A0 (hdd), not the "memory" glyph (U+F538): the latter has a
+  // broken charstring in woff2-font-awesome 7.3.1-1 that HarfBuzz refuses to
+  // shape (renders as a hex-code tofu box) despite fontconfig/FreeType both
+  // reporting it as a valid glyph. Confirmed via direct pango-view testing.
   "memory": {
-    "format": " {percentage}%",
+    "format": " {percentage}%",
     "interval": 5,
     "tooltip-format": "{used:0.1f}G / {total:0.1f}G used"
   },
@@ -98,10 +102,13 @@
   },
 
   // Network (built-in module, replaces custom iwgetid script):
-  // WiFi SSID + signal strength, ethernet fallback, IP in tooltip
+  // WiFi SSID + signal strength, ethernet fallback, IP in tooltip.
+  // format-ethernet uses U+F1E6 (plug), not the "ethernet" glyph (U+F796):
+  // same broken-charstring issue as the memory module below, confirmed via
+  // pango-view against woff2-font-awesome 7.3.1-1.
   "network": {
     "format-wifi": " {essid} {signalStrength}%",
-    "format-ethernet": " {ifname}",
+    "format-ethernet": " {ifname}",
     "format-disconnected": " offline",
     "tooltip-format-wifi": "{essid} ({frequency} GHz)\n{ipaddr}/{cidr} via {gwaddr}\n{bandwidthDownBits} down / {bandwidthUpBits} up",
     "tooltip-format-ethernet": "{ifname}: {ipaddr}/{cidr}",
