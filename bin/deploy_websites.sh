@@ -216,7 +216,11 @@ test_connection() {
     fi
 
     # More aggressive timeout settings
-    if timeout 15s ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" exit 2>/dev/null; then
+    # </dev/null: without this, ssh forwards the script's stdin to the
+    # remote 'exit' command and drains it - piping "yes" in for a later
+    # --with-delete confirmation prompt would be silently swallowed here
+    # instead of reaching that prompt.
+    if timeout 15s ssh $ssh_opts "$SERVER_USER@$SERVER_HOST" exit 2>/dev/null </dev/null; then
         success "SSH connection successful"
         return 0
     else
