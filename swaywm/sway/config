@@ -145,10 +145,11 @@ bindsym $mod+Shift+r exec kitty -e ranger
 bindsym mod1+c exec kate
 
 # Gaming
-# GDK_SCALE=2 fixes Steam's blurry/tiny UI on the scaled laptop output —
-# without it Steam renders at 1x and gets upscaled, unlike properly
-# HiDPI-aware apps.
-bindsym mod1+g exec GDK_SCALE=2 steam
+# Steam isn't HiDPI-aware, so it renders at 1x and gets blurrily upscaled on
+# the scaled laptop output unless forced. GDK_SCALE only takes integers, and
+# 2 alone is too big — GDK_DPI_SCALE then scales font/DPI back down within
+# that, so 2 * 0.75 nets an effective ~1.5x that's sharp but not oversized.
+bindsym mod1+g exec GDK_SCALE=2 GDK_DPI_SCALE=0.75 steam
 
 # System monitoring and utilities
 bindsym $mod+shift+t exec kitty -e htop
