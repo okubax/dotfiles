@@ -80,12 +80,15 @@ floating_modifier $mod normal
 #   mako                    - notification daemon
 #   sway-audio-idle-inhibit - prevent idle/lock while audio is playing
 #   import-gsettings        - sync GTK theme settings into the session
+#   polkit-kde-agent        - auth prompts for privileged actions (no agent
+#                             runs by default outside a DE like GNOME/KDE)
 exec mpd
 exec yams
 exec nextcloud --background
 exec /usr/bin/mako
 exec sway-audio-idle-inhibit
 exec_always import-gsettings
+exec /usr/lib/polkit-kde-authentication-agent-1
 
 # Screen sharing
 # Export critical environment variables to the systemd/D-Bus user session
