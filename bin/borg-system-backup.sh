@@ -17,8 +17,9 @@
 #   sudo ./borg-system-backup.sh info [ARCHIVE]
 #   sudo ./borg-system-backup.sh check [--verify]
 #   sudo ./borg-system-backup.sh prune-dry
-#   sudo ./borg-system-backup.sh mount   <dir> [ARCHIVE]
-#   sudo ./borg-system-backup.sh umount  <dir>
+#   sudo ./borg-system-backup.sh mount   [ARCHIVE]        # mounts at /mnt/borg
+#   sudo ./borg-system-backup.sh mount   <DIR> [ARCHIVE]  # ... or a custom dir
+#   sudo ./borg-system-backup.sh umount  [DIR]            # defaults to /mnt/borg
 # ---------------------------------------------------------------------------
 
 set -euo pipefail
@@ -30,6 +31,7 @@ VERSION="2.0"
 # ---------------------------------------------------------------------------
 MOUNT_POINT="/run/media/USERNAME/11111111-1111-1111-1111-111111111111"
 BORG_REPO="$MOUNT_POINT/borg-arch"          # Borg repository (separate from the old rsync arch-backup/)
+DEFAULT_MOUNT_DIR="/mnt/borg"               # Default target for `mount`/`umount` when no dir is given
 
 SNAPSHOT_DIR="/mnt/btr_pool/.snapshots"     # Where btrfs-snapshot-backup.sh keeps its snapshots
 ROOT_SNAP_DIR="$SNAPSHOT_DIR/root"          # Snapshots of @      (newest = highest timestamp)
@@ -114,14 +116,27 @@ case "$COMMAND" in
     *) err "Unknown command: $COMMAND"; exit 1 ;;
 esac
 # Second positional is the mount dir (mount/umount) or an archive name (info).
+# `mount`/`umount` default to $DEFAULT_MOUNT_DIR when no dir is given, so the
+# common case is just `mount [ARCHIVE]` / `umount`. A lone mount arg starting
+# with '/' is treated as a custom dir instead of an archive name.
+if [[ "$COMMAND" == "mount" || "$COMMAND" == "umount" ]]; then
+    MOUNT_TARGET="$DEFAULT_MOUNT_DIR"
+fi
 if [[ ${#POSITIONAL[@]} -gt 1 ]]; then
     case "$COMMAND" in
-        mount|umount) MOUNT_TARGET="${POSITIONAL[1]}" ;;
-        info)         ARCHIVE_ARG="${POSITIONAL[1]}" ;;
+        mount)
+            if [[ ${#POSITIONAL[@]} -gt 2 ]]; then
+                MOUNT_TARGET="${POSITIONAL[1]}"
+                ARCHIVE_ARG="${POSITIONAL[2]}"
+            elif [[ "${POSITIONAL[1]}" == /* ]]; then
+                MOUNT_TARGET="${POSITIONAL[1]}"
+            else
+                ARCHIVE_ARG="${POSITIONAL[1]}"
+            fi
+            ;;
+        umount) MOUNT_TARGET="${POSITIONAL[1]}" ;;
+        info)   ARCHIVE_ARG="${POSITIONAL[1]}" ;;
     esac
-fi
-if [[ ${#POSITIONAL[@]} -gt 2 && "$COMMAND" == "mount" ]]; then
-    ARCHIVE_ARG="${POSITIONAL[2]}"
 fi
 
 # ---------------------------------------------------------------------------
@@ -376,7 +391,7 @@ do_prune_dry() {
 
 do_mount() {
     if [[ -z "$MOUNT_TARGET" ]]; then
-        err "Usage: $0 mount <dir> [ARCHIVE]"
+        err "Usage: $0 mount [ARCHIVE] | mount <dir> [ARCHIVE]"
         exit 1
     fi
     mkdir -p "$MOUNT_TARGET"

@@ -526,9 +526,10 @@ alias abk-check-data="sudo $ARCH_BACKUP_SCRIPT check --verify" # Deep check (rea
 alias abk-prune-dry="sudo $ARCH_BACKUP_SCRIPT prune-dry" # Preview which archives pruning would remove
 
 # Browse / restore: mount an archive (or the whole repo) read-only via FUSE
-# Usage: abk-mount /mnt/borg            # newest tree of every archive
-#        abk-mount /mnt/borg system-20260717-013000
-#        abk-umount /mnt/borg
+# Defaults to /mnt/borg, browsable as yourself (allow_other), so usually just:
+# Usage: abk-mount                      # whole repo, newest tree of every archive
+#        abk-mount system-20260717-013000
+#        abk-umount
 alias abk-mount="sudo $ARCH_BACKUP_SCRIPT mount"
 alias abk-umount="sudo $ARCH_BACKUP_SCRIPT umount"
 
@@ -559,8 +560,8 @@ INSPECT:
   abk-prune-dry   - Preview what retention pruning would delete
 
 BROWSE / RESTORE (FUSE mount, read-only):
-  abk-mount <dir> [archive]   - Mount repo (or one archive) to browse/copy files out
-  abk-umount <dir>            - Unmount it
+  abk-mount [archive]         - Mount repo (or one archive) at /mnt/borg to browse/copy files out
+  abk-umount                  - Unmount /mnt/borg
   # To restore fully:  sudo borg extract <repo>::<archive>   (run from an empty dir)
 
 LOGS:
