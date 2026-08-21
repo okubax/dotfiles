@@ -120,6 +120,9 @@ if [[ ${#POSITIONAL[@]} -gt 1 ]]; then
         info)         ARCHIVE_ARG="${POSITIONAL[1]}" ;;
     esac
 fi
+if [[ ${#POSITIONAL[@]} -gt 2 && "$COMMAND" == "mount" ]]; then
+    ARCHIVE_ARG="${POSITIONAL[2]}"
+fi
 
 # ---------------------------------------------------------------------------
 # Logging: tee to $LOG_FILE, rotating first if it has grown too large.
@@ -377,10 +380,13 @@ do_mount() {
         exit 1
     fi
     mkdir -p "$MOUNT_TARGET"
+    # allow_other so the invoking (non-root) user can browse the mount too --
+    # per-file permission checks still apply against each file's original
+    # uid/gid, so root-owned system files stay root-only as expected.
     if [[ -n "$ARCHIVE_ARG" ]]; then
-        borg mount "$BORG_REPO::$ARCHIVE_ARG" "$MOUNT_TARGET"
+        borg mount -o allow_other "$BORG_REPO::$ARCHIVE_ARG" "$MOUNT_TARGET"
     else
-        borg mount "$BORG_REPO" "$MOUNT_TARGET"
+        borg mount -o allow_other "$BORG_REPO" "$MOUNT_TARGET"
     fi
     ok "Mounted at $MOUNT_TARGET. Browse it, then: $0 umount $MOUNT_TARGET"
 }
