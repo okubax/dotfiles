@@ -6,8 +6,11 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 Current theme (Harmattan), Light and Dark side by side.
 
-![Desktop, Harmattan Light and Dark](screenshot.png)
-![Vim, Harmattan Light and Dark](screenshot2.png)
+![Desktop, Harmattan Light and Dark](img/screenshots/desktop.png)
+![File managers (ranger + Dolphin), Harmattan Light and Dark](img/screenshots/thunar_ranger.png)
+![Vim, Harmattan Light and Dark](img/screenshots/vim.png)
+![Power menu (wofi), Harmattan Light and Dark](img/screenshots/power_menu.png)
+![Terminal game (clidle) + status scripts, Harmattan Light and Dark](img/screenshots/clidle.png)
 
 ## Components
 
