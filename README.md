@@ -55,6 +55,7 @@ Current theme (Harmattan), Light and Dark side by side.
 - **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports all five themes' palettes (Catppuccin's light/dusk/dark reuse the existing `latte`/`macchiato`/`mocha`/`frappe` palettes directly). Desktop wallpapers and swaylock backgrounds for all five ship pre-generated in `img/wallpapers/`.
 - **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3) — already matches Zephyr/Breeze natively, no porting needed. Set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`)
 - **Qt**: `breeze5` (Qt5 Breeze style) via qt5ct/qt6ct
+- **KDE color schemes**: each theme family ships a matching KDE Frameworks color scheme (`swaywm/<family>/<variant>/<Family><Variant>.colors`, e.g. `swaywm/harmattan/dark/HarmattanDark.colors`), generated straight from that variant's `palette.md` so KDE apps (Okular, Dolphin, etc.) match the active desktop palette. **Deliberately not wired into `<family>-theme`** — apply one with `plasma-apply-colorscheme <Family><Variant>` (e.g. `plasma-apply-colorscheme NordDark`) after symlinking/copying the `.colors` files into `~/.local/share/color-schemes/`; switching sway themes does not switch this, and vice versa. Requires `QT_QPA_PLATFORMTHEME=kde` (via `plasma-integration`) for full KDE Frameworks apps to pick up `kdeglobals`, not `qt5ct`/`qt6ct`.
 - **Icons / Cursors**: `breeze-icons`, `breeze-cursors`
 - **Theme Tools**: nwg-look for GTK3/4 theme management
 
@@ -168,11 +169,11 @@ catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Ca
 ├── ranger/              # File manager
 ├── startpage/           # Browser start page
 ├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
-│   ├── zephyr/          # Zephyr colorscheme: light/, dusk/, dark/, active -> one of them
-│   ├── harmattan/       # Harmattan colorscheme: light/, dusk/, dark/, active -> one of them
-│   ├── solarized/       # Solarized colorscheme: dark/, light/, active -> one of them
-│   ├── nord/            # Nord colorscheme: light/, dusk/, dark/, active -> one of them
-│   └── catppuccin/      # Catppuccin colorscheme: light/, dusk/, dark/, active -> one of them
+│   ├── zephyr/          # Zephyr colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
+│   ├── harmattan/       # Harmattan colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
+│   ├── solarized/       # Solarized colorscheme: dark/, light/ (each with a KDE .colors file too), active -> one of them
+│   ├── nord/            # Nord colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
+│   └── catppuccin/      # Catppuccin colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
 ├── vim/                 # Editor configuration (native packages; colors/ has all five themes)
 └── zsh/                 # Shell configuration
     ├── config/          # Modular ZSH configs
