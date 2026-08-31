@@ -40,12 +40,10 @@ filetype indent on      " load filetype-specific indent files
 set wildmenu            " visual autocomplete for command menu
 set lazyredraw          " redraw only when we need to.
 set showmatch           " highlight matching [{()}]
-" Zephyr theme from ~/.vim/colors (Breeze-matched, see
-" swaywm/zephyr/README.md in this repo). Other flavors also available:
-" zephyr_{light,dusk,dark}, harmattan_{light,dusk,dark},
-" solarized_{dark,light}, nord_{light,dusk,dark},
-" catppuccin_{light,dusk,dark}.
-colorscheme zephyr_light
+" Theme from ~/.vim/colors, see swaywm/<family>/README.md in this repo.
+" Other flavors also available: litho_{light,dark}, vellum_{light,dark},
+" daguerre_{light,dark}, verdigris_{light,dark}.
+colorscheme verdigris_light
 
 "search
 "------

@@ -1,0 +1,11 @@
+/* Verdigris Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #F4EFE6;
+@define-color bg-alt #EAE2D3;
+@define-color bg-selected #B85E24;
+@define-color bg-selected-soft #E1C1A8;
+@define-color fg #24312B;
+@define-color fg-selected #F4EFE6;
+@define-color fg-muted #5C6F66;
+@define-color border #B85E24;
+@define-color input-border #A8402A;

@@ -1,0 +1,14 @@
+/* Verdigris Light — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #DED2BC;
+@define-color bg-tooltip #F4EFE6;
+@define-color fg #24312B;
+@define-color fg-muted #5C6F66;
+@define-color border #B85E24;
+@define-color accent #B85E24;
+@define-color red #A8402A;
+@define-color green #4C7A3A;
+@define-color yellow #96751C;
+@define-color purple #7A4F76;
+@define-color cyan #1F7A70;
+@define-color link #1F7A70;

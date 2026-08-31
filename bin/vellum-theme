@@ -4,9 +4,6 @@
 # See ~/.cfg-tzevaot/swaywm/vellum/README.md for how the theme is wired
 # up, and how it coexists with the other theme families.
 #
-# Vellum only has two variants (dark/light) — no dusk equivalent, unlike
-# Zephyr/Harmattan.
-#
 # Usage: vellum-theme dark|light|toggle|status
 
 set -euo pipefail

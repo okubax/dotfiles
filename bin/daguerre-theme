@@ -4,9 +4,6 @@
 # See ~/.cfg-tzevaot/swaywm/daguerre/README.md for how the theme is wired
 # up, and how it coexists with the other theme families.
 #
-# Daguerre only has two variants (dark/light) — no dusk equivalent, unlike
-# Zephyr/Harmattan.
-#
 # Usage: daguerre-theme dark|light|toggle|status
 
 set -euo pipefail

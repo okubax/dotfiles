@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 """
-Scheme Wallpaper — a small, from-scratch wallpaper generator built around the
-same role-based palette every theme family already uses (bg, bg_alt, fg,
-accent, ...) instead of a separate 26-key Catppuccin-shaped schema. A new
-family only has to define its palette once (palette.md already documents
-it) — those same hex values are copy-pasted straight in here.
+Scheme Wallpaper — a small wallpaper generator built around the same
+role-based palette every theme family already uses (bg, bg_alt, fg,
+accent, ...). A new family only has to define its palette once
+(palette.md already documents it) — those same hex values are
+copy-pasted straight in here.
 
-Not a rewrite of palette_wallpaper.py, which stays as-is for the five
-existing families (Zephyr/Harmattan/Solarized/Nord/Catppuccin). This is a
-second, independent tool, used for the Litho/Vellum/Daguerre monochrome
-schemes.
+The only wallpaper generator in this repo, used for all four current
+theme families: Litho, Vellum, Daguerre, Verdigris.
 
 Patterns are deliberately few and each tied to one scheme's visual idea:
 
@@ -21,6 +19,9 @@ Patterns are deliberately few and each tied to one scheme's visual idea:
             than one flat ramp. Daguerre's full-tonal-range idea.
   grain   — blurred random noise remapped into a narrow slice of the palette.
             Vellum's soft, no-pure-extremes paper/graphite feel.
+  patina  — blurred oxidation blotches (bg -> bg_header) with warm accent
+            breaking through in smaller, sparser patches. Verdigris's
+            weathered-copper feel.
   glow    — a radial vignette, accent at the center fading to bg at the
             edges. Used for every family's lockscreen background.
 
@@ -78,6 +79,18 @@ PALETTES = {
         bg_header="999999", fg="0A0A0A", fg_muted="737373", border="858585",
         accent="000000", link="191919", red="2B2B2B", green="4F4F4F",
         yellow="616161", purple="3D3D3D",
+    ),
+    "verdigris_dark": dict(
+        bg="14201E", bg_alt="1B2A27", bg_panel="223531", bg_panel_alt="2C423D",
+        bg_header="35504A", fg="DCEDE8", fg_muted="7FA69C", border="4C6B64",
+        accent="E08D4B", link="4FB3A9", red="D9634B", green="7FB069",
+        yellow="E0B84B", purple="A97CA5",
+    ),
+    "verdigris_light": dict(
+        bg="F4EFE6", bg_alt="EAE2D3", bg_panel="DED2BC", bg_panel_alt="CBBFA3",
+        bg_header="B9AC8E", fg="24312B", fg_muted="5C6F66", border="8FA096",
+        accent="B85E24", link="1F7A70", red="A8402A", green="4C7A3A",
+        yellow="96751C", purple="7A4F76",
     ),
 }
 
@@ -181,6 +194,32 @@ def pattern_grid(w: int, h: int, pal: dict) -> Image.Image:
     return img
 
 
+def pattern_patina(w: int, h: int, pal: dict, seed: int) -> Image.Image:
+    """Mottled oxidation blotches: bg -> bg_header (patina) with warm copper
+    (accent) breaking through in smaller, sparser patches. Built for
+    Verdigris; works for any hued palette with bg/bg_header/accent roles."""
+    bg = np.array(hex_to_rgb(pal["bg"]), dtype=np.float64)
+    patina = np.array(hex_to_rgb(pal["bg_header"]), dtype=np.float64)
+    copper = np.array(hex_to_rgb(pal["accent"]), dtype=np.float64)
+
+    rng = np.random.default_rng(seed)
+
+    def blurred_field(blur_div):
+        noise = rng.random((h, w)).astype(np.float32)
+        img = Image.fromarray((noise * 255).astype(np.uint8), mode="L")
+        img = img.filter(ImageFilter.GaussianBlur(radius=max(w, h) / blur_div))
+        field = np.asarray(img, dtype=np.float64) / 255.0
+        return (field - field.min()) / (field.max() - field.min() + 1e-9)
+
+    patina_field = blurred_field(28)
+    copper_field = blurred_field(40)
+
+    arr = lerp(bg, patina, patina_field[..., None])
+    copper_t = np.clip((copper_field - 0.55) / 0.45, 0.0, 1.0)[..., None]
+    arr = lerp(arr, copper, copper_t * 0.9)
+    return array_to_image(arr)
+
+
 def pattern_glow(w: int, h: int, pal: dict) -> Image.Image:
     bg = np.array(hex_to_rgb(pal["bg"]), dtype=np.float64)
     center = np.array(hex_to_rgb(pal["accent"]), dtype=np.float64)
@@ -200,6 +239,7 @@ PATTERNS = {
     "bands": lambda w, h, pal, seed: pattern_bands(w, h, pal),
     "grain": lambda w, h, pal, seed: pattern_grain(w, h, pal, seed),
     "grid": lambda w, h, pal, seed: pattern_grid(w, h, pal),
+    "patina": lambda w, h, pal, seed: pattern_patina(w, h, pal, seed),
     "glow": lambda w, h, pal, seed: pattern_glow(w, h, pal),
 }
 

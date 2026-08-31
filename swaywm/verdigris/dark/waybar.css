@@ -1,0 +1,14 @@
+/* Verdigris Dark — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #223531;
+@define-color bg-tooltip #14201E;
+@define-color fg #DCEDE8;
+@define-color fg-muted #7FA69C;
+@define-color border #E08D4B;
+@define-color accent #E08D4B;
+@define-color red #D9634B;
+@define-color green #7FB069;
+@define-color yellow #E0B84B;
+@define-color purple #A97CA5;
+@define-color cyan #4FB3A9;
+@define-color link #4FB3A9;

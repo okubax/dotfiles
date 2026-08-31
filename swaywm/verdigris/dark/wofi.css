@@ -1,0 +1,11 @@
+/* Verdigris Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #14201E;
+@define-color bg-alt #1B2A27;
+@define-color bg-selected #E08D4B;
+@define-color bg-selected-soft #55432C;
+@define-color fg #DCEDE8;
+@define-color fg-selected #14201E;
+@define-color fg-muted #7FA69C;
+@define-color border #E08D4B;
+@define-color input-border #D9634B;

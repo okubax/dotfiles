@@ -1,15 +1,15 @@
 #!/bin/bash
-# litho-theme - switch the sway desktop (sway, mako, waybar, wofi,
-# swaylock, kitty) between Litho Dark and Litho Light in one go.
-# See ~/.cfg-tzevaot/swaywm/litho/README.md for how the theme is wired
+# verdigris-theme - switch the sway desktop (sway, mako, waybar, wofi,
+# swaylock, kitty) between Verdigris Dark and Verdigris Light in one go.
+# See ~/.cfg-tzevaot/swaywm/verdigris/README.md for how the theme is wired
 # up, and how it coexists with the other theme families.
 #
-# Usage: litho-theme dark|light|toggle|status
+# Usage: verdigris-theme dark|light|toggle|status
 
 set -euo pipefail
 
-LITHO_DIR="$HOME/.cfg-tzevaot/swaywm/litho"
-ACTIVE_LINK="$LITHO_DIR/active"
+VERDIGRIS_DIR="$HOME/.cfg-tzevaot/swaywm/verdigris"
+ACTIVE_LINK="$VERDIGRIS_DIR/active"
 SWAYLOCK_CFG="$HOME/.cfg-tzevaot/swaywm/swaylock/config"
 KITTY_CONF="$HOME/.cfg-tzevaot/kitty/kitty.conf"
 SWAY_CONF="$HOME/.cfg-tzevaot/swaywm/sway/config"
@@ -22,7 +22,7 @@ current_variant() {
 }
 
 usage() {
-    echo "Usage: litho-theme dark|light|toggle|status"
+    echo "Usage: verdigris-theme dark|light|toggle|status"
     exit 1
 }
 
@@ -40,7 +40,7 @@ case "$1" in
         esac
         ;;
     status)
-        echo "Litho: $(current_variant)"
+        echo "Verdigris: $(current_variant)"
         exit 0
         ;;
     *)
@@ -48,25 +48,25 @@ case "$1" in
         ;;
 esac
 
-echo "Switching to Litho $target..."
+echo "Switching to Verdigris $target..."
 
 # 1. Repoint the active symlink (drives sway, mako, waybar, wofi includes)
 ln -sfn "$target" "$ACTIVE_LINK"
 
-# 2. Make Litho the active theme *family* for sway/mako/waybar/wofi
+# 2. Make Verdigris the active theme *family* for sway/mako/waybar/wofi
 #    (only one family's active/ dir drives the WM chrome at a time — see
 #    README.md "Coexisting with other themes". The [a-z]+ regex matches
 #    any family name, so this doesn't need updating when a new theme is
 #    added elsewhere.)
-sed -i -E "s|swaywm/[a-z]+/active|swaywm/litho/active|" "$SWAY_CONF" "$MAKO_CONF" "$WAYBAR_CSS" "$WOFI_CSS"
+sed -i -E "s|swaywm/[a-z]+/active|swaywm/verdigris/active|" "$SWAY_CONF" "$MAKO_CONF" "$WAYBAR_CSS" "$WOFI_CSS"
 
 # 3. swaylock has no include mechanism - copy the variant's config in place
-cp "$LITHO_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
+cp "$VERDIGRIS_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
 
 # 4. kitty: comment out whichever colors/*.conf is currently active (any
 #    theme family), then activate this one
 sed -i -E "s|^include (\./colors/.+\.conf)|#include \1|" "$KITTY_CONF"
-sed -i -E "s|^#include (\./colors/litho_${target}\.conf)|include \1|" "$KITTY_CONF"
+sed -i -E "s|^#include (\./colors/verdigris_${target}\.conf)|include \1|" "$KITTY_CONF"
 
 # 5. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
@@ -84,6 +84,6 @@ if pgrep -x waybar >/dev/null 2>&1; then
     echo "  waybar reloaded"
 fi
 
-echo "Litho is now $target."
+echo "Verdigris is now $target."
 echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
-echo "vim: run :colorscheme litho_${target} in open sessions."
+echo "vim: run :colorscheme verdigris_${target} in open sessions."

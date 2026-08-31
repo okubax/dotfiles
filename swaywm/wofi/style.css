@@ -1,13 +1,13 @@
-/* Wofi launcher styling — one of five theme families (Zephyr, Harmattan,
- * Solarized, Nord, Catppuccin — see swaywm/<family>/README.md); only one
+/* Wofi launcher styling — one of four theme families (Litho, Vellum,
+ * Daguerre, Verdigris — see swaywm/<family>/README.md); only one
  * drives this @import at a time, switched by `<family>-theme <variant>`. */
 
 /* Must be an absolute path: ~/.config/wofi is a symlink, and GTK resolves
  * @import relative to the symlinked path it opened rather than the real
- * one, so a relative "../zephyr/..." lands in the wrong (non-existent)
+ * one, so a relative "../verdigris/..." lands in the wrong (non-existent)
  * directory. GTK CSS also doesn't expand ~ or $HOME, so on a real machine
  * replace the path below with your own absolute path to this repo. */
-@import url("/home/YOUR_USERNAME/dotfiles/swaywm/zephyr/active/wofi.css");
+@import url("/home/YOUR_USERNAME/dotfiles/swaywm/verdigris/active/wofi.css");
 
 /* Outer launcher window: accent border, subtle gradient */
 #window {
