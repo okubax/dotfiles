@@ -1,0 +1,11 @@
+/* Vellum Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #E9E9E9;
+@define-color bg-alt #E0E0E0;
+@define-color bg-selected #262626;
+@define-color bg-selected-soft #ABABAB;
+@define-color fg #333333;
+@define-color fg-selected #E9E9E9;
+@define-color fg-muted #7A7A7A;
+@define-color border #262626;
+@define-color input-border #404040;

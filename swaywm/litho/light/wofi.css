@@ -1,0 +1,11 @@
+/* Litho Light — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #FFFFFF;
+@define-color bg-alt #F2F2F2;
+@define-color bg-selected #000000;
+@define-color bg-selected-soft #ADADAD;
+@define-color fg #000000;
+@define-color fg-selected #FFFFFF;
+@define-color fg-muted #737373;
+@define-color border #000000;
+@define-color input-border #0D0D0D;

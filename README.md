@@ -1,6 +1,6 @@
 # Dotfiles - Sway Desktop Environment
 
-A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dusk/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps, alongside four full alternative theme families with the same sway/waybar/mako/wofi/swaylock/kitty/vim coverage: **[Harmattan](swaywm/harmattan/README.md)** (an original warm, dust-toned scheme with no external source palette), **[Solarized](swaywm/solarized/README.md)** (Ethan Schoonover's precision palette, dark/light only), **[Nord](swaywm/nord/README.md)** (the arctic Polar Night/Snow Storm/Frost/Aurora palette), and **[Catppuccin](swaywm/catppuccin/README.md)** (Latte/Macchiato/Mocha, mapped to light/dusk/dark). Catppuccin's ZSH syntax-highlighting plugin ships separately (`zsh/plugins/`) and isn't tied to any one of these five.
+A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Themed with **[Zephyr](swaywm/zephyr/README.md)**, a custom light/dusk/dark colorscheme matched to KDE's Breeze theme so the sway stack looks coherent next to Breeze-themed apps, alongside seven full alternative theme families with the same sway/waybar/mako/wofi/swaylock/kitty/vim coverage: **[Harmattan](swaywm/harmattan/README.md)** (an original warm, dust-toned scheme with no external source palette), **[Solarized](swaywm/solarized/README.md)** (Ethan Schoonover's precision palette, dark/light only), **[Nord](swaywm/nord/README.md)** (the arctic Polar Night/Snow Storm/Frost/Aurora palette), **[Catppuccin](swaywm/catppuccin/README.md)** (Latte/Macchiato/Mocha, mapped to light/dusk/dark), and three original, strictly-grayscale schemes built from scratch — **[Litho](swaywm/litho/README.md)** (stark, high-contrast, poster-like), **[Vellum](swaywm/vellum/README.md)** (soft, muted, no pure black/white), and **[Daguerre](swaywm/daguerre/README.md)** (a full smooth 0–255 tonal ramp, photographic). Catppuccin's ZSH syntax-highlighting plugin ships separately (`zsh/plugins/`) and isn't tied to any one of these eight.
 
 ## Screenshots
 
@@ -20,7 +20,7 @@ Current theme (Harmattan), Light and Dark side by side.
 - **Launcher / Menus**: Wofi (app launcher, power menu, clipboard picker)
 - **Terminal**: Kitty
 - **Notifications**: Mako
-- **Lock Screen**: Swaylock (plain wallpaper, theme-colored indicator ring matching whichever of the five colorschemes is active — accent typing, warning-color verifying, red wrong password, purple/violet Caps Lock) with swayidle (auto-lock, lock on suspend). Uses vanilla swaylock — blur/clock require the swaylock-effects fork instead.
+- **Lock Screen**: Swaylock (plain wallpaper, theme-colored indicator ring matching whichever of the eight colorschemes is active — accent typing, warning-color verifying, red wrong password, purple/violet Caps Lock) with swayidle (auto-lock, lock on suspend). Uses vanilla swaylock — blur/clock require the swaylock-effects fork instead.
 - **Clipboard**: cliphist + wl-clipboard (history picker bound to Alt+h)
 - **Screenshots**: swayshot (full screen / window / region)
 - **Shell**: ZSH with modular configuration
@@ -49,10 +49,13 @@ Current theme (Harmattan), Light and Dark side by side.
   - [Solarized](swaywm/solarized/README.md) — Ethan Schoonover's palette, unmodified. **Dark/light only** — no dusk equivalent, by design. `solarized-theme dark|light|toggle`.
   - [Nord](swaywm/nord/README.md) — the arctic Polar Night/Snow Storm/Frost/Aurora palette. No official Nord Light exists, so `light` inverts which range plays background vs. text (a common community approach); `dusk` shifts Polar Night one step lighter than classic Nord Dark. `nord-theme light|dusk|dark|toggle`.
   - [Catppuccin](swaywm/catppuccin/README.md) — Latte/Macchiato/Mocha mapped to light/dusk/dark (Frappé, the fourth official flavor, isn't part of this mapping). Unlike the other four themes here, Catppuccin's accents genuinely differ per variant upstream, not just its neutrals. `catppuccin-theme light|dusk|dark|toggle`.
+  - [Litho](swaywm/litho/README.md) — an original, strictly grayscale scheme (R=G=B throughout, no hue anywhere): a small set of flat plates with big jumps between them, extremes (`#000000`/`#FFFFFF`) reserved for bg/fg/accent. Stark and poster-like. **Dark/light only**. `litho-theme dark|light|toggle`.
+  - [Vellum](swaywm/vellum/README.md) — an original, strictly grayscale scheme with a narrow, compressed range that never touches pure black or pure white, even for `accent`. Soft and muted. **Dark/light only**. `vellum-theme dark|light|toggle`.
+  - [Daguerre](swaywm/daguerre/README.md) — an original, strictly grayscale scheme spanning the full 0–255 range in one smooth ramp, loosely inspired by the photographic zone system. **Dark/light only**. `daguerre-theme dark|light|toggle`.
 
   Only one theme *family* drives sway/mako/waybar/wofi's chrome at a time — whichever `<family>-theme` script ran most recently rewrites the shared include paths to point at itself. kitty and vim are unaffected: every family's variants sit side by side as ordinary toggle/colorscheme options, so kitty/vim can be on a different family than the rest of the desktop.
-- **ZSH syntax highlighting**: Catppuccin-only (`zsh/plugins/`), independent of which of the five desktop themes is active.
-- **Wallpaper**: Generated with `bin/palette_wallpaper.py` — supports all five themes' palettes (Catppuccin's light/dusk/dark reuse the existing `latte`/`macchiato`/`mocha`/`frappe` palettes directly). Desktop wallpapers and swaylock backgrounds for all five ship pre-generated in `img/wallpapers/`.
+- **ZSH syntax highlighting**: Catppuccin-only (`zsh/plugins/`), independent of which of the eight desktop themes is active.
+- **Wallpaper**: Zephyr/Harmattan/Solarized/Nord/Catppuccin are generated with `bin/palette_wallpaper.py` (Catppuccin's light/dusk/dark reuse the existing `latte`/`macchiato`/`mocha`/`frappe` palettes directly). Litho/Vellum/Daguerre use a separate, standalone generator, `bin/scheme_wallpaper.py`, built around the same role-based palette (`bg`/`fg`/`accent`/...) each `palette.md` already documents rather than palette_wallpaper.py's Catppuccin-shaped schema. Desktop wallpapers and swaylock backgrounds for all eight ship pre-generated in `img/wallpapers/`.
 - **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3) — already matches Zephyr/Breeze natively, no porting needed. Set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`)
 - **Qt**: `breeze5` (Qt5 Breeze style) via qt5ct/qt6ct
 - **KDE color schemes**: each theme family ships a matching KDE Frameworks color scheme (`swaywm/<family>/<variant>/<Family><Variant>.colors`, e.g. `swaywm/harmattan/dark/HarmattanDark.colors`), generated straight from that variant's `palette.md` so KDE apps (Okular, Dolphin, etc.) match the active desktop palette. **Deliberately not wired into `<family>-theme`** — apply one with `plasma-apply-colorscheme <Family><Variant>` (e.g. `plasma-apply-colorscheme NordDark`) after symlinking/copying the `.colors` files into `~/.local/share/color-schemes/`; switching sway themes does not switch this, and vice versa. Requires `QT_QPA_PLATFORMTHEME=kde` (via `plasma-integration`) for full KDE Frameworks apps to pick up `kdeglobals`, not `qt5ct`/`qt6ct`.
@@ -102,7 +105,7 @@ sudo pacman -S gsimplecal qalculate-qt dolphin neofetch              # Desktop u
 sudo pacman -S kate                                                  # Text editor (GUI)
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
-sudo pacman -S python-pillow python-numpy                            # palette_wallpaper.py
+sudo pacman -S python-pillow python-numpy                            # palette_wallpaper.py / scheme_wallpaper.py
 yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
@@ -128,6 +131,9 @@ harmattan-theme light|dusk|dark|toggle|status   # Switch the whole desktop to Ha
 solarized-theme dark|light|toggle|status        # Switch the whole desktop to Solarized
 nord-theme light|dusk|dark|toggle|status        # Switch the whole desktop to Nord
 catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Catppuccin
+litho-theme dark|light|toggle|status            # Switch the whole desktop to Litho
+vellum-theme dark|light|toggle|status           # Switch the whole desktop to Vellum
+daguerre-theme dark|light|toggle|status         # Switch the whole desktop to Daguerre
 ```
 
 ## Post-Installation
@@ -147,11 +153,14 @@ catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Ca
 - **Swaylock**: `swaywm/swaylock/config`
 - **Terminal**: `kitty/kitty.conf`
 - **Vim colorscheme**: set near the bottom of `vimrc`
-- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dusk/dark switch is wired, and how all five theme families coexist)
+- **Zephyr theme**: `swaywm/zephyr/` (see its own [README](swaywm/zephyr/README.md) for how the light/dusk/dark switch is wired, and how all eight theme families coexist)
 - **Harmattan theme**: `swaywm/harmattan/README.md`
 - **Solarized theme**: `swaywm/solarized/README.md`
 - **Nord theme**: `swaywm/nord/README.md`
 - **Catppuccin theme**: `swaywm/catppuccin/README.md`
+- **Litho theme**: `swaywm/litho/README.md`
+- **Vellum theme**: `swaywm/vellum/README.md`
+- **Daguerre theme**: `swaywm/daguerre/README.md`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
 
@@ -162,8 +171,8 @@ catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Ca
 ├── aliases/             # Shell aliases (system/dev/personal/scripts)
 ├── bin/                 # Custom scripts (see below)
 ├── ii/                  # ii IRC credentials template
-├── img/wallpapers/      # Desktop + swaylock wallpapers, all five themes
-├── kitty/               # Terminal config (colors/ has all five themes' flavors)
+├── img/wallpapers/      # Desktop + swaylock wallpapers, all eight themes
+├── kitty/               # Terminal config (colors/ has all eight themes' flavors)
 ├── mpd/                 # Music Player Daemon
 ├── ncmpcpp/             # Music player client
 ├── ranger/              # File manager
@@ -173,19 +182,22 @@ catppuccin-theme light|dusk|dark|toggle|status  # Switch the whole desktop to Ca
 │   ├── harmattan/       # Harmattan colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
 │   ├── solarized/       # Solarized colorscheme: dark/, light/ (each with a KDE .colors file too), active -> one of them
 │   ├── nord/            # Nord colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
-│   └── catppuccin/      # Catppuccin colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
-├── vim/                 # Editor configuration (native packages; colors/ has all five themes)
+│   ├── catppuccin/      # Catppuccin colorscheme: light/, dusk/, dark/ (each with a KDE .colors file too), active -> one of them
+│   ├── litho/           # Litho colorscheme (grayscale): dark/, light/ (each with a KDE .colors file too), active -> one of them
+│   ├── vellum/          # Vellum colorscheme (grayscale): dark/, light/ (each with a KDE .colors file too), active -> one of them
+│   └── daguerre/        # Daguerre colorscheme (grayscale): dark/, light/ (each with a KDE .colors file too), active -> one of them
+├── vim/                 # Editor configuration (native packages; colors/ has all eight themes)
 └── zsh/                 # Shell configuration
     ├── config/          # Modular ZSH configs
     └── plugins/         # Catppuccin syntax highlighting themes
 ```
 
-`swaywm/{zephyr,harmattan,solarized,nord,catppuccin}/` are deliberately
-**not** in `bootstrap.sh`'s symlink map — sway/mako/waybar/wofi reference
-whichever family is active directly at
-`~/dotfiles/swaywm/{zephyr,harmattan,solarized,nord,catppuccin}/...` rather
-than through a `$HOME` symlink, so all five only work correctly if the
-repo is cloned to `~/dotfiles` (as the Installation section above does).
+`swaywm/{zephyr,harmattan,solarized,nord,catppuccin,litho,vellum,daguerre}/`
+are deliberately **not** in `bootstrap.sh`'s symlink map — sway/mako/waybar/wofi
+reference whichever family is active directly at
+`~/dotfiles/swaywm/{zephyr,harmattan,solarized,nord,catppuccin,litho,vellum,daguerre}/...`
+rather than through a `$HOME` symlink, so all eight only work correctly if
+the repo is cloned to `~/dotfiles` (as the Installation section above does).
 
 ### Adding a dotfile / keeping the map honest
 The symlink map lives in a single `LINKS` block inside `bootstrap.sh`. When you
@@ -201,7 +213,11 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `solarized-theme` - switch the whole desktop between Solarized Dark and Light in one command
 - `nord-theme` - switch the whole desktop between Nord Light, Dusk and Dark in one command
 - `catppuccin-theme` - switch the whole desktop between Catppuccin Light (Latte), Dusk (Macchiato) and Dark (Mocha) in one command
-- `palette_wallpaper.py` - wallpaper generator for all five themes' palettes, or any of the four standalone Catppuccin flavors
+- `litho-theme` - switch the whole desktop between Litho Dark and Light in one command
+- `vellum-theme` - switch the whole desktop between Vellum Dark and Light in one command
+- `daguerre-theme` - switch the whole desktop between Daguerre Dark and Light in one command
+- `palette_wallpaper.py` - wallpaper generator for Zephyr/Harmattan/Solarized/Nord/Catppuccin's palettes, or any of the four standalone Catppuccin flavors
+- `scheme_wallpaper.py` - standalone wallpaper generator for Litho/Vellum/Daguerre's role-based palettes
 - `ii-start` / `ii-sway` - manage the ii IRC client and its Sway/wofi integration
 - `deploy_websites.sh` / `godaddy-server-backup.sh` - static site deployment and full server-home backup (configured via config file/env vars)
 - `btrfs-snapshot-backup.sh` / `borg-system-backup.sh` - btrfs snapshot+send backups and Borg full-system backups
@@ -272,6 +288,9 @@ MIT License. Use, modify, and distribute freely.
 - [Solarized colorscheme README](swaywm/solarized/README.md) - palette provenance and how the dark/light switch works
 - [Nord colorscheme README](swaywm/nord/README.md) - palette provenance and how the light/dusk/dark switch works
 - [Catppuccin colorscheme README](swaywm/catppuccin/README.md) - flavor mapping and how the light/dusk/dark switch works
+- [Litho colorscheme README](swaywm/litho/README.md) - a stark, high-contrast grayscale scheme and how the dark/light switch works
+- [Vellum colorscheme README](swaywm/vellum/README.md) - a soft, muted grayscale scheme and how the dark/light switch works
+- [Daguerre colorscheme README](swaywm/daguerre/README.md) - a full-tonal-range grayscale scheme and how the dark/light switch works
 - [Sway Documentation](https://github.com/swaywm/sway/wiki)
 - [Waybar Configuration](https://github.com/Alexays/Waybar/wiki)
 - [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)

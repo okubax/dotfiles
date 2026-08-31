@@ -1,0 +1,11 @@
+/* Litho Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #000000;
+@define-color bg-alt #0D0D0D;
+@define-color bg-selected #FFFFFF;
+@define-color bg-selected-soft #525252;
+@define-color fg #FFFFFF;
+@define-color fg-selected #000000;
+@define-color fg-muted #8C8C8C;
+@define-color border #FFFFFF;
+@define-color input-border #F2F2F2;

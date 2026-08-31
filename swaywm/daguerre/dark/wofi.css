@@ -1,0 +1,11 @@
+/* Daguerre Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #000000;
+@define-color bg-alt #1A1A1A;
+@define-color bg-selected #FFFFFF;
+@define-color bg-selected-soft #525252;
+@define-color fg #F5F5F5;
+@define-color fg-selected #000000;
+@define-color fg-muted #8C8C8C;
+@define-color border #FFFFFF;
+@define-color input-border #D4D4D4;

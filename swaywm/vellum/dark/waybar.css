@@ -1,0 +1,14 @@
+/* Vellum Dark — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #3E3E3E;
+@define-color bg-tooltip #2E2E2E;
+@define-color fg #DCDCDC;
+@define-color fg-muted #8C8C8C;
+@define-color border #E6E6E6;
+@define-color accent #E6E6E6;
+@define-color red #D2D2D2;
+@define-color green #B4B4B4;
+@define-color yellow #A2A2A2;
+@define-color purple #9E9E9E;
+@define-color cyan #C6C6C6;
+@define-color link #C6C6C6;

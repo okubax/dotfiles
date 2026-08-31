@@ -1,0 +1,14 @@
+/* Daguerre Light — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #CCCCCC;
+@define-color bg-tooltip #FFFFFF;
+@define-color fg #0A0A0A;
+@define-color fg-muted #737373;
+@define-color border #000000;
+@define-color accent #000000;
+@define-color red #2B2B2B;
+@define-color green #4F4F4F;
+@define-color yellow #616161;
+@define-color purple #3D3D3D;
+@define-color cyan #191919;
+@define-color link #191919;

@@ -1,0 +1,11 @@
+/* Vellum Dark — wofi color tokens, @import'd by ../../wofi/style.css */
+
+@define-color bg #2E2E2E;
+@define-color bg-alt #363636;
+@define-color bg-selected #E6E6E6;
+@define-color bg-selected-soft #696969;
+@define-color fg #DCDCDC;
+@define-color fg-selected #2E2E2E;
+@define-color fg-muted #8C8C8C;
+@define-color border #E6E6E6;
+@define-color input-border #D2D2D2;

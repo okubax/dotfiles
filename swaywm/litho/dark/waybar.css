@@ -1,0 +1,14 @@
+/* Litho Dark — waybar color tokens, @import'd by ../../waybar/style.css */
+
+@define-color bg-panel #1A1A1A;
+@define-color bg-tooltip #000000;
+@define-color fg #FFFFFF;
+@define-color fg-muted #8C8C8C;
+@define-color border #FFFFFF;
+@define-color accent #FFFFFF;
+@define-color red #F2F2F2;
+@define-color green #A6A6A6;
+@define-color yellow #D9D9D9;
+@define-color purple #737373;
+@define-color cyan #BFBFBF;
+@define-color link #BFBFBF;
