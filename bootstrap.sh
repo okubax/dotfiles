@@ -67,10 +67,6 @@ zsh/config/history.zsh|.config/zsh/history.zsh
 zsh/config/options.zsh|.config/zsh/options.zsh
 zsh/config/plugins.zsh|.config/zsh/plugins.zsh
 zsh/config/prompt.zsh|.config/zsh/prompt.zsh
-zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh|.local/share/zsh/plugins/catppuccin_frappe-zsh-syntax-highlighting.zsh
-zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh|.local/share/zsh/plugins/catppuccin_latte-zsh-syntax-highlighting.zsh
-zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh|.local/share/zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh
-zsh/plugins/catppuccin_mocha-zsh-syntax-highlighting.zsh|.local/share/zsh/plugins/catppuccin_mocha-zsh-syntax-highlighting.zsh
 MAP
 
 # --- colours / logging -----------------------------------------------------

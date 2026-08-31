@@ -7,9 +7,7 @@ load_plugin() {
     [[ -f "$1" ]] && source "$1" || echo "Plugin not found: $1"
 }
 
-# Catppuccin colors must be defined before zsh-syntax-highlighting loads;
 # autosuggestions and syntax-highlighting come from Arch packages
-load_plugin ~/.local/share/zsh/plugins/catppuccin_macchiato-zsh-syntax-highlighting.zsh
 load_plugin /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 load_plugin /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 

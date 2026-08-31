@@ -4,11 +4,16 @@ A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayla
 
 ## Screenshots
 
-From an earlier theme family that has since been retired from this repo (screenshots not yet refreshed against the current four — layout and apps shown are otherwise unchanged).
+Desktop and vim, Litho Dark and Verdigris Dark side by side.
 
-![Desktop](img/screenshots/desktop.png)
+![Desktop, Litho Dark](img/screenshots/litho_dark_desktop.png)
+![Vim, Litho Dark](img/screenshots/litho_dark_vim.png)
+![Desktop, Verdigris Dark](img/screenshots/verdigris_dark_desktop.png)
+![Vim, Verdigris Dark](img/screenshots/verdigris_dark_vim.png)
+
+The three below are from an earlier theme family that has since been retired from this repo (not yet refreshed against the current four — layout and apps shown are otherwise unchanged).
+
 ![File managers (ranger + Dolphin)](img/screenshots/thunar_ranger.png)
-![Vim](img/screenshots/vim.png)
 ![Power menu (wofi)](img/screenshots/power_menu.png)
 ![Terminal game (clidle) + status scripts](img/screenshots/clidle.png)
 
@@ -50,7 +55,6 @@ From an earlier theme family that has since been retired from this repo (screens
   - [Daguerre](swaywm/daguerre/README.md) — spans the full 0–255 range in one smooth ramp, loosely inspired by the photographic zone system. `daguerre-theme dark|light|toggle`.
 
   All four families are **dark/light only** — no dusk variant. Only one theme *family* drives sway/mako/waybar/wofi's chrome at a time — whichever `<family>-theme` script ran most recently rewrites the shared include paths to point at itself. kitty and vim are unaffected: every family's variants sit side by side as ordinary toggle/colorscheme options, so kitty/vim can be on a different family than the rest of the desktop.
-- **ZSH syntax highlighting**: Catppuccin-only (`zsh/plugins/`) — a standalone shell feature, independent of the four desktop colorschemes above (Catppuccin isn't one of them).
 - **Wallpaper**: generated with `bin/scheme_wallpaper.py`, built around each family's role-based palette (`bg`/`fg`/`accent`/...) — the same roles each `palette.md` already documents. Desktop wallpapers and swaylock backgrounds for all four ship pre-generated in `img/wallpapers/`.
 - **GTK**: `breeze-gtk` (Breeze widget theme for GTK2/3), set via `gtk-3.0`/`gtk-4.0` `settings.ini` (`gtk-theme-name=Breeze`, `gtk-icon-theme-name=breeze`, `gtk-cursor-theme-name=breeze_cursors`) — a neutral widget theme independent of which of the four colorschemes above is active
 - **Qt**: `breeze5` (Qt5 Breeze style) via qt5ct/qt6ct
@@ -172,8 +176,7 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 │   └── verdigris/       # Verdigris colorscheme (full color): dark/, light/ (each with a KDE .colors file too), active -> one of them
 ├── vim/                 # Editor configuration (native packages; colors/ has all four themes)
 └── zsh/                 # Shell configuration
-    ├── config/          # Modular ZSH configs
-    └── plugins/         # Catppuccin syntax highlighting themes
+    └── config/          # Modular ZSH configs
 ```
 
 `swaywm/{litho,vellum,daguerre,verdigris}/` are deliberately **not** in
@@ -216,8 +219,6 @@ Modular setup with separate configuration files:
 - `prompt.zsh` - Command prompt
 - `aliases.zsh` - ZSH-specific aliases
 - `plugins.zsh` - Plugin management
-
-Includes Catppuccin syntax highlighting themes (frappe, latte, macchiato, mocha) — a standalone shell feature, independent of whichever of the four sway/kitty/vim colorschemes is active.
 
 ## Backup System
 
