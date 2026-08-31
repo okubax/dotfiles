@@ -29,25 +29,30 @@
 
 <style>
   :root {
-    /* Light theme (default) */
-    --bg-color: #ffffff;
-    --text-color: #222222;
-    --input-bg: #222222;
-    --input-text: #ffffff;
-    --sidebar-bg: #ffffff;
-    --sidebar-shadow: rgba(0, 0, 0, 0.2);
-    --hover-color: #333333;
+    /* Light theme — Vellum grayscale (soft, no pure black/white), one
+       Verdigris copper accent as the interactive colour. */
+    --bg-color: #e9e9e9;
+    --text-color: #333333;
+    --text-muted: #7a7a7a;
+    --input-bg: #262626;
+    --input-text: #e9e9e9;
+    --sidebar-bg: #e0e0e0;
+    --sidebar-shadow: rgba(0, 0, 0, 0.15);
+    --accent: #b85e24;
+    --accent-glow: rgba(184, 94, 36, 0.35);
   }
 
   [data-theme="dark"] {
-    /* Dark theme */
-    --bg-color: #1e1e2e;
-    --text-color: #cdd6f4;
-    --input-bg: #313244;
-    --input-text: #cdd6f4;
-    --sidebar-bg: #181825;
+    /* Dark theme — Verdigris: oxidized copper on a weathered patina. */
+    --bg-color: #14201e;
+    --text-color: #dcede8;
+    --text-muted: #7fa69c;
+    --input-bg: #223531;
+    --input-text: #dcede8;
+    --sidebar-bg: #1b2a27;
     --sidebar-shadow: rgba(0, 0, 0, 0.5);
-    --hover-color: #f5c2e7;
+    --accent: #e08d4b;
+    --accent-glow: rgba(224, 141, 75, 0.35);
   }
 
   body {
@@ -79,6 +84,7 @@
 
   time {
     display: block;
+    font-family: 'Cascadia Mono', 'Courier New', monospace;
     font-size: 5rem;
     letter-spacing: 6px;
   }
@@ -88,7 +94,7 @@
     margin: 0 0 25px;
     font-size: 0.95rem;
     letter-spacing: 3px;
-    opacity: 0.8;
+    color: var(--text-muted);
   }
 
   input,
@@ -113,7 +119,7 @@
   }
 
   input:focus {
-    box-shadow: 0 0 10px rgba(116, 199, 236, 0.5);
+    box-shadow: 0 0 10px var(--accent-glow);
   }
 
   aside {
@@ -139,7 +145,7 @@
   h1 {
     margin: 0 25px 15px;
     line-height: 1rem;
-    color: var(--text-color);
+    color: var(--accent);
   }
 
   ul {
@@ -161,12 +167,13 @@
   }
 
   a:hover .help-name {
-    color: var(--hover-color);
+    color: var(--accent);
     text-decoration: underline;
   }
 
   .help-key {
-    font-family: 'Courier New', monospace;
+    font-family: 'Cascadia Mono', 'Courier New', monospace;
+    color: var(--text-muted);
   }
 
   .help-name {
