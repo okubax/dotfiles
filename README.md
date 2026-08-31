@@ -11,12 +11,6 @@ Desktop and vim, Litho Dark and Verdigris Dark side by side.
 ![Desktop, Verdigris Dark](img/screenshots/verdigris_dark_desktop.png)
 ![Vim, Verdigris Dark](img/screenshots/verdigris_dark_vim.png)
 
-The three below are from an earlier theme family that has since been retired from this repo (not yet refreshed against the current four — layout and apps shown are otherwise unchanged).
-
-![File managers (ranger + Dolphin)](img/screenshots/thunar_ranger.png)
-![Power menu (wofi)](img/screenshots/power_menu.png)
-![Terminal game (clidle) + status scripts](img/screenshots/clidle.png)
-
 ## Components
 
 **Core Desktop (all Wayland-native)**
