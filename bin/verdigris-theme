@@ -68,7 +68,18 @@ cp "$VERDIGRIS_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
 sed -i -E "s|^include (\./colors/.+\.conf)|#include \1|" "$KITTY_CONF"
 sed -i -E "s|^#include (\./colors/verdigris_${target}\.conf)|include \1|" "$KITTY_CONF"
 
-# 5. Reload the running apps
+# 5. Qt/KDE apps (Okular, Dolphin, ...) don't read swaywm/*/active or any of
+#    the above - they read ~/.config/kdeglobals, which plasma-apply-colorscheme
+#    populates from the matching ~/.local/share/color-schemes/*.colors file.
+#    Without this they silently keep whatever scheme was last applied,
+#    disconnected from the sway-level theme entirely.
+target_cap="$(tr '[:lower:]' '[:upper:]' <<< "${target:0:1}")${target:1}"
+if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
+    plasma-apply-colorscheme "Verdigris${target_cap}" >/dev/null 2>&1 || true
+    echo "  Qt/KDE colour scheme applied (Verdigris${target_cap})"
+fi
+
+# 6. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
     swaymsg reload >/dev/null
     echo "  sway reloaded"
