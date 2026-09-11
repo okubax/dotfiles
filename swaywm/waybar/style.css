@@ -153,11 +153,10 @@ tooltip label {
 #battery.warning { color: @yellow; }
 #battery.critical { color: @red; }
 
-/* mpd playback states — same module, three different looks, so playing
- * (accent), paused (yellow) and stopped (muted, deprioritized) read as
- * different at a glance instead of all sharing one color and one icon.
- * Disconnected has no rule since format-disconnected is empty (mpd not
- * running hides the module entirely — nothing there to distinguish). */
+/* mpd playback states: playing and paused get different colors (accent vs
+ * yellow) as well as different icons (set in config's format-paused), so
+ * the two are distinguishable at a glance instead of sharing one look.
+ * Stopped and disconnected both have empty format strings in config, which
+ * hides the module entirely: no music playing means nothing on the bar. */
 #mpd.playing { color: @accent; }
 #mpd.paused { color: @yellow; }
-#mpd.stopped { color: @fg-muted; }

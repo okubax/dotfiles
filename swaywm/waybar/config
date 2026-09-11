@@ -37,21 +37,21 @@
   },
 
   // Now-playing from mpd (built-in module: event-driven, no polling script).
-  // Click to play/pause, right-click for next track. Playing/paused/stopped
-  // each get their own icon (play/pause/stop) and their own #mpd.<state>
-  // color in style.css, so the three are distinguishable at a glance
-  // instead of sharing one look. Hidden only when mpd itself is not running.
+  // Click to play/pause, right-click for next track. Playing vs paused each
+  // get their own icon (play/pause) and their own #mpd.<state> color in
+  // style.css, so the two are distinguishable at a glance instead of
+  // sharing one look. Hidden entirely when stopped, or when mpd is not
+  // running: no music playing means nothing to show on the bar.
   "mpd": {
     "format": " {artist} - {title}",
     "format-paused": " {artist} - {title}",
-    "format-stopped": " stopped",
+    "format-stopped": "",
     "format-disconnected": "",
     "max-length": 40,
     "interval": 10,
     "on-click": "mpc toggle",
     "on-click-right": "mpc next",
     "tooltip-format": "{artist} - {album} - {title} ({elapsedTime:%M:%S}/{totalTime:%M:%S})",
-    "tooltip-format-stopped": "MPD: stopped",
     "tooltip-format-disconnected": "mpd not running"
   },
 
