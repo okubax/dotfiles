@@ -56,11 +56,10 @@ toggle options (`kitty/colors/daguerre_{dark,light}.conf`,
 `vim/colors/daguerre_{dark,light}.vim`).
 
 Daguerre also ships a KDE Frameworks color scheme
-(`{dark,light}/Daguerre{Dark,Light}.colors`) — **deliberately not wired
-into `daguerre-theme`**, same as every other family's KDE schemes. Apply
-one with `plasma-apply-colorscheme DaguerreDark` (or `DaguerreLight`)
-after symlinking/copying the `.colors` file into
-`~/.local/share/color-schemes/`.
+(`{dark,light}/Daguerre{Dark,Light}.colors`) — once symlinked/copied into
+`~/.local/share/color-schemes/`, `daguerre-theme` applies the matching one
+automatically via `plasma-apply-colorscheme DaguerreDark`/`DaguerreLight`
+on every switch, same as every other family's KDE schemes.
 
 ## Coexisting with other themes
 

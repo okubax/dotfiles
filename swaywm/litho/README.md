@@ -56,10 +56,10 @@ and vim pick their colorscheme independently as ordinary toggle options
 (`kitty/colors/litho_{dark,light}.conf`, `vim/colors/litho_{dark,light}.vim`).
 
 Litho also ships a KDE Frameworks color scheme
-(`{dark,light}/Litho{Dark,Light}.colors`) — **deliberately not wired into
-`litho-theme`**, same as every other family's KDE schemes. Apply one with
-`plasma-apply-colorscheme LithoDark` (or `LithoLight`) after symlinking/
-copying the `.colors` file into `~/.local/share/color-schemes/`.
+(`{dark,light}/Litho{Dark,Light}.colors`) — once symlinked/copied into
+`~/.local/share/color-schemes/`, `litho-theme` applies the matching one
+automatically via `plasma-apply-colorscheme LithoDark`/`LithoLight` on
+every switch, same as every other family's KDE schemes.
 
 ## Coexisting with other themes
 

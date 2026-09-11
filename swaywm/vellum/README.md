@@ -53,10 +53,10 @@ and vim pick their colorscheme independently as ordinary toggle options
 (`kitty/colors/vellum_{dark,light}.conf`, `vim/colors/vellum_{dark,light}.vim`).
 
 Vellum also ships a KDE Frameworks color scheme
-(`{dark,light}/Vellum{Dark,Light}.colors`) — **deliberately not wired into
-`vellum-theme`**, same as every other family's KDE schemes. Apply one with
-`plasma-apply-colorscheme VellumDark` (or `VellumLight`) after symlinking/
-copying the `.colors` file into `~/.local/share/color-schemes/`.
+(`{dark,light}/Vellum{Dark,Light}.colors`) — once symlinked/copied into
+`~/.local/share/color-schemes/`, `vellum-theme` applies the matching one
+automatically via `plasma-apply-colorscheme VellumDark`/`VellumLight` on
+every switch, same as every other family's KDE schemes.
 
 ## Coexisting with other themes
 

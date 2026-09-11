@@ -54,11 +54,10 @@ toggle options (`kitty/colors/verdigris_{dark,light}.conf`,
 `vim/colors/verdigris_{dark,light}.vim`).
 
 Verdigris also ships a KDE Frameworks color scheme
-(`{dark,light}/Verdigris{Dark,Light}.colors`) — **deliberately not wired
-into `verdigris-theme`**, same as the other families' KDE schemes. Apply
-one with `plasma-apply-colorscheme VerdigrisDark` (or `VerdigrisLight`)
-after symlinking/copying the `.colors` file into
-`~/.local/share/color-schemes/`.
+(`{dark,light}/Verdigris{Dark,Light}.colors`) — once symlinked/copied into
+`~/.local/share/color-schemes/`, `verdigris-theme` applies the matching one
+automatically via `plasma-apply-colorscheme VerdigrisDark`/`VerdigrisLight`
+on every switch, same as the other families' KDE schemes.
 
 ## Coexisting with other themes
 
