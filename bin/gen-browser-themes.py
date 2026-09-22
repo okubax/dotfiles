@@ -71,11 +71,49 @@ FIREFOX_USERCHROME_TMPL = """\
   --tab-selected-bgcolor: var(--bg-panel-alt) !important;
 }}
 
-/* Window chrome: tab bar, nav bar, bookmarks toolbar */
+/* Firefox paints most toolbar-ish surfaces with a native appearance and a
+   background-image (a subtle built-in gradient) on top of whatever
+   background-color is set — confirmed by direct testing that without
+   killing both explicitly, every background-color override below renders
+   wrong (crushed toward black, or a saturated color coming through
+   badly dimmed) regardless of the value used. Not optional, not a
+   style preference. */
 #navigator-toolbox,
 #TabsToolbar,
-#nav-bar {{
+#nav-bar,
+#PersonalToolbar,
+.tab-background,
+#urlbar-background,
+.urlbarView,
+.urlbarView-results,
+.urlbarView-row,
+menupopup,
+panel,
+#sidebar-box,
+#sidebar,
+#sidebar-header,
+findbar {{
+  background-image: none !important;
+  appearance: none !important;
+}}
+
+/* Window chrome. The tab strip (#TabsToolbar) deliberately gets its own,
+   more recessed background (bg-alt) distinct from #nav-bar (bg-panel) —
+   the selected tab below is given that same bg-panel, so it visually
+   "connects" to the toolbar under it and reads as clearly raised out of
+   the strip, rather than relying on a subtle shade difference alone
+   (which is what made active-vs-inactive hard to tell apart before). */
+#navigator-toolbox {{
   background-color: var(--bg-header) !important;
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+}}
+#TabsToolbar {{
+  background-color: var(--bg-alt) !important;
+  color: var(--fg) !important;
+}}
+#nav-bar {{
+  background-color: var(--bg-panel) !important;
   color: var(--fg) !important;
   border-color: var(--border) !important;
 }}
@@ -88,23 +126,30 @@ FIREFOX_USERCHROME_TMPL = """\
   color: var(--fg) !important;
 }}
 
-/* Tabs */
+/* Tabs: three clearly distinct states, not two shades apart in one
+   family's tonal range — unselected tabs are transparent (show the
+   strip's bg-alt), hover is bg-panel-alt (a third, different tone), and
+   the selected tab is bg-panel (matching #nav-bar) plus a solid accent
+   top border and bold text, so it's never just "a slightly different
+   gray" carrying the whole signal. */
 .tabbrowser-tab {{
   color: var(--fg-muted) !important;
+  font-weight: 400 !important;
 }}
 .tabbrowser-tab[selected="true"] {{
   color: var(--fg) !important;
+  font-weight: 600 !important;
 }}
 .tab-background {{
   background-color: transparent !important;
 }}
 .tabbrowser-tab[selected="true"] .tab-background {{
-  background-color: var(--bg-panel-alt) !important;
+  background-color: var(--bg-panel) !important;
   border-radius: 6px 6px 0 0 !important;
-  box-shadow: inset 0 2px 0 var(--accent) !important;
+  box-shadow: inset 0 3px 0 var(--accent) !important;
 }}
 .tabbrowser-tab:hover:not([selected="true"]) .tab-background {{
-  background-color: var(--bg-panel) !important;
+  background-color: var(--bg-panel-alt) !important;
   border-radius: 6px 6px 0 0 !important;
 }}
 
@@ -224,27 +269,70 @@ THUNDERBIRD_USERCHROME_TMPL = """\
 {vars}
 }}
 
-/* Toolbars, unified toolbar, tab bar */
+/* Same gotcha as Firefox's gen template (see its comment): native
+   appearance + a built-in background-image sit on top of
+   background-color and must both be killed explicitly, or every
+   override below renders wrong regardless of the value used. */
 #toolbar-menubar,
 #mail-toolbar-menubar2,
 #unifiedToolbar,
 #tabbar-toolbar,
+#tabmail-tabs,
+.tab-background,
+#folderPaneBox,
+#folderPaneHeaderBar,
+#folderTree,
+#threadTree,
+#threadPane,
+treechildren,
+#messagepane,
+.quickFilterBar,
+#quick-filter-bar,
+#searchInput,
+.textbox-input,
+toolbar,
+menupopup,
+panel {{
+  background-image: none !important;
+  appearance: none !important;
+}}
+
+/* Toolbars, unified toolbar. The tab strip (#tabbar-toolbar/#tabmail-tabs)
+   gets its own more recessed bg-alt, distinct from the unified
+   toolbar/menubar's bg-panel — matched by the selected tab below, same
+   reasoning as Firefox's #TabsToolbar/#nav-bar split (see gen script
+   comment there): a subtle single-step shade difference wasn't enough to
+   tell active vs. inactive tabs apart at a glance. */
+#toolbar-menubar,
+#mail-toolbar-menubar2,
+#unifiedToolbar {{
+  background-color: var(--bg-panel) !important;
+  color: var(--fg) !important;
+  border-color: var(--border) !important;
+}}
+#tabbar-toolbar,
 #tabmail-tabs {{
-  background-color: var(--bg-header) !important;
+  background-color: var(--bg-alt) !important;
   color: var(--fg) !important;
   border-color: var(--border) !important;
 }}
 
-/* Tabs */
+/* Tabs: three distinct states, same scheme as Firefox */
 .tab-background {{
   background-color: transparent !important;
 }}
+.tabmail-tab {{
+  font-weight: 400 !important;
+}}
+.tabmail-tab[selected="true"] {{
+  font-weight: 600 !important;
+}}
 .tabmail-tab[selected="true"] .tab-background {{
-  background-color: var(--bg-panel-alt) !important;
-  box-shadow: inset 0 2px 0 var(--accent) !important;
+  background-color: var(--bg-panel) !important;
+  box-shadow: inset 0 3px 0 var(--accent) !important;
 }}
 .tabmail-tab:hover:not([selected="true"]) .tab-background {{
-  background-color: var(--bg-panel) !important;
+  background-color: var(--bg-panel-alt) !important;
 }}
 
 /* Folder pane */
