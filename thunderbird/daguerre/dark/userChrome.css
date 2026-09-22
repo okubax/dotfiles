@@ -25,6 +25,11 @@
   --green: #B0B0B0;
   --yellow: #9E9E9E;
   --purple: #C2C2C2;
+  /* Same reasoning as Firefox's gen template: if Thunderbird's tab
+     widget also reads this internally with browser-side !important,
+     it needs to carry the real color itself. Harmless to define if it
+     turns out Thunderbird doesn't use it at all. */
+  --tab-selected-bgcolor: #FFFFFF !important;
 }
 
 /* Same gotcha as Firefox's gen template (see its comment): native
@@ -75,22 +80,40 @@ panel {
   border-color: var(--border) !important;
 }
 
-/* Tabs: three distinct states, same scheme as Firefox */
-.tab-background {
-  background-color: transparent !important;
-}
-.tabmail-tab {
+/* Tabs: same fix and same reasoning as Firefox's gen-script comment
+   above — `.tabmail-tab[selected="true"] .tab-background` turned out not
+   to exist as a real, paintable element/attribute-value in current
+   Firefox and was confirmed (by testing an unmissable diagnostic color
+   directly on it) to have no effect at all; the verified-working
+   Firefox equivalent was the boolean `tab[selected]` attribute on the
+   plain `tab` element, scoped to its container. Thunderbird's Supernova
+   tab strip is built on the same underlying tab-widget lineage, so this
+   applies the identical `tab[selected]` pattern scoped to
+   `#tabmail-tabs`. Unlike the Firefox selector, this one could not be
+   independently multi-tab-tested here (Thunderbird's CLI doesn't open
+   arbitrary tabs the way `firefox url1 url2` does, and there is no
+   input-injection tool available in this environment to click a second
+   tab open) — if this still isn't right in Thunderbird specifically,
+   that's the first thing to re-verify against the real app. Literal hex
+   on the selected/hover rules, same reasoning as the Firefox template. */
+#tabmail-tabs tab {
+  color: var(--fg-muted) !important;
   font-weight: 400 !important;
+  background-image: none !important;
+  appearance: none !important;
 }
-.tabmail-tab[selected="true"] {
+#tabmail-tabs tab[selected] {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
   font-weight: 600 !important;
 }
-.tabmail-tab[selected="true"] .tab-background {
-  background-color: var(--bg-panel) !important;
-  box-shadow: inset 0 3px 0 var(--accent) !important;
+#tabmail-tabs tab[selected] .tab-background {
+  background-color: #FFFFFF !important;
+  background-image: none !important;
+  appearance: none !important;
 }
-.tabmail-tab:hover:not([selected="true"]) .tab-background {
-  background-color: var(--bg-panel-alt) !important;
+#tabmail-tabs tab:hover:not([selected]) {
+  background-color: #4D4D4D !important;
 }
 
 /* Folder pane */
