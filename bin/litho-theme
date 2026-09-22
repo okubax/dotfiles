@@ -1,6 +1,7 @@
 #!/bin/bash
 # litho-theme - switch the sway desktop (sway, mako, waybar, wofi,
-# swaylock, kitty) between Litho Dark and Litho Light in one go.
+# swaylock, kitty, Firefox, Thunderbird) between Litho Dark and Litho Light
+# in one go.
 # See ~/.cfg-tzevaot/swaywm/litho/README.md for how the theme is wired
 # up, and how it coexists with the other theme families.
 #
@@ -79,7 +80,15 @@ if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
     echo "  Qt/KDE colour scheme applied (Litho${target_cap})"
 fi
 
-# 6. Reload the running apps
+# 6. Firefox and Thunderbird don't read swaywm/*/active either - each has
+#    its own top-level active symlink that a static userChrome.css/
+#    userContent.css stub in the live profile always @imports. Neither
+#    app hot-reloads chrome CSS, so this only takes effect on restart.
+ln -sfn "litho/$target" "$HOME/.cfg-tzevaot/firefox/active"
+ln -sfn "litho/$target" "$HOME/.cfg-tzevaot/thunderbird/active"
+echo "  Firefox/Thunderbird theme set (restart both to see it)"
+
+# 7. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
     swaymsg reload >/dev/null
     echo "  sway reloaded"
@@ -98,3 +107,4 @@ fi
 echo "Litho is now $target."
 echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
 echo "vim: run :colorscheme litho_${target} in open sessions."
+echo "Firefox/Thunderbird: restart to pick up the new theme."

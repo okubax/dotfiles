@@ -139,6 +139,9 @@ bindsym $mod+g exec google-chrome-stable
 bindsym mod1+w exec $HOME/.firefox-developer/firefox
 bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
 
+# Email
+bindsym mod1+e exec $HOME/.thunderbird/thunderbird
+
 # File managers
 bindsym mod1+shift+f exec dolphin
 bindsym $mod+Shift+r exec kitty -e ranger
