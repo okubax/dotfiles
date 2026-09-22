@@ -29,30 +29,32 @@
 
 <style>
   :root {
-    /* Light theme — Vellum grayscale (soft, no pure black/white), one
-       Verdigris copper accent as the interactive colour. */
-    --bg-color: #e9e9e9;
-    --text-color: #333333;
-    --text-muted: #7a7a7a;
-    --input-bg: #262626;
-    --input-text: #e9e9e9;
-    --sidebar-bg: #e0e0e0;
+    /* Light theme — Litho: strictly grayscale (R=G=B throughout), stark
+       and high-contrast, extremes reserved for bg/fg/accent. No hue
+       anywhere on the page, in either theme. */
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --text-muted: #737373;
+    --input-bg: #000000;
+    --input-text: var(--bg-color);
+    --sidebar-bg: #e6e6e6;
     --sidebar-shadow: rgba(0, 0, 0, 0.15);
-    --accent: #b85e24;
-    --accent-glow: rgba(184, 94, 36, 0.35);
+    --accent: #000000;
+    --accent-glow: rgba(0, 0, 0, 0.35);
   }
 
   [data-theme="dark"] {
-    /* Dark theme — Verdigris: oxidized copper on a weathered patina. */
-    --bg-color: #14201e;
-    --text-color: #dcede8;
-    --text-muted: #7fa69c;
-    --input-bg: #223531;
-    --input-text: #dcede8;
-    --sidebar-bg: #1b2a27;
+    /* Dark theme — Litho: the same palette inverted, still strictly
+       grayscale. */
+    --bg-color: #000000;
+    --text-color: #ffffff;
+    --text-muted: #8c8c8c;
+    --input-bg: #ffffff;
+    --input-text: var(--bg-color);
+    --sidebar-bg: #1a1a1a;
     --sidebar-shadow: rgba(0, 0, 0, 0.5);
-    --accent: #e08d4b;
-    --accent-glow: rgba(224, 141, 75, 0.35);
+    --accent: #ffffff;
+    --accent-glow: rgba(255, 255, 255, 0.35);
   }
 
   body {
@@ -194,9 +196,13 @@
     cursor: pointer;
     /* Buttons don't inherit the body font; route the icon glyphs straight
        to a color emoji font so Firefox doesn't pick a symbol font for the
-       sun and render its U+FE0F variation selector as tofu */
+       sun and render its U+FE0F variation selector as tofu. Desaturated
+       via filter, not a symbol swap, so the glyph shapes (moon phase,
+       sun) stay recognisable but render in grayscale like everything
+       else on the page. */
     font-family: 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
     font-size: 1.2rem;
+    filter: grayscale(1);
     transition: all 0.3s ease;
     z-index: 10;
   }
@@ -248,18 +254,18 @@
     commands: [
       { key: 'a', name: 'ArchLinux', url: 'https://archlinux.org', search: '/packages/?q=' },
       { key: 'b', name: 'BBC', url: 'https://www.bbc.co.uk', search: '/search?q=' },
-      { key: 'd', name: 'Drive', url: 'https://your-nextcloud-server.com/index.php/apps/files/' },
-      { key: 'c', name: 'Calendar', url: 'https://your-nextcloud-server.com/index.php/apps/calendar/' },
-      { key: 'C', name: 'Contacts', url: 'https://your-nextcloud-server.com/index.php/apps/contacts/' },
+      { key: 'd', name: 'Drive', url: 'https://stratos.okubax.co.uk/index.php/apps/files/' },
+      { key: 'c', name: 'Calendar', url: 'https://stratos.okubax.co.uk/index.php/apps/calendar/' },
+      { key: 'C', name: 'Contacts', url: 'https://stratos.okubax.co.uk/index.php/apps/contacts/' },
       { key: 'e', name: 'Egghead', url: 'https://egghead.io', search: '/search?q=' },
       { key: 'f', name: 'Facebook', url: 'https://www.facebook.com', search: '/search/top/?q=' },
       { key: 'g', name: 'GitHub', url: 'https://github.com', search: '/search?q=' },
       { key: 'G', name: 'Guardian', url: 'https://www.theguardian.com/uk', searchUrl: 'https://www.theguardian.com', search: '/search?q=' },
       { key: 'h', name: 'Hacker News', url: 'https://news.ycombinator.com', searchUrl: 'https://hn.algolia.com', search: '/?q=' },
       { key: 'm', name: 'Gmail', url: 'https://mail.google.com/mail/u/0/#inbox', searchUrl: 'https://mail.google.com/mail/u/0/', search: '#search/' },
-      { key: 'n', name: 'Notes', url: 'https://your-nextcloud-server.com/index.php/apps/notes/' },
+      { key: 'n', name: 'Notes', url: 'https://stratos.okubax.co.uk/index.php/apps/notes/' },
       { key: 'o', name: 'Outlook', url: 'https://outlook.live.com/mail/0/' },
-      { key: 'p', name: 'Paper', url: 'https://your-notes-app.example.com', search: '/search?q=' },
+      { key: 'p', name: 'Paper', url: 'https://paper.okubax.co.uk', search: '/search?q=' },
       { key: 'r', name: 'Reddit', url: 'https://www.reddit.com', search: '/search?q=' },
       { key: 's', name: 'Stack Exchange', url: 'https://stackexchange.com', search: '/search?q=' },
       { key: 'S', name: 'SoundCloud', url: 'https://soundcloud.com', search: '/search?q=' },
