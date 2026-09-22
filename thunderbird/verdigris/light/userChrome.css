@@ -28,8 +28,10 @@
   /* Same reasoning as Firefox's gen template: if Thunderbird's tab
      widget also reads this internally with browser-side !important,
      it needs to carry the real color itself. Harmless to define if it
-     turns out Thunderbird doesn't use it at all. */
-  --tab-selected-bgcolor: #B85E24 !important;
+     turns out Thunderbird doesn't use it at all. --bg-header (the
+     family's lightest neutral), not --accent — see the Firefox
+     template's comment on why a solid white/black tab was wrong. */
+  --tab-selected-bgcolor: #B9AC8E !important;
 }
 
 /* Same gotcha as Firefox's gen template (see its comment): native
@@ -94,8 +96,10 @@ panel {
    arbitrary tabs the way `firefox url1 url2` does, and there is no
    input-injection tool available in this environment to click a second
    tab open) — if this still isn't right in Thunderbird specifically,
-   that's the first thing to re-verify against the real app. Literal hex
-   on the selected/hover rules, same reasoning as the Firefox template. */
+   that's the first thing to re-verify against the real app. --bg-header
+   fill, normal --fg text (bold, not inverted) — same reasoning as the
+   Firefox template's Tabs comment: a solid white/black tab in an
+   otherwise dark/light theme reads as broken, not intentional. */
 #tabmail-tabs tab {
   color: var(--fg-muted) !important;
   font-weight: 400 !important;
@@ -103,12 +107,12 @@ panel {
   appearance: none !important;
 }
 #tabmail-tabs tab[selected] {
-  background-color: #B85E24 !important;
-  color: #F4EFE6 !important;
+  background-color: #B9AC8E !important;
+  color: #24312B !important;
   font-weight: 600 !important;
 }
 #tabmail-tabs tab[selected] .tab-background {
-  background-color: #B85E24 !important;
+  background-color: #B9AC8E !important;
   background-image: none !important;
   appearance: none !important;
 }

@@ -72,9 +72,12 @@ FIREFOX_USERCHROME_TMPL = """\
      with browser-internal !important, which always wins over anything
      in this stylesheet for the same property, specificity or not — so
      it has to carry the real intended color itself, not just be treated
-     as a hint. Literal hex, not var(--accent), to rule out any
+     as a hint. --bg-header (the family's lightest *neutral*), not
+     --accent (white/black for the grayscale families) — a solid white
+     tab in an otherwise dark theme read as broken, not intentional, see
+     the Tabs comment below. Literal hex, not var(), to rule out any
      resolution quirk on the internal path that reads it. */
-  --tab-selected-bgcolor: #{accent} !important;
+  --tab-selected-bgcolor: #{bg_header} !important;
 }}
 
 /* Firefox paints most toolbar-ish surfaces with a native appearance and a
@@ -132,27 +135,22 @@ findbar {{
   color: var(--fg) !important;
 }}
 
-/* Tabs. Two previous versions of this rule targeted
-   `.tabbrowser-tab[selected="true"] .tab-background` — that element/
-   attribute-value combination does not exist in current Firefox (156):
-   confirmed directly by testing a bright, unmissable diagnostic color on
-   that exact selector in a disposable profile and finding literally no
-   effect, then testing narrower selectors the same way until one
-   actually painted. The real, verified-working target is `tab[selected]`
-   (a boolean attribute, not `="true"`), scoped to `#tabbrowser-tabs` so
-   it can't also catch unrelated `<tab>` widgets elsewhere in the browser
-   (about:preferences categories, Page Info dialog, etc., which reuse the
-   same XUL tag). Selected tab is a solid block of the family's own
-   --accent color (the one color every palette defines specifically to
-   stand out against its own bg) with inverted --bg-colored text, not a
-   subtle same-family lightness step — that was tried first and was
-   technically distinct per a pixel-sampled screenshot but only ~5-10% of
-   full range apart, not reliably visible on a real screen. Literal hex,
-   not var(--accent)/var(--bg), on the selected/hover rules specifically:
-   testing showed color on this exact element inconsistent between
-   var()-based and literal values in ways a normal chrome document
-   shouldn't produce, so this sidesteps whatever that scoping quirk is
-   rather than chase it further. */
+/* Tabs. The working selector is `tab[selected]` (a boolean attribute,
+   not `="true"`, and not `.tabbrowser-tab[selected="true"] .tab-
+   background`, which doesn't exist), scoped to `#tabbrowser-tabs` so it
+   can't also catch unrelated `<tab>` widgets elsewhere in the browser
+   (about:preferences categories, Page Info dialog, etc.). An earlier
+   version filled the selected tab with the family's --accent color
+   (white, for the grayscale families) and inverted the text to --bg —
+   technically the most contrast possible, but wrong in practice: a
+   solid white tab in an otherwise all-dark/all-gray theme reads as
+   broken, not intentional, and the inverted dark text on it was hard to
+   read. Fixed to --bg-header (the lightest *neutral* tone the family
+   already defines and uses elsewhere, not white/black), text stays the
+   normal --fg the rest of the tab strip uses — no inversion — just
+   bold. Still a large, unmissable jump from the strip's --bg-alt, just
+   one that stays inside the family's own dark (or light) palette
+   instead of jumping to the opposite extreme. */
 #tabbrowser-tabs tab {{
   color: var(--fg-muted) !important;
   font-weight: 400 !important;
@@ -160,13 +158,13 @@ findbar {{
   appearance: none !important;
 }}
 #tabbrowser-tabs tab[selected] {{
-  background-color: #{accent} !important;
-  color: #{bg} !important;
+  background-color: #{bg_header} !important;
+  color: #{fg} !important;
   font-weight: 600 !important;
   border-radius: 6px 6px 0 0 !important;
 }}
 #tabbrowser-tabs tab[selected] .tab-background {{
-  background-color: #{accent} !important;
+  background-color: #{bg_header} !important;
   background-image: none !important;
   appearance: none !important;
 }}
@@ -292,8 +290,10 @@ THUNDERBIRD_USERCHROME_TMPL = """\
   /* Same reasoning as Firefox's gen template: if Thunderbird's tab
      widget also reads this internally with browser-side !important,
      it needs to carry the real color itself. Harmless to define if it
-     turns out Thunderbird doesn't use it at all. */
-  --tab-selected-bgcolor: #{accent} !important;
+     turns out Thunderbird doesn't use it at all. --bg-header (the
+     family's lightest neutral), not --accent — see the Firefox
+     template's comment on why a solid white/black tab was wrong. */
+  --tab-selected-bgcolor: #{bg_header} !important;
 }}
 
 /* Same gotcha as Firefox's gen template (see its comment): native
@@ -358,8 +358,10 @@ panel {{
    arbitrary tabs the way `firefox url1 url2` does, and there is no
    input-injection tool available in this environment to click a second
    tab open) — if this still isn't right in Thunderbird specifically,
-   that's the first thing to re-verify against the real app. Literal hex
-   on the selected/hover rules, same reasoning as the Firefox template. */
+   that's the first thing to re-verify against the real app. --bg-header
+   fill, normal --fg text (bold, not inverted) — same reasoning as the
+   Firefox template's Tabs comment: a solid white/black tab in an
+   otherwise dark/light theme reads as broken, not intentional. */
 #tabmail-tabs tab {{
   color: var(--fg-muted) !important;
   font-weight: 400 !important;
@@ -367,12 +369,12 @@ panel {{
   appearance: none !important;
 }}
 #tabmail-tabs tab[selected] {{
-  background-color: #{accent} !important;
-  color: #{bg} !important;
+  background-color: #{bg_header} !important;
+  color: #{fg} !important;
   font-weight: 600 !important;
 }}
 #tabmail-tabs tab[selected] .tab-background {{
-  background-color: #{accent} !important;
+  background-color: #{bg_header} !important;
   background-image: none !important;
   appearance: none !important;
 }}
@@ -467,7 +469,7 @@ def main() -> int:
                 REPO / "firefox" / family / variant / "userChrome.css",
                 FIREFOX_USERCHROME_TMPL.format(
                     title=title, palette_key=key, vars=vars_,
-                    accent=pal["accent"], bg=pal["bg"], bg_panel_alt=pal["bg_panel_alt"],
+                    bg_header=pal["bg_header"], fg=pal["fg"], bg_panel_alt=pal["bg_panel_alt"],
                 ),
             )
             write(
@@ -478,7 +480,7 @@ def main() -> int:
                 REPO / "thunderbird" / family / variant / "userChrome.css",
                 THUNDERBIRD_USERCHROME_TMPL.format(
                     title=title, palette_key=key, vars=vars_,
-                    accent=pal["accent"], bg=pal["bg"], bg_panel_alt=pal["bg_panel_alt"],
+                    bg_header=pal["bg_header"], fg=pal["fg"], bg_panel_alt=pal["bg_panel_alt"],
                 ),
             )
 

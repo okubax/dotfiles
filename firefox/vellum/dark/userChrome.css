@@ -41,9 +41,12 @@
      with browser-internal !important, which always wins over anything
      in this stylesheet for the same property, specificity or not — so
      it has to carry the real intended color itself, not just be treated
-     as a hint. Literal hex, not var(--accent), to rule out any
+     as a hint. --bg-header (the family's lightest *neutral*), not
+     --accent (white/black for the grayscale families) — a solid white
+     tab in an otherwise dark theme read as broken, not intentional, see
+     the Tabs comment below. Literal hex, not var(), to rule out any
      resolution quirk on the internal path that reads it. */
-  --tab-selected-bgcolor: #E6E6E6 !important;
+  --tab-selected-bgcolor: #4E4E4E !important;
 }
 
 /* Firefox paints most toolbar-ish surfaces with a native appearance and a
@@ -101,27 +104,22 @@ findbar {
   color: var(--fg) !important;
 }
 
-/* Tabs. Two previous versions of this rule targeted
-   `.tabbrowser-tab[selected="true"] .tab-background` — that element/
-   attribute-value combination does not exist in current Firefox (156):
-   confirmed directly by testing a bright, unmissable diagnostic color on
-   that exact selector in a disposable profile and finding literally no
-   effect, then testing narrower selectors the same way until one
-   actually painted. The real, verified-working target is `tab[selected]`
-   (a boolean attribute, not `="true"`), scoped to `#tabbrowser-tabs` so
-   it can't also catch unrelated `<tab>` widgets elsewhere in the browser
-   (about:preferences categories, Page Info dialog, etc., which reuse the
-   same XUL tag). Selected tab is a solid block of the family's own
-   --accent color (the one color every palette defines specifically to
-   stand out against its own bg) with inverted --bg-colored text, not a
-   subtle same-family lightness step — that was tried first and was
-   technically distinct per a pixel-sampled screenshot but only ~5-10% of
-   full range apart, not reliably visible on a real screen. Literal hex,
-   not var(--accent)/var(--bg), on the selected/hover rules specifically:
-   testing showed color on this exact element inconsistent between
-   var()-based and literal values in ways a normal chrome document
-   shouldn't produce, so this sidesteps whatever that scoping quirk is
-   rather than chase it further. */
+/* Tabs. The working selector is `tab[selected]` (a boolean attribute,
+   not `="true"`, and not `.tabbrowser-tab[selected="true"] .tab-
+   background`, which doesn't exist), scoped to `#tabbrowser-tabs` so it
+   can't also catch unrelated `<tab>` widgets elsewhere in the browser
+   (about:preferences categories, Page Info dialog, etc.). An earlier
+   version filled the selected tab with the family's --accent color
+   (white, for the grayscale families) and inverted the text to --bg —
+   technically the most contrast possible, but wrong in practice: a
+   solid white tab in an otherwise all-dark/all-gray theme reads as
+   broken, not intentional, and the inverted dark text on it was hard to
+   read. Fixed to --bg-header (the lightest *neutral* tone the family
+   already defines and uses elsewhere, not white/black), text stays the
+   normal --fg the rest of the tab strip uses — no inversion — just
+   bold. Still a large, unmissable jump from the strip's --bg-alt, just
+   one that stays inside the family's own dark (or light) palette
+   instead of jumping to the opposite extreme. */
 #tabbrowser-tabs tab {
   color: var(--fg-muted) !important;
   font-weight: 400 !important;
@@ -129,13 +127,13 @@ findbar {
   appearance: none !important;
 }
 #tabbrowser-tabs tab[selected] {
-  background-color: #E6E6E6 !important;
-  color: #2E2E2E !important;
+  background-color: #4E4E4E !important;
+  color: #DCDCDC !important;
   font-weight: 600 !important;
   border-radius: 6px 6px 0 0 !important;
 }
 #tabbrowser-tabs tab[selected] .tab-background {
-  background-color: #E6E6E6 !important;
+  background-color: #4E4E4E !important;
   background-image: none !important;
   appearance: none !important;
 }
