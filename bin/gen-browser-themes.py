@@ -230,6 +230,38 @@ toolbarbutton.subviewbutton:hover {{
   background-color: var(--bg-panel-alt) !important;
 }}
 
+/* Native <select> dropdown popup on ordinary web content (e.g. a site's
+   "Sort by" menu). Confirmed 2026-09-25 (user report + a disposable-profile
+   test) that this is a DIFFERENT rendering path from the generic
+   menupopup/menuitem rules above: a <select size="N"> inline listbox
+   (ordinary content, unaffected by chrome CSS) rendered fine even under
+   this theme, but the real click-opened dropdown popup did not — near-
+   white option text stayed unreadable with the plain rules above in
+   place, meaning they don't reliably reach it. Firefox constructs this
+   specific popup as #ContentSelectDropdown > menupopup (a long-documented,
+   stable id in the userChrome.css customization community), so it's
+   targeted here explicitly with the same appearance/background-image kill
+   as everywhere else in this file. NOT independently verified against the
+   real popup here — no input-simulation tool (xdotool/wtype/ydotool) is
+   available in the environment this was authored in to click one open for
+   a screenshot; verify against a real site's dropdown after regenerating
+   and restarting, and narrow the selector further (e.g. per the
+   diagnostic-lime-color technique in the theme README) if it still
+   doesn't apply. */
+#ContentSelectDropdown menupopup,
+#ContentSelectDropdown menupopup menucaption,
+#ContentSelectDropdown menupopup menuitem {{
+  background-color: var(--bg-panel) !important;
+  background-image: none !important;
+  appearance: none !important;
+  color: var(--fg) !important;
+}}
+#ContentSelectDropdown menupopup menuitem:hover,
+#ContentSelectDropdown menupopup menuitem[_moz-menuactive="true"] {{
+  background-color: var(--bg-panel-alt) !important;
+  color: var(--fg) !important;
+}}
+
 /* Sidebar: bookmarks / history / synced tabs */
 #sidebar-box,
 #sidebar {{

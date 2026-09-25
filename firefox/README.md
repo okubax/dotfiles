@@ -50,7 +50,9 @@ file — Firefox also has a separate, currently-unused
 ```
 
 The `chrome/*.css` files in the profile are permanent one-line stubs, only
-the `active` symlink they import ever changes.
+the `active` symlink they import ever changes. `user.js` is hand-maintained
+directly in the profile (not generated/tracked here, just documented) —
+recreate that line if the profile is ever rebuilt.
 
 ## Switching
 
@@ -75,6 +77,30 @@ unlike waybar/mako/sway which the scripts reload live.
   `about:newtab` (Activity Stream) mostly ignores it anyway since it's a
   locked-down privileged component. Not a bug, just what's left after
   Mozilla tightened that surface.
+- Native `<select>` dropdown popups (on ordinary web pages, e.g. a site's
+  "Sort by" menu) render unreadable near-white option text on a light
+  popup under the dark families — reported 2026-09-25. First suspected an
+  OS/GTK-theme color leak and tried `browser.display.use_system_colors =
+  false`; the user restarted and confirmed **no change**, so that pref was
+  reverted (it wasn't the mechanism). Second suspected the generic
+  `menupopup`/`menuitem` rules further up this file just don't reach this
+  specific popup — confirmed via a disposable-profile test: a `<select
+  size="N">` inline listbox (ordinary page content, never touched by
+  chrome CSS) rendered with normal readable dark-on-light text even under
+  this theme, meaning the popup variant is a genuinely different code path
+  from a plain content select, not something the OS theme controls.
+  Current fix targets `#ContentSelectDropdown menupopup`/`menuitem`
+  explicitly (a long-documented, stable id for this specific popup in the
+  userChrome.css community) — added to the generator, **not yet verified
+  against a real click-opened dropdown**: this environment has no
+  xdotool/wtype/ydotool to synthesize a click, and a `<select size>`
+  listbox doesn't exercise the same path, so there's no way to test the
+  real popup without a human clicking one open. If it's still wrong,
+  narrow it with the diagnostic-lime-color technique (append a throwaway
+  `#ContentSelectDropdown menupopup menuitem { background-color: lime
+  !important; }` directly to the live profile's userChrome.css, not this
+  generator, and see whether it lands at all before trying a different
+  selector).
 - Selectors target the current Proton-era chrome (`.tabbrowser-tab`,
   `#urlbar-background`, `.urlbarView-row`, etc.), stable for years across
   releases, but not guaranteed forever — if a future Firefox redesign
