@@ -217,10 +217,25 @@ toolbarbutton.subviewbutton:hover {
    reach either (same pattern as the color issue: this popup needs its
    own explicit rules, nothing here is inherited reliably). Explicit
    `outline: none` + an explicit `border` (not just border-color, in case
-   this popup has no border of its own to recolor) added below; not yet
-   independently re-verified after this specific change (see the
-   text-color fix above for why: no input-simulation tool in this
-   environment to click one open). */
+   this popup has no border of its own to recolor) added below.
+   FOLLOW-UP (still 2026-09-25): user confirmed text color fixed live, but
+   the outline: none + border attempt above did NOT remove the white
+   ring — still visible after that change. Next guess: many Firefox
+   panels draw their edge as a zero-blur `box-shadow` (e.g. `0 0 0 1px
+   white`) specifically so it doesn't affect layout, which looks exactly
+   like a crisp hard-edged border but is untouched by either `border` or
+   `outline` — matches what the screenshot showed (a sharp, uniform-width
+   ring, not a soft/blurred glow, which a normal shadow would have). Added
+   `box-shadow: none` on both the `#ContentSelectDropdown` element itself
+   and its `menupopup` child (belt-and-suspenders — not certain which
+   level actually carries it). Still NOT independently re-verified (same
+   input-simulation gap as the whole rest of this section) — if this
+   ALSO doesn't work, stop guessing selectors blind and have the user
+   open the Browser Toolbox (`devtools.chrome.enabled` +
+   `devtools.debugger.remote-enabled` in about:config, then Tools >
+   Browser Tools > Browser Toolbox) and use its element picker on the
+   open popup to get the real element/property directly, rather than a
+   fourth guess. */
 #ContentSelectDropdown menupopup,
 #ContentSelectDropdown menupopup menucaption,
 #ContentSelectDropdown menupopup menuitem {
@@ -229,8 +244,10 @@ toolbarbutton.subviewbutton:hover {
   appearance: none !important;
   color: var(--fg) !important;
 }
+#ContentSelectDropdown,
 #ContentSelectDropdown menupopup {
   outline: none !important;
+  box-shadow: none !important;
   border: 1px solid var(--border) !important;
 }
 #ContentSelectDropdown menupopup menuitem:hover,
