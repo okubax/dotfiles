@@ -74,13 +74,22 @@ check_sway_session() {
     fi
 }
 
-# Send notification to user (urgency must be low/normal/critical)
+# Send notification to user (urgency must be low/normal/critical).
+# Best-effort only: with `set -e` active, a bare (non-conditional) call to
+# this function is subject to errexit like any other command — and most
+# call sites ARE bare (e.g. the "shutting down in 3 seconds" warning in
+# shutdown_system/reboot_system/logout_sway, not inside an if-condition).
+# A transient notify-send failure there (mako restarting, a D-Bus hiccup)
+# would otherwise abort the whole script before the `sleep` + actual
+# systemctl poweroff/reboot/swaymsg exit that follows ever runs — silently,
+# with no visible error, since there's nothing left afterward to report it.
+# A notification failing is not a reason to skip the power action itself.
 notify_user() {
     local urgency="$1"
     local message="$2"
 
     if command -v notify-send &> /dev/null; then
-        notify-send --urgency="$urgency" "Power Menu" "$message"
+        notify-send --urgency="$urgency" "Power Menu" "$message" || true
     else
         log_info "Notification: $message"
     fi
@@ -104,6 +113,15 @@ confirm_action() {
             ;;
         "❌ No"|"")
             log_debug "User cancelled: $action"
+            return 1
+            ;;
+        *)
+            # wofi's dmenu mode lets the user type arbitrary text that
+            # matches neither option and submit it anyway — falling through
+            # here with no branch would return this function's default
+            # (success) status, treating unrecognized input as "confirmed"
+            # for what's always a destructive action. Fail closed instead.
+            log_debug "Unrecognized confirmation input for $action: $choice"
             return 1
             ;;
     esac
@@ -253,7 +271,19 @@ show_power_menu() {
         log_debug "No selection made or menu cancelled"
         return 1
     fi
-    
+
+    # Guard the lookup: wofi's dmenu mode allows submitting arbitrary typed
+    # text that matches none of POWER_OPTIONS' keys, not just a real menu
+    # pick. Under `set -u`, indexing an associative array with an unknown
+    # key is an "unbound variable" error that aborts the whole script —
+    # unlike `set -e`, that guard is NOT suspended just because the caller
+    # (main) tests this function's exit status. Treat unrecognized input
+    # the same as no selection instead of crashing.
+    if [[ -z "${POWER_OPTIONS[$selected]+set}" ]]; then
+        log_debug "Unrecognized menu selection: $selected"
+        return 1
+    fi
+
     echo "${POWER_OPTIONS[$selected]}"
 }
 
