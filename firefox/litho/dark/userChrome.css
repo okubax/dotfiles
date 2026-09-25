@@ -204,56 +204,48 @@ toolbarbutton.subviewbutton:hover {
    from the generic menupopup/menuitem rules above: a <select size="N">
    inline listbox (ordinary content, unaffected by chrome CSS) rendered
    fine even under this theme, but the real click-opened dropdown popup
-   did not — near-white option text stayed unreadable with the plain
-   rules above in place, meaning they don't reliably reach it. Firefox
-   constructs this specific popup as #ContentSelectDropdown > menupopup (a
-   long-documented, stable id in the userChrome.css customization
-   community); targeted explicitly with the same appearance/background-
-   image kill as everywhere else in this file. Text color confirmed fixed
-   live (2026-09-25). Left over after that fix: a stark white OUTLINE
-   around the whole popup — `border-color` above only recolors an
-   existing border, it doesn't touch `outline`, and this popup apparently
-   has its own default outline the generic panel/menupopup rule doesn't
-   reach either (same pattern as the color issue: this popup needs its
-   own explicit rules, nothing here is inherited reliably). Explicit
-   `outline: none` + an explicit `border` (not just border-color, in case
-   this popup has no border of its own to recolor) added below.
-   FOLLOW-UP (still 2026-09-25): user confirmed text color fixed live, but
-   the outline: none + border attempt above did NOT remove the white
-   ring — still visible after that change. Next guess: many Firefox
-   panels draw their edge as a zero-blur `box-shadow` (e.g. `0 0 0 1px
-   white`) specifically so it doesn't affect layout, which looks exactly
-   like a crisp hard-edged border but is untouched by either `border` or
-   `outline` — matches what the screenshot showed (a sharp, uniform-width
-   ring, not a soft/blurred glow, which a normal shadow would have). Added
-   `box-shadow: none` on both the `#ContentSelectDropdown` element itself
-   and its `menupopup` child (belt-and-suspenders — not certain which
-   level actually carries it). Still NOT independently re-verified (same
-   input-simulation gap as the whole rest of this section) — if this
-   ALSO doesn't work, stop guessing selectors blind and have the user
-   open the Browser Toolbox (`devtools.chrome.enabled` +
-   `devtools.debugger.remote-enabled` in about:config, then Tools >
-   Browser Tools > Browser Toolbox) and use its element picker on the
-   open popup to get the real element/property directly, rather than a
-   fourth guess. */
-#ContentSelectDropdown menupopup,
-#ContentSelectDropdown menupopup menucaption,
-#ContentSelectDropdown menupopup menuitem {
+   did not — near-white option text on an unreadable popup. The outer
+   trigger element has id="ContentSelectDropdown" (a <menulist>); the
+   popup itself is a DIFFERENT element, <menupopup id=
+   "ContentSelectDropdownPopup" class="in-menulist">, confirmed via the
+   Browser Toolbox (no input-simulation tool exists in the environment
+   this was authored in to open one directly, so the user drove the
+   inspector). #ContentSelectDropdown menuitem (below) still works for
+   the individual option rows — they're normal light-DOM children — and
+   fixed the text-color bug live. The white ring around the popup's own
+   edge was a separate bug: outline/border/box-shadow set directly on
+   the popup element did nothing, because this popup ships its own
+   Shadow DOM (confirmed: <menupopup ...>#shadow-root (open)</menupopup>
+   in the inspector) and the visible frame is painted on an internal
+   ::part(content) inside that shadow root, by Firefox's own
+   chrome://global/content/elements/menupopup.css, via
+   --panel-border-color / --panel-background-color / --panel-box-shadow.
+   ::part() is the standard, correct way to reach a designated part of a
+   shadow tree from outside it — no other property on the host element
+   can touch it. Also relevant: the popup element itself carries an
+   inline style="color-scheme: light", which is almost certainly why
+   those --panel-* variables were resolving to light-theme (whitish)
+   values regardless of this theme. Fixed by targeting the part directly
+   with its confirmed real id. */
+#ContentSelectDropdown menuitem,
+#ContentSelectDropdown menucaption {
   background-color: var(--bg-panel) !important;
   background-image: none !important;
   appearance: none !important;
   color: var(--fg) !important;
 }
-#ContentSelectDropdown,
-#ContentSelectDropdown menupopup {
-  outline: none !important;
-  box-shadow: none !important;
-  border: 1px solid var(--border) !important;
-}
-#ContentSelectDropdown menupopup menuitem:hover,
-#ContentSelectDropdown menupopup menuitem[_moz-menuactive="true"] {
+#ContentSelectDropdown menuitem:hover,
+#ContentSelectDropdown menuitem[_moz-menuactive="true"] {
   background-color: var(--bg-panel-alt) !important;
   color: var(--fg) !important;
+}
+#ContentSelectDropdownPopup {
+  color-scheme: dark !important;
+}
+#ContentSelectDropdownPopup::part(content) {
+  background: var(--bg-panel) !important;
+  border-color: var(--border) !important;
+  box-shadow: none !important;
 }
 
 /* Sidebar: bookmarks / history / synced tabs */
