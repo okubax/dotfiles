@@ -22,6 +22,25 @@ current_variant() {
     readlink "$ACTIVE_LINK" 2>/dev/null || echo "dark"
 }
 
+# The globally active family+variant, for `status`. Each family's own
+# active/ symlink (current_variant above) only remembers where THAT
+# family was last left, even when a different family is the one actually
+# driving the WM right now — so litho-theme status and verdigris-theme
+# status used to report two different, both-stale answers instead of
+# agreeing on the one real current theme. Read the shared sway config's
+# include line instead, which is the actual source of truth for which
+# family is live (see step 2 of the switch below).
+live_theme() {
+    local family
+    family="$(command grep -oE 'swaywm/[a-z]+/active' "$SWAY_CONF" 2>/dev/null | head -1 | sed -E 's#swaywm/([a-z]+)/active#\1#')"
+    [[ -n "$family" ]] || family="verdigris"
+    local variant
+    variant="$(readlink "$HOME/.cfg-tzevaot/swaywm/$family/active" 2>/dev/null || echo dark)"
+    local family_cap
+    family_cap="$(tr '[:lower:]' '[:upper:]' <<< "${family:0:1}")${family:1}"
+    echo "$family_cap: $variant"
+}
+
 usage() {
     echo "Usage: verdigris-theme dark|light|toggle|status"
     exit 1
@@ -41,7 +60,7 @@ case "$1" in
         esac
         ;;
     status)
-        echo "Verdigris: $(current_variant)"
+        live_theme
         exit 0
         ;;
     *)

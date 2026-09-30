@@ -47,6 +47,22 @@
      the Tabs comment below. Literal hex, not var(), to rule out any
      resolution quirk on the internal path that reads it. */
   --tab-selected-bgcolor: #4E4E4E !important;
+  /* Same story, found 2026-09-30 chasing unreadable tab text on Verdigris
+     Light: the actual tab LABEL (`.tab-content`, a child of the tab, not
+     the tab element itself) is painted by Firefox's own tabs.css reading
+     `--tab-text-color`/`--tab-text-color-hover` directly, completely
+     bypassing the plain `color` property set on `#tabbrowser-tabs tab`
+     below no matter how specific the selector or how many !important
+     flags — inheritance doesn't apply because `.tab-content` sets its own
+     explicit `color`. Unset, both default to `--toolbox-text-color-current`,
+     an OS/system-theme-derived tone this theme never touches, which is why
+     it happened to look fine-ish on the dark families (a light system
+     default reads okay-ish on a dark background by coincidence) and was
+     unreadable (near-white on light cream) on Verdigris Light specifically.
+     `--tab-text-color-selected` is left alone: it already resolves
+     correctly through `--toolbar-color`, which this theme does set. */
+  --tab-text-color: #8C8C8C !important;
+  --tab-text-color-hover: #DCDCDC !important;
 }
 
 /* Firefox paints most toolbar-ish surfaces with a native appearance and a
@@ -165,22 +181,38 @@ findbar {
    "medium" (`--panel-border-radius: var(--border-radius-medium)` in
    tokens-shared.css). 8px on a 280px-wide, multi-line card reads as
    basically a rectangle with barely-clipped corners next to the now
-   much more visibly rounded 8px tabs above it. Overriding the same
-   custom property here (not a plain border-radius declaration, since
-   that's what the panel's own CSS actually reads) to Firefox's own
-   16px "large" panel radius, the same value its own nova redesign uses
-   for this exact panel, not an invented one. Literal px, not
-   var(--border-radius-large), same reasoning as --tab-selected-bgcolor
-   above: rule out any token-scoping surprise. **Verified live
-   2026-09-30**: sway's `seat <seat> cursor set/press` IPC commands can
-   synthesize a real pointer warp + click with no xdotool/wtype/ydotool
-   needed (none present in this environment, the gap that blocked live
-   verification of the ContentSelectDropdown fix earlier) — used that to
-   hover a real tab in a disposable Firefox instance and confirmed the
-   card's corners render fully rounded. Worth reusing for any future
-   hover/click-dependent userChrome.css check. */
+   much more visibly rounded 8px tabs above it.
+
+   First attempt (2026-09-30) only overrode `--panel-border-radius` and
+   tested exclusively against Litho Dark, where it looked right —
+   **wrong on Verdigris Light**: square corners AND a near-black
+   background on a light-palette theme, reported live by the user. Root
+   cause, found by checking tokens-shared.css again: panel background
+   itself is `--panel-background-color: light-dark(var(--color-white),
+   rgb(66, 65, 77))`, so this panel's real background depends on
+   Firefox's own resolved `color-scheme` for the popup, not on this
+   theme's `--bg-panel` override at all — and this panel was resolving
+   to the dark branch regardless of theme, plus still rendering with a
+   *native* (GTK) widget appearance, which ignores author border-radius
+   entirely (the same "looks like it should match but doesn't" class of
+   bug as the ContentSelectDropdown popup two entries up, and the same
+   fix shape: `appearance: none`, an explicit `color-scheme`, and this
+   theme's own colors set directly rather than relying on tokens this
+   panel doesn't actually consult). Litho Dark happened to look fine
+   purely because a dark theme's card matches what the popup already
+   defaults to regardless of override — not because the fix worked
+   there, which is why testing only one dark variant missed this
+   entirely. **Lesson: test a light AND a dark variant of any
+   popup/panel fix, they can fail in opposite, non-obvious ways.** */
 #tab-preview-panel {
   --panel-border-radius: 16px !important;
+  appearance: none !important;
+  background-image: none !important;
+  background-color: var(--bg-panel) !important;
+  color: var(--fg) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 16px !important;
+  color-scheme: dark !important;
 }
 
 /* URL bar / search bar */
