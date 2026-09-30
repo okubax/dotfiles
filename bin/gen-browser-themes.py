@@ -187,6 +187,33 @@ findbar {{
   border-radius: 8px !important;
 }}
 
+/* Tab hover-preview card (the title+URL popup shown when hovering a tab,
+   not the tab itself). Confirmed by reading Firefox's own shipped
+   tab-hover-preview.css directly out of omni.ja rather than guessing:
+   `#tab-preview-panel` only widens its `--panel-border-radius` to the
+   16px "large" token behind an experimental `browser.nova.enabled` pref;
+   otherwise it falls back to the toolkit-wide panel default, 8px
+   "medium" (`--panel-border-radius: var(--border-radius-medium)` in
+   tokens-shared.css). 8px on a 280px-wide, multi-line card reads as
+   basically a rectangle with barely-clipped corners next to the now
+   much more visibly rounded 8px tabs above it. Overriding the same
+   custom property here (not a plain border-radius declaration, since
+   that's what the panel's own CSS actually reads) to Firefox's own
+   16px "large" panel radius, the same value its own nova redesign uses
+   for this exact panel, not an invented one. Literal px, not
+   var(--border-radius-large), same reasoning as --tab-selected-bgcolor
+   above: rule out any token-scoping surprise. **Verified live
+   2026-09-30**: sway's `seat <seat> cursor set/press` IPC commands can
+   synthesize a real pointer warp + click with no xdotool/wtype/ydotool
+   needed (none present in this environment, the gap that blocked live
+   verification of the ContentSelectDropdown fix earlier) — used that to
+   hover a real tab in a disposable Firefox instance and confirmed the
+   card's corners render fully rounded. Worth reusing for any future
+   hover/click-dependent userChrome.css check. */
+#tab-preview-panel {{
+  --panel-border-radius: 16px !important;
+}}
+
 /* URL bar / search bar */
 #urlbar-background {{
   background-color: var(--bg-panel) !important;
