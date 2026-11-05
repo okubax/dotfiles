@@ -24,9 +24,10 @@ alias paclo="pacman -Qdt"          # List orphaned packages
 alias paclf="pacman -Ql"           # List files in package
 alias pacof="pacman -Qo"           # Find package that owns file
 
-# AUR management
-alias aurs="rua search"            # Search AUR packages
-alias auri="rua install"           # Install AUR packages
+# AUR management (aurhelper — minimal replacement for rua, see ~/bin/aurhelper)
+alias aurs="aurhelper search"      # Search AUR packages
+alias auri="aurhelper install"     # Install AUR packages
+alias auru="aurhelper update"      # Update installed AUR packages
 alias aurl="pacman -Qm"            # List installed AUR packages
 
 # Flatpak management

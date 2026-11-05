@@ -1,0 +1,181 @@
+#!/usr/bin/env bash
+# aurhelper — minimal AUR helper: search, install, and update AUR packages.
+#
+# Talks to the AUR RPC API directly and builds with git + makepkg, so it
+# needs nothing beyond what building AUR packages already requires: curl,
+# jq, git, makepkg (base-devel) and pacman's own vercmp.
+#
+# Usage:
+#   aurhelper search  <query>           List AUR packages matching <query>
+#   aurhelper install <pkg> [pkg...]    Build and install package(s) from AUR
+#   aurhelper update  [-c|--check]      Upgrade installed AUR packages
+#                                       (-c: list outdated only, exit 1 if any)
+set -uo pipefail
+
+AUR_RPC="https://aur.archlinux.org/rpc/v5"
+BUILD_DIR="${AURHELPER_BUILD_DIR:-$HOME/.cache/aurhelper/build}"
+
+die() { echo "aurhelper: $*" >&2; exit 1; }
+need() { command -v "$1" >/dev/null 2>&1 || die "'$1' is required but not found"; }
+for c in curl jq git makepkg vercmp pacman; do need "$c"; done
+mkdir -p "$BUILD_DIR"
+
+usage() { sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; }
+
+urlenc() { jq -rn --arg s "$1" '$s|@uri'; }
+
+aur_search() {
+  curl -fsS --max-time 15 "$AUR_RPC/search/$(urlenc "$1")?by=name-desc" \
+    || die "search request failed (network/AUR down?)"
+}
+
+# args: one or more package names -> AUR RPC info JSON for all of them
+aur_info_multi() {
+  local args=() n
+  for n in "$@"; do args+=(--data-urlencode "arg[]=$n"); done
+  curl -fsS --max-time 15 -G "${args[@]}" "$AUR_RPC/info" \
+    || die "info request failed (network/AUR down?)"
+}
+
+# ---- search -----------------------------------------------------------
+
+cmd_search() {
+  [ $# -ge 1 ] || die "usage: aurhelper search <query>"
+  local q="$*" resp count installed
+  resp=$(aur_search "$q")
+  count=$(jq -r '.resultcount // 0' <<<"$resp")
+  if [ "$count" = "0" ]; then
+    echo "No AUR packages found for '$q'."
+    return 0
+  fi
+  installed=$(pacman -Qm 2>/dev/null)
+  jq -r '.results | sort_by(-.Popularity)[]
+         | [.Name, .Version, (.Description // ""), (.Popularity|tostring)] | @tsv' <<<"$resp" |
+  while IFS=$'\t' read -r name version desc pop; do
+    local iv="" mark=""
+    iv=$(awk -v n="$name" '$1==n{print $2}' <<<"$installed")
+    [ -n "$iv" ] && mark="  [installed: $iv]"
+    printf '\033[1;35maur/\033[0m\033[1m%s\033[0m \033[32m%s\033[0m (popularity: %.2f)%s\n' \
+      "$name" "$version" "$pop" "$mark"
+    printf '    %s\n' "$desc"
+  done
+}
+
+# ---- install ------------------------------------------------------------
+
+declare -A _VISITED
+
+install_one() {
+  local pkg=$1
+  [ -n "${_VISITED[$pkg]:-}" ] && return 0
+  _VISITED[$pkg]=1
+
+  if pacman -Si "$pkg" >/dev/null 2>&1; then
+    echo "==> '$pkg' is in an official repo; installing via pacman."
+    sudo pacman -S --needed -- "$pkg"
+    return $?
+  fi
+
+  echo "==> Looking up '$pkg' on AUR..."
+  local info pkgbase
+  info=$(aur_info_multi "$pkg")
+  [ "$(jq -r '.resultcount // 0' <<<"$info")" = "0" ] && die "package '$pkg' not found in AUR"
+  pkgbase=$(jq -r --arg n "$pkg" '.results[] | select(.Name==$n) | .PackageBase' <<<"$info")
+  [ -z "$pkgbase" ] && pkgbase=$(jq -r '.results[0].PackageBase' <<<"$info")
+
+  # Pull in any AUR-only deps first (repo deps are left to makepkg/pacman).
+  local deps=() d
+  mapfile -t deps < <(jq -r '.results[0]
+      | (.Depends//[]) + (.MakeDepends//[]) + (.CheckDepends//[])
+      | .[]' <<<"$info" | sed -E 's/[<>=].*//')
+  for d in "${deps[@]}"; do
+    [ -z "$d" ] && continue
+    pacman -Qi "$d" >/dev/null 2>&1 && continue   # already installed
+    pacman -Si "$d" >/dev/null 2>&1 && continue   # pacman will grab it from a repo
+    echo "==> AUR dependency needed for $pkg: $d"
+    install_one "$d"
+  done
+
+  local dir="$BUILD_DIR/$pkgbase"
+  if [ -d "$dir/.git" ]; then
+    git -C "$dir" pull --ff-only || die "git pull failed for $pkgbase"
+  else
+    rm -rf "$dir"
+    git clone -- "https://aur.archlinux.org/$pkgbase.git" "$dir" || die "git clone failed for $pkgbase"
+  fi
+
+  echo "==> PKGBUILD for $pkgbase (review before building — AUR packages are unverified):"
+  "${PAGER:-less}" "$dir/PKGBUILD"
+  read -rp "==> Build and install $pkgbase? [Y/n] " ans
+  if [[ "$ans" =~ ^[Nn] ]]; then
+    echo "==> Skipped $pkgbase"
+    return 0
+  fi
+
+  (cd "$dir" && makepkg -si --needed) || die "build failed for $pkgbase"
+}
+
+cmd_install() {
+  [ $# -ge 1 ] || die "usage: aurhelper install <pkg> [pkg...]"
+  local pkg
+  for pkg in "$@"; do
+    install_one "$pkg"
+  done
+}
+
+# ---- update ---------------------------------------------------------------
+
+cmd_update() {
+  local check_only=0
+  case "${1:-}" in -c|--check) check_only=1 ;; esac
+
+  local foreign
+  foreign=$(pacman -Qm 2>/dev/null)
+  if [ -z "$foreign" ]; then
+    echo "No AUR packages installed."
+    return 0
+  fi
+
+  local names=()
+  mapfile -t names < <(awk '{print $1}' <<<"$foreign")
+  local info
+  info=$(aur_info_multi "${names[@]}")
+
+  local outdated=() name newver oldver cmp
+  for name in "${names[@]}"; do
+    newver=$(jq -r --arg n "$name" '.results[] | select(.Name==$n) | .Version' <<<"$info")
+    [ -z "$newver" ] && continue   # foreign but not in AUR (e.g. a local/manual build)
+    oldver=$(awk -v n="$name" '$1==n{print $2}' <<<"$foreign")
+    cmp=$(vercmp "$newver" "$oldver")
+    if [ "$cmp" -gt 0 ]; then
+      outdated+=("$name")
+      echo ":: $name $oldver -> $newver"
+    fi
+  done
+
+  if [ "${#outdated[@]}" -eq 0 ]; then
+    echo "All AUR packages up to date."
+    return 0
+  fi
+
+  if [ "$check_only" -eq 1 ]; then
+    echo
+    echo "${#outdated[@]} update(s) available"
+    exit 1
+  fi
+
+  echo
+  read -rp "==> Install ${#outdated[@]} update(s)? [Y/n] " ans
+  [[ "$ans" =~ ^[Nn] ]] && return 0
+  cmd_install "${outdated[@]}"
+}
+
+# ---- dispatch ---------------------------------------------------------------
+
+case "${1:-}" in
+  search)        shift; cmd_search "$@" ;;
+  install)       shift; cmd_install "$@" ;;
+  update)        shift; cmd_update "$@" ;;
+  -h|--help|"")  usage ;;
+  *)             die "unknown command '$1' (expected: search|install|update)" ;;
+esac
