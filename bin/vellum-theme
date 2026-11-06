@@ -1,6 +1,6 @@
 #!/bin/bash
 # vellum-theme - switch the sway desktop (sway, mako, waybar, wofi,
-# swaylock, kitty, Firefox, Thunderbird) between Vellum Dark and Vellum
+# swaylock, kitty, Firefox) between Vellum Dark and Vellum
 # Light in one go.
 # See ~/.cfg-tzevaot/swaywm/vellum/README.md for how the theme is wired
 # up, and how it coexists with the other theme families.
@@ -99,13 +99,12 @@ if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
     echo "  Qt/KDE colour scheme applied (Vellum${target_cap})"
 fi
 
-# 6. Firefox and Thunderbird don't read swaywm/*/active either - each has
-#    its own top-level active symlink that a static userChrome.css/
-#    userContent.css stub in the live profile always @imports. Neither
-#    app hot-reloads chrome CSS, so this only takes effect on restart.
+# 6. Firefox doesn't read swaywm/*/active either - it has its own
+#    top-level active symlink that a static userChrome.css/userContent.css
+#    stub in the live profile always @imports. It doesn't hot-reload
+#    chrome CSS, so this only takes effect on restart.
 ln -sfn "vellum/$target" "$HOME/.cfg-tzevaot/firefox/active"
-ln -sfn "vellum/$target" "$HOME/.cfg-tzevaot/thunderbird/active"
-echo "  Firefox/Thunderbird theme set (restart both to see it)"
+echo "  Firefox theme set (restart to see it)"
 
 # 7. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
@@ -126,4 +125,4 @@ fi
 echo "Vellum is now $target."
 echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
 echo "vim: run :colorscheme vellum_${target} in open sessions."
-echo "Firefox/Thunderbird: restart to pick up the new theme."
+echo "Firefox: restart to pick up the new theme."
