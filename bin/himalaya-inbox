@@ -1,0 +1,57 @@
+#!/bin/bash
+# himalaya-inbox - minimal interactive inbox browser for himalaya, which has
+# no TUI of its own: list envelopes, pick an ID to read, loop. No deps beyond
+# himalaya itself (and $PAGER, defaulting to less).
+#
+# Usage: himalaya-inbox [-a account]
+
+set -uo pipefail
+
+page=1
+account=""
+[[ "${1:-}" == "-a" ]] && account="${2:-}"
+
+list_accounts() {
+    himalaya account list 2>/dev/null \
+        | awk -F'┆' '/│/{gsub(/^[│ ]+|[ ]+$/,"",$1); if ($1!="" && $1!="NAME") print $1}'
+}
+
+pick_account() {
+    local accounts=() i=1
+    while IFS= read -r a; do accounts+=("$a"); done < <(list_accounts)
+    if [[ ${#accounts[@]} -eq 0 ]]; then
+        echo "No himalaya accounts configured." >&2
+        exit 1
+    fi
+    if [[ ${#accounts[@]} -eq 1 ]]; then
+        account="${accounts[0]}"
+        return
+    fi
+    echo "Accounts:"
+    for a in "${accounts[@]}"; do echo "  $i) $a"; ((i++)); done
+    read -rp "Pick an account [1]: " choice
+    choice="${choice:-1}"
+    account="${accounts[$((choice - 1))]}"
+}
+
+[[ -n "$account" ]] || pick_account
+
+while true; do
+    clear
+    echo "== $account inbox (page $page) =="
+    himalaya -a "$account" envelope list -p "$page"
+    echo
+    read -rp "ID to read, [n]ext/[p]rev page, [a]ccount, [q]uit: " input
+    case "$input" in
+        q | Q) break ;;
+        a | A) pick_account; page=1 ;;
+        n | N) ((page++)) ;;
+        p | P) ((page > 1)) && ((page--)) ;;
+        '') ;;
+        *[!0-9]*) echo "Not a message ID, ignoring."; sleep 1 ;;
+        *)
+            clear
+            himalaya -a "$account" message read "$input" --seen | "${PAGER:-less}"
+            ;;
+    esac
+done

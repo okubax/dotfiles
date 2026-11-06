@@ -140,8 +140,10 @@ bindsym mod1+w exec $HOME/.firefox-developer/firefox
 bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
 
 # Email (himalaya CLI, replaced Thunderbird 2026-11-06; account config is
-# private — not tracked in this public mirror, see ~/.config/himalaya)
-bindsym mod1+e exec kitty -e zsh -ic "himalaya envelope list; exec zsh"
+# private — not tracked in this public mirror, see ~/.config/himalaya).
+# himalaya has no TUI of its own, so bin/himalaya-inbox wraps it in a
+# minimal list-pick-read loop.
+bindsym mod1+e exec kitty -e himalaya-inbox
 
 # File managers
 bindsym mod1+shift+f exec dolphin
