@@ -1,0 +1,7 @@
+set folder    = ~/.mail/gmail
+set spoolfile = +INBOX
+set postponed = +Drafts
+set record    = +Sent
+set from      = "YOUR_ADDRESS@gmail.com"
+set realname  = "Your Name"
+set sendmail  = "/usr/bin/msmtp -a gmail"

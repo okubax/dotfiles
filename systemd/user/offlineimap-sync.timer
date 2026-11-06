@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic offlineimap sync
+
+[Timer]
+# 15 min after the previous sync FINISHES, not a fixed clock time — so the
+# long first-ever backfill doesn't immediately re-trigger on top of itself.
+OnUnitActiveSec=15min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,29 @@
+# mutt reads the local Maildir offlineimap already synced down — it never
+# talks IMAP itself, and never needs OAuth2 (that's offlineimap's and
+# msmtp's job). Sending goes through msmtp (see ../msmtp/msmtprc), picked
+# explicitly via `-a <account>` from each account file below rather than
+# From-header matching, since the active account is already known from
+# whichever folder-hook last fired.
+#
+# This is a generic 2-account EXAMPLE matching offlineimap/offlineimap.conf
+# and msmtp/msmtprc; add one account.<name> file + macro/folder-hook pair
+# per mailbox you actually use.
+
+set mbox_type   = Maildir
+set sort        = reverse-date
+set sort_browser = reverse-date
+set delete      = yes
+set mail_check  = 60
+
+# Default account on startup.
+source ~/.config/mutt/account.gmail
+
+# Switch active account: syncs the current one, then sources the chosen
+# account file and opens its inbox. folder-hook keeps $from/$sendmail
+# correct too if you just navigate into another account's folder directly
+# (<change-folder> without the macro).
+macro index,pager <f2> '<sync-mailbox><enter-command>source ~/.config/mutt/account.gmail<enter><change-folder>!<enter>' "switch to gmail"
+macro index,pager <f3> '<sync-mailbox><enter-command>source ~/.config/mutt/account.generic<enter><change-folder>!<enter>' "switch to generic"
+
+folder-hook ~/.mail/gmail/.*   'source ~/.config/mutt/account.gmail'
+folder-hook ~/.mail/generic/.* 'source ~/.config/mutt/account.generic'

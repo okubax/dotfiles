@@ -44,9 +44,12 @@ img|.img
 kitty|.config/kitty
 mpd|.mpd
 mplayer|.mplayer
+msmtp/msmtprc|.msmtprc
 multitailrc|.multitailrc
+mutt|.config/mutt
 ncmpcpp|.ncmpcpp
 neofetch|.config/neofetch
+offlineimap/offlineimap.conf|.offlineimaprc
 ranger|.config/ranger
 startpage|.startpage
 urlview|.urlview
@@ -58,6 +61,8 @@ swaywm/swaylock|.config/swaylock
 swaywm/swayshot.sh|.config/swayshot.sh
 swaywm/waybar|.config/waybar
 swaywm/wofi|.config/wofi
+systemd/user/offlineimap-sync.service|.config/systemd/user/offlineimap-sync.service
+systemd/user/offlineimap-sync.timer|.config/systemd/user/offlineimap-sync.timer
 zsh/zprofile|.zprofile
 zsh/zshenv|.zshenv
 zsh/zshrc|.zshrc

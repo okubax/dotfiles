@@ -1,0 +1,7 @@
+set folder    = ~/.mail/generic
+set spoolfile = +INBOX
+set postponed = +INBOX.Drafts
+set record    = +INBOX.Sent
+set from      = "you@example.com"
+set realname  = "Your Name"
+set sendmail  = "/usr/bin/msmtp -a generic"

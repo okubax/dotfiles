@@ -40,6 +40,7 @@ Desktop and vim, Litho Dark and Verdigris Dark side by side.
 - **Calendar / Calculator**: gsimplecal, qalculate-qt
 - **Cloud Sync**: Nextcloud client
 - **IRC**: ii + stunnel + multitail (see `bin/ii-start`, `bin/ii-sway`)
+- **Email**: offlineimap (IMAP → local Maildir sync) + mutt (reads the Maildir, no IMAP of its own) + msmtp (sending). See [Email Setup](#email-setup) below.
 
 **Theming**
 - **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch both variants at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`), or set `vim`/`kitty` independently by editing their own config.
@@ -108,6 +109,7 @@ sudo pacman -S kate                                                  # Text edit
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 sudo pacman -S python-pillow python-numpy                            # scheme_wallpaper.py
+sudo pacman -S offlineimap mutt msmtp pass                           # Email (see Email Setup); OAuth2 accounts also need ortie (AUR/github.com/pimalaya/ortie)
 yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
@@ -157,6 +159,7 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 - **Daguerre theme**: `swaywm/daguerre/README.md`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
+- **Email**: `offlineimap/offlineimap.conf` + `offlineimap/offlineimap.py`, `msmtp/msmtprc`, `mutt/muttrc` + `mutt/account.*` (see [Email Setup](#email-setup))
 
 ### Directory Structure
 ```
@@ -168,7 +171,10 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 ├── img/wallpapers/      # Desktop + swaylock wallpapers, all four themes
 ├── kitty/               # Terminal config (colors/ has all four themes' flavors)
 ├── mpd/                 # Music Player Daemon
+├── msmtp/               # Email sending (generic 2-account example, see Email Setup)
+├── mutt/                # Email client (generic 2-account example, see Email Setup)
 ├── ncmpcpp/             # Music player client
+├── offlineimap/         # Email IMAP->Maildir sync (generic 2-account example, see Email Setup)
 ├── ranger/              # File manager
 ├── startpage/           # Browser start page
 ├── swaywm/              # Sway, Waybar, Mako, Swaylock, Wofi configs
@@ -176,6 +182,7 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 │   ├── vellum/          # Vellum colorscheme (grayscale): dark/, light/ (each with a KDE .colors file too), active -> one of them
 │   ├── daguerre/        # Daguerre colorscheme (grayscale): dark/, light/ (each with a KDE .colors file too), active -> one of them
 │   └── verdigris/       # Verdigris colorscheme (full color): dark/, light/ (each with a KDE .colors file too), active -> one of them
+├── systemd/user/        # offlineimap-sync.{service,timer} (periodic mail sync)
 ├── vim/                 # Editor configuration (native packages; colors/ has all four themes)
 └── zsh/                 # Shell configuration
     └── config/          # Modular ZSH configs
@@ -212,6 +219,55 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `sweep`: safe cleaner for caches, trash, journal, and pacman cache (dry-run by default; system parts use sudo)
 - `news_reader.py`: terminal RSS reader
 
+## Email Setup
+
+`offlineimap/`, `msmtp/`, and `mutt/` ship a generic **2-account example**
+(one Gmail-style OAuth2 account, one plain-username/password IMAP account)
+rather than real account wiring — fill in your own account(s) and delete
+whichever pattern you don't need.
+
+- **offlineimap** pulls mail down from IMAP into a local Maildir under
+  `~/.mail`. It never talks to mutt or msmtp directly — it's purely the
+  sync step.
+- **mutt** only ever reads that local Maildir; it has no IMAP code path of
+  its own and needs no OAuth2 setup. Switching between the example's two
+  accounts is done per-account via `account.<name>` files sourced by both a
+  `folder-hook` (fires on navigating into that account's folder) and an
+  `<f2>`/`<f3>` macro (syncs, switches, and opens the inbox in one step).
+- **msmtp** handles sending, picked explicitly with `-a <account>` from
+  each `account.<name>`'s `sendmail` line (not From-header auto-detection),
+  since the active account is already known from whichever folder-hook
+  last fired.
+- **OAuth2 accounts** (Gmail, Outlook, etc.) authenticate through
+  [ortie](https://github.com/pimalaya/ortie) rather than offlineimap's or
+  msmtp's own OAuth2 machinery: `offlineimap/offlineimap.py`'s
+  `get_ortie_token()` calls `ortie token show -a <account> -r` (the `-r`
+  makes ortie refresh the cached token first if it's gone stale), and
+  `oauth2_access_token_eval`/`passwordeval` both just shell out to it. No
+  client-id/secret/refresh-token lives in these configs at all. Set up the
+  account in ortie first (`ortie account configure`, then `ortie auth
+  login`); offlineimap/msmtp never see that process.
+- **Plain-password accounts** instead pull from [pass](https://www.passwordstore.org/)
+  via `offlineimap.py`'s `get_pass()` / msmtp's `passwordeval`, e.g.
+  `pass insert Mail/Example/you`, then reference that entry's path in the
+  config. Nothing is ever written in cleartext in these files.
+- **Gmail-specific gotcha**: Gmail's IMAP exposes labels as folders, so the
+  same message can live under several "folders" simultaneously, and
+  offlineimap has no cross-folder dedup. The example's `folderfilter`
+  restricts Gmail to `All Mail` (+ `Trash`/`Spam`/`Drafts`, which don't
+  overlap with it) to avoid double-storing every message on disk. Depending
+  on your account's locale/branding, the real remote folder names may
+  differ from the US-default `[Gmail]/...` used in the example (e.g. UK
+  accounts use `[Google Mail]/...`, with `Bin` instead of `Trash`) — a
+  throwaway `folderfilter = lambda f: print(repr(f))` run once will tell
+  you the real names before you lock in the filter.
+- **Keeping it running**: `systemd/user/offlineimap-sync.{service,timer}`
+  reruns the sync 15 minutes after the previous run *finishes*
+  (`OnUnitActiveSec`, not a fixed clock time), so a long first-ever
+  backfill doesn't immediately retrigger on top of itself. Enable with
+  `systemctl --user enable --now offlineimap-sync.timer` once your real
+  `offlineimap.conf` is in place.
+
 ## ZSH Configuration
 
 Modular setup with separate configuration files:
@@ -235,11 +291,11 @@ skip the backup and overwrite in place, or `--dry-run` to preview first.
 
 For security reasons, the following are excluded:
 - SSH keys and server configurations
-- Email setup, credentials and GPG keys
+- Real email account wiring (addresses, mail hosts, OAuth2/pass references) and GPG keys
 - Password manager databases
 - Personal scripts with sensitive information
 
-Files like `ii/credentials`, `gitconfig`, and the server-related scripts ship with placeholder values, so fill in your own.
+Files like `ii/credentials`, `gitconfig`, `offlineimap/offlineimap.conf`, `msmtp/msmtprc`, `mutt/account.*`, and the server-related scripts ship with placeholder values, so fill in your own.
 
 ## Troubleshooting
 

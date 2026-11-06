@@ -1,0 +1,7 @@
+[Unit]
+Description=Sync all offlineimap accounts to ~/.mail
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/offlineimap -c /home/YOUR_USERNAME/dotfiles/offlineimap/offlineimap.conf
