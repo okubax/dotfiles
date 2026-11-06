@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# sweep — safe cleaner for caches, trash, redundant files, system pkg cache & journal.
+# sweep — safe cleaner for caches, trash, redundant files, the offlineimap
+# sync log, system pkg cache & journal.
 #
 #   DRY-RUN BY DEFAULT — shows what it *would* remove. Add -y/--yes to actually delete.
 #   Home is always cleaned (primary). System & journal are opt-in and use sudo.
@@ -22,6 +23,8 @@ set -uo pipefail
 CACHE_KEEP=(borg vim cliphist)              # ~/.cache subdirs to PRESERVE
 PACCACHE_KEEP=2                            # keep N most-recent versions of installed pkgs
 JOURNAL_DEFAULT="2weeks"                   # default journal retention
+OFFLINEIMAP_LOG="$HOME/.local/state/offlineimap/sync.log"
+OFFLINEIMAP_LOG_KEEP_DAYS=1                 # trim sync.log to just the last N days
 DU=/usr/bin/du                            # bypass the du->gdu alias/function
 
 # ---------- flags ----------
@@ -97,6 +100,33 @@ clean_trash(){
   if [ "$RUN" -eq 1 ]; then find "$t"/files "$t"/info "$t"/expunged -mindepth 1 -delete 2>/dev/null; fi
 }
 
+clean_offlineimap_log(){
+  local f="$OFFLINEIMAP_LOG" tmp before after sz
+  echo "${B}offlineimap log${NC} ${DIM}(keeping last ${OFFLINEIMAP_LOG_KEEP_DAYS}d, by its own line timestamps)${NC}"
+  if [ ! -f "$f" ]; then echo "   ${DIM}none yet${NC}"; return; fi
+  before=$(stat -c%s "$f" 2>/dev/null || echo 0)
+  tmp=$(mktemp "${f}.XXXXXX") || return
+  # offlineimap's -l logfile stamps every line "YYYY-MM-DD HH:MM:SS LEVEL: msg";
+  # a wrapped/continuation line (e.g. a traceback) has no timestamp of its own,
+  # so it inherits the keep/drop decision of the record above it.
+  awk -v cutoff="$(date -d "-${OFFLINEIMAP_LOG_KEEP_DAYS} day" +%s)" '
+    function epoch(line,    ts) {
+      ts = substr(line, 1, 19)
+      if (ts !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/) return -1
+      return mktime(substr(ts,1,4)" "substr(ts,6,2)" "substr(ts,9,2)" "substr(ts,12,2)" "substr(ts,15,2)" "substr(ts,18,2))
+    }
+    { e = epoch($0); if (e >= 0) keep = (e >= cutoff); if (keep) print }
+  ' "$f" > "$tmp" 2>/dev/null
+  after=$(stat -c%s "$tmp" 2>/dev/null || echo 0)
+  sz=$((before - after)); [ "$sz" -lt 0 ] && sz=0
+  if [ "$sz" -eq 0 ]; then
+    echo "   ${DIM}nothing older than ${OFFLINEIMAP_LOG_KEEP_DAYS}d${NC}"; rm -f "$tmp"; return
+  fi
+  add "$sz"; printf "   ${YEL}trim   %-20s %s${NC}\n" "sync.log" "$(hsize "$sz")"
+  if [ "$RUN" -eq 1 ]; then chmod --reference="$f" "$tmp" 2>/dev/null; mv -f "$tmp" "$f"
+  else rm -f "$tmp"; fi
+}
+
 clean_junk(){
   echo "${B}Editor/OS junk under ~${NC} ${DIM}(*.swp *.swo *~ .DS_Store Thumbs.db)${NC}"
   local hits sz=0 f
@@ -157,7 +187,7 @@ if [ "$RUN" -eq 1 ] && { [ "$DO_SYS" -eq 1 ] || [ "$DO_JOURNAL" -eq 1 ]; }; then
 
 if [ "$DO_HOME" -eq 1 ]; then
   echo; echo "${B}${CY}══ Home (~) ══${NC}"
-  clean_cache; clean_trash; [ "$JUNK" -eq 1 ] && clean_junk
+  clean_cache; clean_trash; clean_offlineimap_log; [ "$JUNK" -eq 1 ] && clean_junk
 fi
 [ "$DO_SYS" -eq 1 ] && clean_system
 [ "$DO_JOURNAL" -eq 1 ] && clean_journal

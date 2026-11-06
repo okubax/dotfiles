@@ -216,7 +216,7 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `sysglance.sh`: system overview at a glance (host/CPU/memory/GPU/storage/network/power)
 - `space-report.sh`: disk usage (top dirs/files) plus installed-package sizes (repo vs AUR)
 - `netusage`: who's using the network, overall and live up/down, plus per-process rates (via nethogs)
-- `sweep`: safe cleaner for caches, trash, journal, and pacman cache (dry-run by default; system parts use sudo)
+- `sweep`: safe cleaner for caches, trash, the offlineimap sync log (kept to the last day by its own line timestamps), journal, and pacman cache (dry-run by default; system parts use sudo)
 - `news_reader.py`: terminal RSS reader
 
 ## Email Setup
@@ -266,10 +266,12 @@ whichever pattern you don't need.
   (`OnUnitActiveSec`, not a fixed clock time), so a long first-ever
   backfill doesn't immediately retrigger on top of itself. Enable with
   `systemctl --user enable --now offlineimap-sync.timer` once your real
-  `offlineimap.conf` is in place. The service redirects its (high-volume,
-  one line per synced message) output to a plain file under
-  `~/.local/state/offlineimap/` instead of the systemd journal — create
-  that directory before first enabling it.
+  `offlineimap.conf` is in place. The service writes its (high-volume, one
+  line per synced message) output to a timestamped log file under
+  `~/.local/state/offlineimap/` via offlineimap's own `-l` flag, instead of
+  the systemd journal — create that directory before first enabling it.
+  `bin/sweep` trims that file to the last day on every run (see its
+  `OFFLINEIMAP_LOG_KEEP_DAYS` setting).
 
 ## ZSH Configuration
 
