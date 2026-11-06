@@ -266,7 +266,10 @@ whichever pattern you don't need.
   (`OnUnitActiveSec`, not a fixed clock time), so a long first-ever
   backfill doesn't immediately retrigger on top of itself. Enable with
   `systemctl --user enable --now offlineimap-sync.timer` once your real
-  `offlineimap.conf` is in place.
+  `offlineimap.conf` is in place. The service redirects its (high-volume,
+  one line per synced message) output to a plain file under
+  `~/.local/state/offlineimap/` instead of the systemd journal — create
+  that directory before first enabling it.
 
 ## ZSH Configuration
 

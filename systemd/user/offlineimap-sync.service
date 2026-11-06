@@ -5,3 +5,9 @@ StartLimitIntervalSec=0
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/offlineimap -c /home/YOUR_USERNAME/dotfiles/offlineimap/offlineimap.conf
+# Per-message sync output is high-volume (one line per message on a big
+# backfill) — keep it out of the journal, in a plain file instead. journald
+# still gets systemd's own unit start/stop/exit records regardless. Create
+# the directory first: mkdir -p ~/.local/state/offlineimap
+StandardOutput=append:/home/YOUR_USERNAME/.local/state/offlineimap/sync.log
+StandardError=append:/home/YOUR_USERNAME/.local/state/offlineimap/sync.log
