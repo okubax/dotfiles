@@ -139,11 +139,10 @@ bindsym $mod+g exec google-chrome-stable
 bindsym mod1+w exec $HOME/.firefox-developer/firefox
 bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
 
-# Email (himalaya CLI, replaced Thunderbird 2026-11-06; account config is
-# private — not tracked in this public mirror, see ~/.config/himalaya).
-# himalaya has no TUI of its own, so bin/himalaya-inbox wraps it in a
-# minimal list-pick-read loop.
-bindsym mod1+e exec kitty -e himalaya-inbox
+# Email (Thunderbird removed 2026-11-06; himalaya tried and removed
+# 2026-11-06 too — settled on offlineimap + mutt + msmtp instead, OAuth2
+# via ortie's `token show`/passwordeval, not yet set up. Rebind mod1+e
+# once that's in place.)
 
 # File managers
 bindsym mod1+shift+f exec dolphin
