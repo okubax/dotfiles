@@ -31,6 +31,16 @@ alternative_order text/plain text/html
 set pipe_decode = yes
 macro index,pager \cb "<pipe-message>urlview<enter>" "extract URLs with urlview"
 
+# Mark every message in the current view as read in one step.
+macro index \Cr "T~U<enter><tag-prefix><clear-flag>N<untag-pattern>.<enter>" "mark all messages as read"
+
+# Saner copy/move: C/M already exist as copy-message/save-message, this
+# just adds the mailbox browser (?<toggle-mailboxes>) instead of typing a
+# path blind. save-message IS mutt's move (copy, then mark the original
+# deleted), not a separate command.
+macro index C "<copy-message>?<toggle-mailboxes>" "copy a message to a mailbox"
+macro index M "<save-message>?<toggle-mailboxes>" "move a message to a mailbox"
+
 # Colorscheme: matches whichever of litho/vellum/daguerre/verdigris-theme
 # ran most recently (approximated to the nearest xterm 256-color, since
 # mutt has no truecolor support like kitty/vim) — <family>-theme rewrites

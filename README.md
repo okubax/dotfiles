@@ -245,6 +245,11 @@ whichever pattern you don't need.
   find. `\cb` (`index`/`pager`) pipes the current message to `urlview`
   (config at repo root; `pipe_decode = yes` so it sees the decoded body,
   not raw MIME source), which lists every URL it finds and opens your pick.
+- **Mailbox shortcuts**: `\Cr` (`index`) tags every unread message in the
+  current view and clears its New flag, in one step. `C`/`M` (`index`)
+  add a mailbox-browser prompt (`?<toggle-mailboxes>`) on top of mutt's
+  existing copy-message/save-message — `save-message` already IS mutt's
+  "move" (copy, then mark the original deleted), not a separate command.
 - **Colorscheme**: `mutt/colors/<family>_<variant>.muttrc`, one per
   theme family (see Theming under Components above) — each role from that
   family's `palette.md` mapped to the nearest xterm 256-color index, since
