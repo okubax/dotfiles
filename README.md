@@ -250,6 +250,11 @@ whichever pattern you don't need.
   add a mailbox-browser prompt (`?<toggle-mailboxes>`) on top of mutt's
   existing copy-message/save-message — `save-message` already IS mutt's
   "move" (copy, then mark the original deleted), not a separate command.
+- **Performance**: `header_cache` caches every mailbox's parsed headers
+  (GDBM, one file per mailbox under `~/.cache/mutt/headers/`) instead of
+  re-parsing every message on each open — matters once a Maildir reaches
+  the tens of thousands of messages. No `message_cache_dir`: that only
+  helps avoid IMAP re-fetches, and mutt never talks IMAP here.
 - **Colorscheme**: `mutt/colors/<family>_<variant>.muttrc`, one per
   theme family (see Theming under Components above) — each role from that
   family's `palette.md` mapped to the nearest xterm 256-color index, since

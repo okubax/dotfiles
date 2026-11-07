@@ -15,6 +15,16 @@ set sort_browser = reverse-date
 set delete      = yes
 set mail_check  = 60
 
+# Header cache: without this, mutt re-parses every message's headers from
+# scratch on every mailbox open — painful once a Maildir gets into the tens
+# of thousands. One GDBM file per mailbox, keyed by path; a cache cleaner
+# is free to clear this directory, mutt just rebuilds it lazily on next
+# open. No message_cache_dir — that only pays off avoiding IMAP re-fetches,
+# and mutt never talks IMAP here (offlineimap's job). Needs mutt built
+# with --enable-hcache (check: `mutt -v` lists a hcache backend) and the
+# directory to exist first: mkdir -p ~/.cache/mutt/headers
+set header_cache = ~/.cache/mutt/headers
+
 # HTML mail: render via w3m (mutt/mailcap) instead of showing raw markup or
 # a bare attachment line. Own mailcap file first, then any mailcap you
 # already have (e.g. from an unrelated tool) and the system defaults as
