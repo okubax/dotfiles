@@ -20,7 +20,11 @@
 set -uo pipefail
 
 # ---------- config (edit to taste) ----------
-CACHE_KEEP=(borg vim cliphist)              # ~/.cache subdirs to PRESERVE
+CACHE_KEEP=(borg vim cliphist mutt)         # ~/.cache subdirs to PRESERVE
+# ("mutt" is the header cache (mutt/muttrc's header_cache) — losing it
+# means re-parsing every message's headers from scratch next open.
+# mutt-tmp (tmpdir) is a deliberate SIBLING dir, not kept, so it still
+# gets cleared below like any other cache.)
 PACCACHE_KEEP=2                            # keep N most-recent versions of installed pkgs
 JOURNAL_DEFAULT="2weeks"                   # default journal retention
 OFFLINEIMAP_LOG="$HOME/.local/state/offlineimap/sync.log"

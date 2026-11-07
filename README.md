@@ -254,7 +254,13 @@ whichever pattern you don't need.
   (GDBM, one file per mailbox under `~/.cache/mutt/headers/`) instead of
   re-parsing every message on each open — matters once a Maildir reaches
   the tens of thousands of messages. No `message_cache_dir`: that only
-  helps avoid IMAP re-fetches, and mutt never talks IMAP here.
+  helps avoid IMAP re-fetches, and mutt never talks IMAP here. `tmpdir`
+  (`~/.cache/mutt-tmp/`) keeps compose/attachment/pipe temp files out of
+  plain `/tmp`, so a crash mid-compose doesn't leave stragglers you'd
+  otherwise have to go hunting for — deliberately a *separate* top-level
+  cache dir from `header_cache` above, so a cache cleaner can protect the
+  header cache while still clearing this one every time (see `bin/sweep`'s
+  `CACHE_KEEP`).
 - **Colorscheme**: `mutt/colors/<family>_<variant>.muttrc`, one per
   theme family (see Theming under Components above) — each role from that
   family's `palette.md` mapped to the nearest xterm 256-color index, since

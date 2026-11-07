@@ -16,14 +16,26 @@ set delete      = yes
 set mail_check  = 60
 
 # Header cache: without this, mutt re-parses every message's headers from
-# scratch on every mailbox open — painful once a Maildir gets into the tens
-# of thousands. One GDBM file per mailbox, keyed by path; a cache cleaner
-# is free to clear this directory, mutt just rebuilds it lazily on next
-# open. No message_cache_dir — that only pays off avoiding IMAP re-fetches,
-# and mutt never talks IMAP here (offlineimap's job). Needs mutt built
-# with --enable-hcache (check: `mutt -v` lists a hcache backend) and the
+# scratch on every mailbox open — painful once a Maildir gets into the
+# tens of thousands. One GDBM file per mailbox, keyed by path. No
+# message_cache_dir — that only pays off avoiding IMAP re-fetches, and
+# mutt never talks IMAP here (offlineimap's job). Needs mutt built with
+# --enable-hcache (check: `mutt -v` lists a hcache backend) and the
 # directory to exist first: mkdir -p ~/.cache/mutt/headers
+#
+# Deliberately its own top-level ~/.cache entry, NOT shared with tmpdir
+# below: if you add a cache cleaner, protect "mutt" wholesale there (losing
+# this means re-parsing every header again), while tmpdir below is a
+# *sibling* dir precisely so it's NOT protected, and stays safe to clear
+# on every run like any other disposable cache.
 set header_cache = ~/.cache/mutt/headers
+
+# Compose/attachment/pipe temp files: if /tmp is already tmpfs there's no
+# speed difference, but mutt doesn't always clean up after a crash mid-
+# compose, and plain /tmp makes those stragglers easy to lose track of. A
+# dedicated dir a cache cleaner clears unconditionally is simpler than
+# ever having to go hunting through /tmp for an old mutt-* file.
+set tmpdir = ~/.cache/mutt-tmp
 
 # HTML mail: render via w3m (mutt/mailcap) instead of showing raw markup or
 # a bare attachment line. Own mailcap file first, then any mailcap you
