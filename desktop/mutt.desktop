@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Mutt
+GenericName=Mail Client
+Comment=Terminal-based email client
+Exec=kitty --class mutt -e mutt-mailto %u
+Icon=mutt
+Terminal=false
+Categories=Network;Email;
+MimeType=x-scheme-handler/mailto;

@@ -37,6 +37,7 @@ aliases/aliases_personal|.aliases_personal
 aliases/aliases_script|.aliases_script
 aliases/aliases_system|.aliases_system
 bin|bin
+desktop/mutt.desktop|.local/share/applications/mutt.desktop
 fontconfig|.config/fontconfig
 gitconfig|.gitconfig
 ii|.config/ii

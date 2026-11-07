@@ -140,9 +140,9 @@ bindsym mod1+w exec $HOME/.firefox-developer/firefox
 bindsym mod1+b exec $HOME/.tor-browser/Browser/start-tor-browser
 
 # Email (Thunderbird removed 2026-11-06; himalaya tried and removed
-# 2026-11-06 too — settled on offlineimap + mutt + msmtp instead, OAuth2
-# via ortie's `token show`/passwordeval, not yet set up. Rebind mod1+e
-# once that's in place.)
+# 2026-11-06 too — settled on offlineimap + mutt + msmtp instead; mutt is
+# the system default mail client, see ../../mutt/muttrc)
+bindsym mod1+e exec kitty --class mutt -e mutt
 
 # File managers
 bindsym mod1+shift+f exec dolphin

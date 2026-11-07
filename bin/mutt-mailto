@@ -1,0 +1,36 @@
+#!/bin/bash
+# mutt-mailto - launch mutt, parsing a mailto: URI into a compose if given
+# one (xdg's mailto handler always calls with %u, which is this URI form).
+# With no argument, just opens mutt's normal inbox view.
+#
+# Usage: mutt-mailto [mailto:address?subject=...&body=...&cc=...]
+
+set -euo pipefail
+
+if [[ $# -eq 0 ]]; then
+    exec mutt
+fi
+
+uri="$1"
+# NUL-delimited, via process substitution: a $(...) command substitution
+# would strip embedded NUL bytes before they ever reach mapfile.
+mapfile -d '' -t mutt_args < <(python3 -c '
+import sys, urllib.parse as u
+
+uri = sys.argv[1]
+if uri.startswith("mailto:"):
+    uri = uri[len("mailto:"):]
+to, _, query = uri.partition("?")
+q = u.parse_qs(query)
+
+out = []
+if "subject" in q:
+    out += ["-s", q["subject"][0]]
+for cc in q.get("cc", []):
+    out += ["-c", cc]
+for bcc in q.get("bcc", []):
+    out += ["-b", bcc]
+out.append(u.unquote(to))
+sys.stdout.write("\0".join(out))
+' "$uri")
+exec mutt "${mutt_args[@]}"
