@@ -31,6 +31,14 @@ alternative_order text/plain text/html
 set pipe_decode = yes
 macro index,pager \cb "<pipe-message>urlview<enter>" "extract URLs with urlview"
 
+# Colorscheme: matches whichever of litho/vellum/daguerre/verdigris-theme
+# ran most recently (approximated to the nearest xterm 256-color, since
+# mutt has no truecolor support like kitty/vim) — <family>-theme rewrites
+# this line on every switch, the same way it already rewrites kitty's
+# `include`. Edit by hand only if you want mutt on a different theme than
+# the rest of the desktop.
+source ~/.config/mutt/colors/litho_dark.muttrc
+
 # Default account on startup.
 source ~/.config/mutt/account.gmail
 

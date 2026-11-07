@@ -43,13 +43,13 @@ Desktop and vim, Litho Dark and Verdigris Dark side by side.
 - **Email**: offlineimap (IMAP → local Maildir sync) + mutt (reads the Maildir, no IMAP of its own) + msmtp (sending). See [Email Setup](#email-setup) below.
 
 **Theming**
-- **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, and vim. Switch both variants at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`), or set `vim`/`kitty` independently by editing their own config.
+- **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, mutt, and vim. Switch everything except vim at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`; mutt and kitty get approximated to the nearest colors each supports — true hex for kitty, nearest xterm 256-color for mutt), or set `vim` independently via its own colorscheme command.
 - **Alternative themes**, same full coverage and shape as Verdigris: three original, strictly grayscale schemes:
   - [Litho](swaywm/litho/README.md): a small set of flat plates with big jumps between them, extremes (`#000000`/`#FFFFFF`) reserved for bg/fg/accent. Stark and poster-like. `litho-theme dark|light|toggle`.
   - [Vellum](swaywm/vellum/README.md): a narrow, compressed range that never touches pure black or pure white, even for `accent`. Soft and muted. `vellum-theme dark|light|toggle`.
   - [Daguerre](swaywm/daguerre/README.md): spans the full 0–255 range in one smooth ramp, loosely inspired by the photographic zone system. `daguerre-theme dark|light|toggle`.
 
-  All four families are **dark/light only**, with no dusk variant. Only one theme *family* drives sway/mako/waybar/wofi's chrome at a time; whichever `<family>-theme` script ran most recently rewrites the shared include paths to point at itself. kitty and vim are unaffected: every family's variants sit side by side as ordinary toggle/colorscheme options, so kitty/vim can be on a different family than the rest of the desktop.
+  All four families are **dark/light only**, with no dusk variant. Only one theme *family* drives sway/mako/waybar/wofi's chrome at a time; whichever `<family>-theme` script ran most recently rewrites the shared include paths to point at itself, and rewrites kitty's `include` and mutt's `source` line to match. vim is unaffected: its variants sit side by side as an ordinary flat colorscheme option, so vim can be on a different family than the rest of the desktop.
 - **Firefox**: the same four families, applied to browser chrome (toolbar,
   tabs, urlbar, menus) via `userChrome.css`/`userContent.css` rather than a
   WebExtension theme, so it works on a manually-installed, unpackaged build
@@ -159,7 +159,7 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 - **Daguerre theme**: `swaywm/daguerre/README.md`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
-- **Email**: `offlineimap/offlineimap.conf` + `offlineimap/offlineimap.py`, `msmtp/msmtprc`, `mutt/muttrc` + `mutt/account.*` + `mutt/mailcap`, `urlview` (see [Email Setup](#email-setup))
+- **Email**: `offlineimap/offlineimap.conf` + `offlineimap/offlineimap.py`, `msmtp/msmtprc`, `mutt/muttrc` + `mutt/account.*` + `mutt/mailcap` + `mutt/colors/`, `urlview` (see [Email Setup](#email-setup))
 
 ### Directory Structure
 ```
@@ -245,6 +245,12 @@ whichever pattern you don't need.
   find. `\cb` (`index`/`pager`) pipes the current message to `urlview`
   (config at repo root; `pipe_decode = yes` so it sees the decoded body,
   not raw MIME source), which lists every URL it finds and opens your pick.
+- **Colorscheme**: `mutt/colors/<family>_<variant>.muttrc`, one per
+  theme family (see Theming under Components above) — each role from that
+  family's `palette.md` mapped to the nearest xterm 256-color index, since
+  mutt has no truecolor support like kitty/vim. `<family>-theme` rewrites
+  muttrc's `source` line on every switch, the same way it already
+  rewrites kitty's `include`.
 - **OAuth2 accounts** (Gmail, Outlook, etc.) authenticate through
   [ortie](https://github.com/pimalaya/ortie) rather than offlineimap's or
   msmtp's own OAuth2 machinery: `offlineimap/offlineimap.py`'s

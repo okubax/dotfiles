@@ -1,0 +1,38 @@
+# Vellum Light — mutt colors
+# Nearest xterm 256-color approximation of each role in
+# ../../swaywm/vellum/light/palette.md (mutt has no truecolor
+# support, unlike kitty/vim's exact hex). Wired into `vellum-theme` —
+# switching rewrites muttrc's `source .../mutt/colors/...muttrc` line to
+# match, same as it already does for kitty's `include`.
+
+color normal      color236 color254
+color error       color238 color254
+color message     color239 color254
+color attachment   color239 color254
+color markers     color145 color254
+color tilde       color145 color254
+color tree        color145 color254
+color bold        color235 color254
+color underline   color239 color254
+color signature   color243 color254
+color search      color254 color242
+color indicator   color254 color235
+color status      color236 color251
+color prompt      color236 color251
+
+color quoted       color239 color254
+color quoted1      color241 color254
+color quoted2      color242 color254
+color quoted3      color242 color254
+color quoted4      color243 color254
+
+color hdrdefault   color243 color254
+color header       color235 color254 "^(From|To|Cc|Subject|Date):"
+
+color index        color254 color238 "~F"
+color index        color235 color254 "~N"
+color index        color243 color254 "~D"
+
+# Same URL pattern as ~/.urlview's REGEXP, so a link is visibly a link in
+# the pager before you ever press \cb to pipe the message to urlview.
+color body         color239 color254 "(((https?|ftp)|gopher)|mailto)[.:][^ >\"\t]*|www\.[-a-z0-9.]+"

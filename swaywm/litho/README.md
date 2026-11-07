@@ -51,9 +51,12 @@ litho/
 Same wiring as every other family — `sway/config`, `mako/config`,
 `waybar/style.css`, `wofi/style.css` each include/`@import`
 `<theme>/active/...`; `swaylock` has no include mechanism so `litho-theme`
-copies the variant's config over `swaywm/swaylock/config` directly; kitty
-and vim pick their colorscheme independently as ordinary toggle options
-(`kitty/colors/litho_{dark,light}.conf`, `vim/colors/litho_{dark,light}.vim`).
+copies the variant's config over `swaywm/swaylock/config` directly; vim picks its colorscheme independently, as an ordinary toggle
+option (`vim/colors/litho_{dark,light}.vim`); kitty and mutt are
+switched automatically along with everything else
+(`kitty/colors/litho_{dark,light}.conf`,
+`mutt/colors/litho_{dark,light}.muttrc` — approximated to the
+nearest xterm 256-color, since mutt has no truecolor support).
 
 Litho also ships a KDE Frameworks color scheme
 (`{dark,light}/Litho{Dark,Light}.colors`) — once symlinked/copied into
@@ -66,9 +69,10 @@ every switch, same as every other family's KDE schemes.
 Only one theme family drives sway/mako/waybar/wofi's chrome at a time —
 whichever of `litho-theme`/`vellum-theme`/`daguerre-theme`/
 `verdigris-theme` ran most recently. Each script rewrites the shared
-`swaywm/<family>/active/...` include paths to point at itself. kitty and
-vim are unaffected — every theme's variants sit side by side as ordinary
-flat toggle/colorscheme options.
+`swaywm/<family>/active/...` include paths to point at itself, and
+rewrites kitty's `include` and mutt's `source` line to match. vim is
+unaffected — its variants sit side by side as an ordinary flat
+colorscheme option.
 
 ## Switching
 
@@ -82,5 +86,7 @@ litho-theme status  # show which variant is active
 Reloads sway (`swaymsg reload`), mako (`makoctl reload`) and waybar
 (`SIGUSR2`) itself; kitty picks up the new include on next launch, or press
 ctrl+shift+F5 in an open kitty window to reload it live. For vim, run
-`:colorscheme litho_dark` (or `_light`) in a running session, or change the
-`colorscheme` line in `vimrc` if you want it to be the new default.
+`:colorscheme litho_dark` (or `_light`) in a running session, or change
+the `colorscheme` line in `vimrc` if you want it to be the new default.
+mutt picks up the new `source` line on next launch, or run
+`:source ~/.config/mutt/muttrc` in an open session to reload it live.

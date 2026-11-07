@@ -1,0 +1,38 @@
+# Verdigris Dark — mutt colors
+# Nearest xterm 256-color approximation of each role in
+# ../../swaywm/verdigris/dark/palette.md (mutt has no truecolor
+# support, unlike kitty/vim's exact hex). Wired into `verdigris-theme` —
+# switching rewrites muttrc's `source .../mutt/colors/...muttrc` line to
+# match, same as it already does for kitty's `include`.
+
+color normal      color254 color234
+color error       color167 color234
+color message     color73 color234
+color attachment   color73 color234
+color markers     color59 color234
+color tilde       color59 color234
+color tree        color59 color234
+color bold        color173 color234
+color underline   color73 color234
+color signature   color109 color234
+color search      color234 color179
+color indicator   color234 color173
+color status      color254 color238
+color prompt      color254 color238
+
+color quoted       color73 color234
+color quoted1      color107 color234
+color quoted2      color179 color234
+color quoted3      color139 color234
+color quoted4      color109 color234
+
+color hdrdefault   color109 color234
+color header       color173 color234 "^(From|To|Cc|Subject|Date):"
+
+color index        color234 color167 "~F"
+color index        color173 color234 "~N"
+color index        color109 color234 "~D"
+
+# Same URL pattern as ~/.urlview's REGEXP, so a link is visibly a link in
+# the pager before you ever press \cb to pipe the message to urlview.
+color body         color73 color234 "(((https?|ftp)|gopher)|mailto)[.:][^ >\"\t]*|www\.[-a-z0-9.]+"

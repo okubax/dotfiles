@@ -13,6 +13,7 @@ VELLUM_DIR="$HOME/.cfg-tzevaot/swaywm/vellum"
 ACTIVE_LINK="$VELLUM_DIR/active"
 SWAYLOCK_CFG="$HOME/.cfg-tzevaot/swaywm/swaylock/config"
 KITTY_CONF="$HOME/.cfg-tzevaot/kitty/kitty.conf"
+MUTT_CONF="$HOME/.cfg-tzevaot/mutt/muttrc"
 SWAY_CONF="$HOME/.cfg-tzevaot/swaywm/sway/config"
 MAKO_CONF="$HOME/.cfg-tzevaot/swaywm/mako/config"
 WAYBAR_CSS="$HOME/.cfg-tzevaot/swaywm/waybar/style.css"
@@ -88,7 +89,13 @@ cp "$VELLUM_DIR/$target/swaylock.conf" "$SWAYLOCK_CFG"
 sed -i -E "s|^include (\./colors/.+\.conf)|#include \1|" "$KITTY_CONF"
 sed -i -E "s|^#include (\./colors/vellum_${target}\.conf)|include \1|" "$KITTY_CONF"
 
-# 5. Qt/KDE apps (Okular, Dolphin, ...) don't read swaywm/*/active or any of
+# 5. mutt: rewrite muttrc's `source .../mutt/colors/...muttrc`
+#    line to point at this family+variant (same approach as
+#    kitty's step 4, just nearest-256-color instead of exact
+#    truecolor hex — mutt has no truecolor support).
+sed -i -E "s@source ~/\.config/mutt/colors/[a-z]+_(dark|light)\.muttrc@source ~/.config/mutt/colors/vellum_${target}.muttrc@" "$MUTT_CONF"
+
+# 6. Qt/KDE apps (Okular, Dolphin, ...) don't read swaywm/*/active or any of
 #    the above - they read ~/.config/kdeglobals, which plasma-apply-colorscheme
 #    populates from the matching ~/.local/share/color-schemes/*.colors file.
 #    Without this they silently keep whatever scheme was last applied,
@@ -99,14 +106,14 @@ if command -v plasma-apply-colorscheme >/dev/null 2>&1; then
     echo "  Qt/KDE colour scheme applied (Vellum${target_cap})"
 fi
 
-# 6. Firefox doesn't read swaywm/*/active either - it has its own
+# 7. Firefox doesn't read swaywm/*/active either - it has its own
 #    top-level active symlink that a static userChrome.css/userContent.css
 #    stub in the live profile always @imports. It doesn't hot-reload
 #    chrome CSS, so this only takes effect on restart.
 ln -sfn "vellum/$target" "$HOME/.cfg-tzevaot/firefox/active"
 echo "  Firefox theme set (restart to see it)"
 
-# 7. Reload the running apps
+# 8. Reload the running apps
 if [[ -n "${SWAYSOCK:-}" ]] && swaymsg -t get_version >/dev/null 2>&1; then
     swaymsg reload >/dev/null
     echo "  sway reloaded"
@@ -125,4 +132,5 @@ fi
 echo "Vellum is now $target."
 echo "kitty: press ctrl+shift+F5 in open windows, or restart, to pick up the new colors."
 echo "vim: run :colorscheme vellum_${target} in open sessions."
+echo "mutt: restart, or run :source ~/.config/mutt/muttrc in an open session, to pick up the new colors."
 echo "Firefox: restart to pick up the new theme."

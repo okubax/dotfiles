@@ -1,0 +1,38 @@
+# Litho Light — mutt colors
+# Nearest xterm 256-color approximation of each role in
+# ../../swaywm/litho/light/palette.md (mutt has no truecolor
+# support, unlike kitty/vim's exact hex). Wired into `litho-theme` —
+# switching rewrites muttrc's `source .../mutt/colors/...muttrc` line to
+# match, same as it already does for kitty's `include`.
+
+color normal      color16 color231
+color error       color232 color231
+color message     color238 color231
+color attachment   color238 color231
+color markers     color248 color231
+color tilde       color248 color231
+color tree        color248 color231
+color bold        color16 color231
+color underline   color238 color231
+color signature   color243 color231
+color search      color231 color235
+color indicator   color231 color16
+color status      color16 color252
+color prompt      color16 color252
+
+color quoted       color238 color231
+color quoted1      color240 color231
+color quoted2      color235 color231
+color quoted3      color245 color231
+color quoted4      color243 color231
+
+color hdrdefault   color243 color231
+color header       color16 color231 "^(From|To|Cc|Subject|Date):"
+
+color index        color231 color232 "~F"
+color index        color16 color231 "~N"
+color index        color243 color231 "~D"
+
+# Same URL pattern as ~/.urlview's REGEXP, so a link is visibly a link in
+# the pager before you ever press \cb to pipe the message to urlview.
+color body         color238 color231 "(((https?|ftp)|gopher)|mailto)[.:][^ >\"\t]*|www\.[-a-z0-9.]+"

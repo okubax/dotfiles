@@ -1,0 +1,38 @@
+# Daguerre Dark — mutt colors
+# Nearest xterm 256-color approximation of each role in
+# ../../swaywm/daguerre/dark/palette.md (mutt has no truecolor
+# support, unlike kitty/vim's exact hex). Wired into `daguerre-theme` —
+# switching rewrites muttrc's `source .../mutt/colors/...muttrc` line to
+# match, same as it already does for kitty's `include`.
+
+color normal      color255 color16
+color error       color188 color16
+color message     color254 color16
+color attachment   color254 color16
+color markers     color243 color16
+color tilde       color243 color16
+color tree        color243 color16
+color bold        color231 color16
+color underline   color254 color16
+color signature   color245 color16
+color search      color16 color247
+color indicator   color16 color231
+color status      color255 color241
+color prompt      color255 color241
+
+color quoted       color254 color16
+color quoted1      color145 color16
+color quoted2      color247 color16
+color quoted3      color251 color16
+color quoted4      color245 color16
+
+color hdrdefault   color245 color16
+color header       color231 color16 "^(From|To|Cc|Subject|Date):"
+
+color index        color16 color188 "~F"
+color index        color231 color16 "~N"
+color index        color245 color16 "~D"
+
+# Same URL pattern as ~/.urlview's REGEXP, so a link is visibly a link in
+# the pager before you ever press \cb to pipe the message to urlview.
+color body         color254 color16 "(((https?|ftp)|gopher)|mailto)[.:][^ >\"\t]*|www\.[-a-z0-9.]+"
