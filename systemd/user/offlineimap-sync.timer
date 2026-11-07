@@ -13,7 +13,12 @@ OnBootSec=0
 # 15 min after the previous sync FINISHES, not a fixed clock time — so the
 # long first-ever backfill doesn't immediately re-trigger on top of itself.
 OnUnitActiveSec=15min
-Persistent=true
+# Deliberately NOT Persistent=true: it stores a last-trigger stamp on disk
+# to catch up missed OnCalendar-style runs, but combined with OnBootSec on
+# a fresh boot, a stale stamp left from before a shutdown makes systemd
+# compute no next-elapse at all (silently never fires) — confirmed by
+# direct reproduction. OnBootSec=0 above already covers "fire immediately
+# when started" on its own; Persistent adds nothing here but that bug.
 
 [Install]
 WantedBy=timers.target
