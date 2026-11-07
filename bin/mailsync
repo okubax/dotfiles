@@ -1,0 +1,49 @@
+#!/bin/bash
+# mailsync - start/stop offlineimap-sync on demand, instead of it running
+# continuously from login/boot. offlineimap-sync.timer ships NOT enabled
+# (no autostart) so it stays off until you explicitly start it; `start`
+# only activates it for the current session, so it won't come back after
+# a reboot/relogin either until you run it again.
+#
+# While running, it still syncs every 15 minutes after the previous run
+# finishes, exactly as before (offlineimap-sync.timer's own
+# OnUnitActiveSec=15min) - this command only controls whether the timer
+# is active at all, not that interval.
+#
+# Usage: mailsync start|stop|status
+
+set -euo pipefail
+
+usage() { echo "Usage: mailsync start|stop|status" >&2; exit 1; }
+[[ $# -eq 1 ]] || usage
+
+case "$1" in
+    start)
+        systemctl --user start offlineimap-sync.timer
+        echo "offlineimap-sync started: syncing now, then every 15 min."
+        echo "Run 'mailsync stop' when you're done checking mail."
+        ;;
+    stop)
+        # Stops both: the timer (no more future runs) and, if a sync
+        # happens to be mid-run right now, that too - safe to interrupt,
+        # offlineimap resumes cleanly next time it starts.
+        systemctl --user stop offlineimap-sync.timer offlineimap-sync.service
+        echo "offlineimap-sync stopped."
+        ;;
+    status)
+        if systemctl --user is-active --quiet offlineimap-sync.timer; then
+            echo "offlineimap-sync: running (next sync scheduled)"
+        else
+            echo "offlineimap-sync: stopped"
+        fi
+        # oneshot services report "activating" the whole time they're
+        # running, not "active" - is-active --quiet alone would miss them.
+        service_state=$(systemctl --user is-active offlineimap-sync.service 2>/dev/null || true)
+        if [[ "$service_state" == "active" || "$service_state" == "activating" ]]; then
+            echo "  a sync is in progress right now"
+        fi
+        ;;
+    *)
+        usage
+        ;;
+esac

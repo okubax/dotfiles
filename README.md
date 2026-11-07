@@ -217,6 +217,7 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 - `space-report.sh`: disk usage (top dirs/files) plus installed-package sizes (repo vs AUR)
 - `netusage`: who's using the network, overall and live up/down, plus per-process rates (via nethogs)
 - `sweep`: safe cleaner for caches, trash, the offlineimap sync log (kept to the last day by its own line timestamps), journal, and pacman cache (dry-run by default; system parts use sudo)
+- `mailsync`: start/stop offlineimap-sync on demand instead of it running continuously from login/boot (see Email Setup below)
 - `news_reader.py`: terminal RSS reader
 
 ## Email Setup
@@ -290,12 +291,19 @@ whichever pattern you don't need.
   accounts use `[Google Mail]/...`, with `Bin` instead of `Trash`) — a
   throwaway `folderfilter = lambda f: print(repr(f))` run once will tell
   you the real names before you lock in the filter.
-- **Keeping it running**: `systemd/user/offlineimap-sync.{service,timer}`
+- **Running it on demand**: `systemd/user/offlineimap-sync.{service,timer}`
   reruns the sync 15 minutes after the previous run *finishes*
   (`OnUnitActiveSec`, not a fixed clock time), so a long first-ever
-  backfill doesn't immediately retrigger on top of itself. Enable with
-  `systemctl --user enable --now offlineimap-sync.timer` once your real
-  `offlineimap.conf` is in place. The service writes its (high-volume, one
+  backfill doesn't immediately retrigger on top of itself — but it's
+  deliberately NOT enabled for autostart, so it doesn't run continuously
+  from every login/boot. `bin/mailsync start` turns it on for the current
+  session only (first sync runs immediately, then every 15 min);
+  `mailsync stop` stops both the timer and, if one happens to be mid-run,
+  that sync too (safe to interrupt — offlineimap resumes cleanly next
+  time). `mailsync status` reports which. If you'd rather it really did
+  run continuously from boot, `systemctl --user enable --now
+  offlineimap-sync.timer` once your real `offlineimap.conf` is in place.
+  The service writes its (high-volume, one
   line per synced message) output to a timestamped log file under
   `~/.local/state/offlineimap/` via offlineimap's own `-l` flag, instead of
   the systemd journal — create that directory before first enabling it.
