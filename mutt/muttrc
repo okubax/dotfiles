@@ -15,6 +15,22 @@ set sort_browser = reverse-date
 set delete      = yes
 set mail_check  = 60
 
+# HTML mail: render via w3m (mutt/mailcap) instead of showing raw markup or
+# a bare attachment line. Own mailcap file first, then any mailcap you
+# already have (e.g. from an unrelated tool) and the system defaults as
+# fallback.
+set mailcap_path = "~/.config/mutt/mailcap:~/.mailcap:/usr/share/mutt/mailcap:/etc/mutt/mailcap:/etc/mailcap"
+auto_view text/html
+alternative_order text/plain text/html
+
+# Click links: \cb pipes the current message to urlview (../urlview — same
+# tool/config used elsewhere in this repo, if you use it), which lists
+# every URL it finds and opens the chosen one in firefox. pipe_decode hands
+# urlview the MIME-decoded body rather than raw base64/quoted-printable
+# source, so links inside an HTML part are actually visible to its regex.
+set pipe_decode = yes
+macro index,pager \cb "<pipe-message>urlview<enter>" "extract URLs with urlview"
+
 # Default account on startup.
 source ~/.config/mutt/account.gmail
 

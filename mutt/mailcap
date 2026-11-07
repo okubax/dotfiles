@@ -1,0 +1,5 @@
+# mutt auto_view: render HTML mail as readable text instead of raw markup.
+# display_link_number adds a "References:" list of every URL at the end —
+# w3m -dump alone shows link TEXT but drops the actual href, which would
+# leave urlview with nothing to find on an HTML-only message.
+text/html; w3m -I %{charset} -T text/html -o display_link_number=1 -dump '%s'; copiousoutput; nametemplate=%s.html

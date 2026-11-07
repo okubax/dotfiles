@@ -109,7 +109,7 @@ sudo pacman -S kate                                                  # Text edit
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 sudo pacman -S python-pillow python-numpy                            # scheme_wallpaper.py
-sudo pacman -S offlineimap mutt msmtp pass                           # Email (see Email Setup); OAuth2 accounts also need ortie (AUR/github.com/pimalaya/ortie)
+sudo pacman -S offlineimap mutt msmtp pass w3m urlview                # Email (see Email Setup); OAuth2 accounts also need ortie (AUR/github.com/pimalaya/ortie)
 yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
 ```
 
@@ -159,7 +159,7 @@ verdigris-theme dark|light|toggle|status        # Switch the whole desktop to Ve
 - **Daguerre theme**: `swaywm/daguerre/README.md`
 - **Shell**: `aliases/aliases*`
 - **ZSH**: `zsh/config/`
-- **Email**: `offlineimap/offlineimap.conf` + `offlineimap/offlineimap.py`, `msmtp/msmtprc`, `mutt/muttrc` + `mutt/account.*` (see [Email Setup](#email-setup))
+- **Email**: `offlineimap/offlineimap.conf` + `offlineimap/offlineimap.py`, `msmtp/msmtprc`, `mutt/muttrc` + `mutt/account.*` + `mutt/mailcap`, `urlview` (see [Email Setup](#email-setup))
 
 ### Directory Structure
 ```
@@ -238,6 +238,13 @@ whichever pattern you don't need.
   each `account.<name>`'s `sendmail` line (not From-header auto-detection),
   since the active account is already known from whichever folder-hook
   last fired.
+- **Clicking links**: `mutt/mailcap` renders HTML mail as text via w3m
+  (`auto_view text/html`) instead of a bare attachment line — crucially
+  with `-o display_link_number=1`, since plain `w3m -dump` shows link text
+  but drops the actual URL, which would leave nothing for the next step to
+  find. `\cb` (`index`/`pager`) pipes the current message to `urlview`
+  (config at repo root; `pipe_decode = yes` so it sees the decoded body,
+  not raw MIME source), which lists every URL it finds and opens your pick.
 - **OAuth2 accounts** (Gmail, Outlook, etc.) authenticate through
   [ortie](https://github.com/pimalaya/ortie) rather than offlineimap's or
   msmtp's own OAuth2 machinery: `offlineimap/offlineimap.py`'s
