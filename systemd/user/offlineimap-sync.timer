@@ -2,6 +2,14 @@
 Description=Periodic offlineimap sync
 
 [Timer]
+# OnBootSec gives this timer a reference point when the service has never
+# run this boot (OnUnitActiveSec alone is monotonic-since-last-run, which
+# resets to "never" every reboot — without this, starting the timer after
+# a reboot computes an infinite next-elapse and silently never fires).
+# Since it's relative to when the user systemd instance started, not to
+# "right now", it's already in the past whenever you run `mailsync start`,
+# so it fires immediately either way.
+OnBootSec=0
 # 15 min after the previous sync FINISHES, not a fixed clock time — so the
 # long first-ever backfill doesn't immediately re-trigger on top of itself.
 OnUnitActiveSec=15min
