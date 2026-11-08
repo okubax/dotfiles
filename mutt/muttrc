@@ -15,6 +15,14 @@ set sort_browser = reverse-date
 set delete      = yes
 set mail_check  = 60
 
+# Mutt's default on opening a mailbox is to jump the cursor to the first
+# UNREAD message in sort order, not the newest one — with reverse-date sort
+# that means it lands on whatever old message happens to still be unread,
+# skipping over all the newer already-read mail above it. Force it back to
+# the newest message (= first entry, since sort is reverse-date) every time
+# a mailbox is opened instead.
+folder-hook . "push <first-entry>"
+
 # Header cache: without this, mutt re-parses every message's headers from
 # scratch on every mailbox open — painful once a Maildir gets into the
 # tens of thousands. One GDBM file per mailbox, keyed by path. No
