@@ -42,8 +42,18 @@ to move down within a long message.
 | Key    | Action                                          |
 |--------|---------------------------------------------------|
 | `d`    | delete message under cursor (not gone till sync) |
+| `E`    | **Gmail accounts: use this instead of `d`** — moves the message to Trash |
 | `u`    | undelete message under cursor                    |
 | `U`    | undelete messages matching a pattern             |
+
+**Gmail gotcha**: plain `d` deletes by EXPUNGE-ing from "All Mail", which
+Gmail doesn't reliably honor (confirmed via the sync log — deleted messages
+kept reappearing every sync cycle, regardless of the account's Auto-Expunge/
+"when expunged" settings). `E` sidesteps this entirely by moving the message
+into Trash (an IMAP APPEND, not an EXPUNGE) — reliable regardless of those
+account settings. Only needed on a Gmail account; accounts using real IMAP
+folders already work correctly with plain `d` (and `E` will just harmlessly
+error there, since there's no local Trash folder matched).
 
 ## Multi-select (tag) and bulk actions
 

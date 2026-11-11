@@ -71,6 +71,21 @@ macro index \Cr "T~U<enter><tag-prefix><clear-flag>N<untag-pattern>.<enter>" "ma
 macro index C "<copy-message>?<toggle-mailboxes>" "copy a message to a mailbox"
 macro index M "<save-message>?<toggle-mailboxes>" "move a message to a mailbox"
 
+# Gmail-safe delete: plain 'd' marks \Deleted + EXPUNGEs the message from
+# wherever it sits locally — which for a Gmail account is "[Google Mail]/
+# All Mail" (not INBOX; see offlineimap.conf's nametrans), and Gmail does
+# not reliably honor an EXPUNGE issued against All Mail (confirmed via its
+# own sync log: the same UIDs got re-deleted and re-downloaded every cycle,
+# forever, regardless of the account's Auto-Expunge/"when expunged" IMAP
+# settings). Moving the message into the Trash folder instead sidesteps
+# that path entirely: it's a plain IMAP APPEND into "[Google Mail]/Bin",
+# and Gmail's own backend then drops it out of All Mail as a side effect
+# of the Trash label (All Mail is defined as everything EXCEPT Trash/Spam)
+# — no EXPUNGE handshake required. Use E instead of d on a Gmail account;
+# a real-IMAP-folder account doesn't have this bug, so plain 'd' is fine
+# there (E will just harmlessly error — no local Trash folder — there).
+macro index,pager E "<copy-message>=Trash<enter><delete-message>" "move message to Trash (Gmail-safe delete)"
+
 # Colorscheme: matches whichever of litho/vellum/daguerre/verdigris-theme
 # ran most recently (approximated to the nearest xterm 256-color, since
 # mutt has no truecolor support like kitty/vim) — <family>-theme rewrites
