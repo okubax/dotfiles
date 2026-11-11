@@ -84,7 +84,7 @@ macro index M "<save-message>?<toggle-mailboxes>" "move a message to a mailbox"
 # — no EXPUNGE handshake required. Use E instead of d on a Gmail account;
 # a real-IMAP-folder account doesn't have this bug, so plain 'd' is fine
 # there (E will just harmlessly error — no local Trash folder — there).
-macro index,pager E "<copy-message>=Trash<enter><delete-message>" "move message to Trash (Gmail-safe delete)"
+macro index,pager E "<copy-message>=Trash<enter><delete-message><sync-mailbox>" "move message to Trash (Gmail-safe delete)"
 
 # Colorscheme: matches whichever of litho/vellum/daguerre/verdigris-theme
 # ran most recently (approximated to the nearest xterm 256-color, since
