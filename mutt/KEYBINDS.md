@@ -22,6 +22,21 @@ Mailboxes always open on the newest message (folder-hook forces
 `<first-entry>` on open — mutt's own default is "first *unread* message",
 which can land on old unread mail instead of the top of the inbox).
 
+## Scrolling within a message (pager)
+
+| Key                  | Action                     |
+|----------------------|------------------------------|
+| `Space` / `PageDown` | next page                   |
+| `-` / `PageUp`       | previous page                |
+| `]`                  | scroll down half a page      |
+| `[`                  | scroll up half a page        |
+| `Enter`              | scroll down one line         |
+| `Backspace`          | scroll up one line           |
+
+Gotcha: `j`/`k` do NOT scroll here — in the pager they jump straight to the
+next/previous **message** instead, same as `J`/`K`. Use `Space`/`PageDown`
+to move down within a long message.
+
 ## Delete / undelete
 
 | Key    | Action                                          |
