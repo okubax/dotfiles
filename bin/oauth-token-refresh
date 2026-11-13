@@ -1,0 +1,35 @@
+#!/bin/bash
+# oauth-token-refresh — proactively refresh every ortie-managed OAuth2
+# account on a fixed cadence (see oauth-token-refresh.timer), instead of
+# relying on offlineimap's lazy "-r" (refresh-if-stale) check inside
+# get_ortie_token() in offlineimap.py. That lazy check only refreshes a
+# token offlineimap was about to use anyway, so a token that's gone bad
+# (provider-side revoke, a near-expiry race, a dropped refresh) is first
+# discovered as a live sync failure. Refreshing independently of sync
+# means the next sync attempt always hands over a token that was health-
+# checked within the last ORTIE_REFRESH_INTERVAL, whether or not a sync
+# happens to run at that moment.
+#
+# `ortie token refresh` is unconditional — it doesn't check expiry first,
+# it always redeems the refresh token for a new access token — so this is
+# safe to run on a short timer without worrying it'll skip a stale one.
+
+set -uo pipefail
+
+# List every account name you configured in ortie (ortie configure), not
+# the account names from offlineimap.conf's [Account ...] sections.
+ACCOUNTS=(gmail)
+LOG=~/.local/state/ortie/refresh.log
+mkdir -p "$(dirname "$LOG")"
+
+status=0
+for account in "${ACCOUNTS[@]}"; do
+    if output=$(ortie token refresh -a "$account" 2>&1); then
+        echo "$(date '+%Y-%m-%d %H:%M:%S') $account: $output" >>"$LOG"
+    else
+        echo "$(date '+%Y-%m-%d %H:%M:%S') $account: FAILED: $output" >>"$LOG"
+        status=1
+    fi
+done
+
+exit "$status"

@@ -1,0 +1,9 @@
+[Unit]
+Description=Proactively refresh ortie-managed OAuth2 tokens (mail accounts)
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=/home/YOUR_USERNAME/dotfiles/bin/oauth-token-refresh
+StandardOutput=null
+StandardError=null

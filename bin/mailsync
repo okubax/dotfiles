@@ -1,14 +1,18 @@
 #!/bin/bash
-# mailsync - start/stop offlineimap-sync on demand, instead of it running
-# continuously from login/boot. offlineimap-sync.timer ships NOT enabled
-# (no autostart) so it stays off until you explicitly start it; `start`
-# only activates it for the current session, so it won't come back after
-# a reboot/relogin either until you run it again.
+# mailsync - start/stop offlineimap-sync (and its companion OAuth2 token
+# refresh) on demand, instead of running continuously from login/boot.
+# Both timers ship NOT enabled (no autostart) so they stay off until you
+# explicitly start them; `start` only activates them for the current
+# session, so they won't come back after a reboot/relogin either until
+# you run it again.
 #
-# While running, it still syncs every 15 minutes after the previous run
-# finishes, exactly as before (offlineimap-sync.timer's own
-# OnUnitActiveSec=15min) - this command only controls whether the timer
-# is active at all, not that interval.
+# While running, offlineimap-sync still syncs every 15 minutes after the
+# previous run finishes, exactly as before (offlineimap-sync.timer's own
+# OnUnitActiveSec=15min); oauth-token-refresh runs independently every 20
+# minutes, refreshing every ortie-managed account's access token whether
+# or not a sync happens to be due, so a sync is never the first thing to
+# find a token stale. This command only controls whether the timers are
+# active at all, not either interval.
 #
 # Usage: mailsync start|stop|status
 
@@ -19,15 +23,17 @@ usage() { echo "Usage: mailsync start|stop|status" >&2; exit 1; }
 
 case "$1" in
     start)
-        systemctl --user start offlineimap-sync.timer
+        systemctl --user start offlineimap-sync.timer oauth-token-refresh.timer
         echo "offlineimap-sync started: syncing now, then every 15 min."
+        echo "oauth-token-refresh started: refreshing tokens every 20 min."
         echo "Run 'mailsync stop' when you're done checking mail."
         ;;
     stop)
-        # Stops both: the timer (no more future runs) and, if a sync
-        # happens to be mid-run right now, that too - safe to interrupt,
-        # offlineimap resumes cleanly next time it starts.
-        systemctl --user stop offlineimap-sync.timer offlineimap-sync.service
+        # Stops both timers (no more future runs) and, if either happens
+        # to be mid-run right now, that too - safe to interrupt, both
+        # resume cleanly next time they start.
+        systemctl --user stop offlineimap-sync.timer offlineimap-sync.service \
+            oauth-token-refresh.timer oauth-token-refresh.service
         echo "offlineimap-sync stopped."
         ;;
     status)
@@ -41,6 +47,11 @@ case "$1" in
         service_state=$(systemctl --user is-active offlineimap-sync.service 2>/dev/null || true)
         if [[ "$service_state" == "active" || "$service_state" == "activating" ]]; then
             echo "  a sync is in progress right now"
+        fi
+        if systemctl --user is-active --quiet oauth-token-refresh.timer; then
+            echo "oauth-token-refresh: running (next refresh scheduled)"
+        else
+            echo "oauth-token-refresh: stopped"
         fi
         ;;
     *)

@@ -64,6 +64,8 @@ swaywm/waybar|.config/waybar
 swaywm/wofi|.config/wofi
 systemd/user/offlineimap-sync.service|.config/systemd/user/offlineimap-sync.service
 systemd/user/offlineimap-sync.timer|.config/systemd/user/offlineimap-sync.timer
+systemd/user/oauth-token-refresh.service|.config/systemd/user/oauth-token-refresh.service
+systemd/user/oauth-token-refresh.timer|.config/systemd/user/oauth-token-refresh.timer
 zsh/zprofile|.zprofile
 zsh/zshenv|.zshenv
 zsh/zshrc|.zshrc

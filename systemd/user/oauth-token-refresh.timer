@@ -1,0 +1,16 @@
+[Unit]
+Description=Periodic OAuth2 token refresh for mail accounts
+
+[Timer]
+# See offlineimap-sync.timer for why OnBootSec=0 is needed alongside
+# OnUnitActiveSec (monotonic-since-last-run resets to "never" every
+# reboot/restart, so without this the first-ever elapse never computes).
+OnBootSec=0
+# Most OAuth2 providers' access tokens last ~1h; refreshing every 20 min
+# gives 3 chances per lifetime, so one failed/delayed refresh still
+# leaves two more tries before the token offlineimap actually uses could
+# go stale.
+OnUnitActiveSec=20min
+
+[Install]
+WantedBy=timers.target
