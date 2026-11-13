@@ -53,6 +53,9 @@ set mailcap_path = "~/.config/mutt/mailcap:~/.mailcap:/usr/share/mutt/mailcap:/e
 auto_view text/html
 alternative_order text/plain text/html
 
+# Default directory for the attachment menu's save-entry ('s').
+set attach_save_dir = "~/downloads"
+
 # Click links: \cb pipes the current message to urlview (../urlview — same
 # tool/config used elsewhere in this repo, if you use it), which lists
 # every URL it finds and opens the chosen one in firefox. pipe_decode hands
