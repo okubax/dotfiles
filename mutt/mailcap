@@ -3,3 +3,31 @@
 # w3m -dump alone shows link TEXT but drops the actual href, which would
 # leave urlview with nothing to find on an HTML-only message.
 text/html; w3m -I %{charset} -T text/html -o display_link_number=1 -dump '%s'; copiousoutput; nametemplate=%s.html
+
+# Attachments: open PDFs in Okular, Office/OpenDocument files in
+# LibreOffice, and images in Gwenview instead of mutt's "no handler"
+# fallback. All three are GUI apps, so each command backgrounds itself
+# (&) rather than making mutt sit there until you close the viewer —
+# triggered via the attachment menu's <view-mailcap> ('m'), or just
+# <Enter>/<view-attach> since mutt falls through to the mailcap entry
+# for anything it has no internal viewer for. nametemplate keeps the
+# real extension on mutt's temp copy, since LibreOffice's own format
+# detection leans on it for the legacy binary formats (.doc/.xls/.ppt
+# all share the same OLE2 container, so content alone is ambiguous).
+
+application/pdf; okular %s &; nametemplate=%s.pdf
+
+application/msword; libreoffice %s &; nametemplate=%s.doc
+application/vnd.openxmlformats-officedocument.wordprocessingml.document; libreoffice %s &; nametemplate=%s.docx
+application/vnd.ms-excel; libreoffice %s &; nametemplate=%s.xls
+application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; libreoffice %s &; nametemplate=%s.xlsx
+application/vnd.ms-powerpoint; libreoffice %s &; nametemplate=%s.ppt
+application/vnd.openxmlformats-officedocument.presentationml.presentation; libreoffice %s &; nametemplate=%s.pptx
+application/vnd.oasis.opendocument.text; libreoffice %s &; nametemplate=%s.odt
+application/vnd.oasis.opendocument.spreadsheet; libreoffice %s &; nametemplate=%s.ods
+application/vnd.oasis.opendocument.presentation; libreoffice %s &; nametemplate=%s.odp
+application/rtf; libreoffice %s &; nametemplate=%s.rtf
+
+# Gwenview sniffs image format from content, not extension, so one
+# wildcard entry covers jpeg/png/gif/webp/bmp/tiff/etc.
+image/*; gwenview %s &
