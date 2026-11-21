@@ -6,6 +6,21 @@ IRC_HOME="$HOME/irc"
 CREDENTIALS_FILE="$HOME/.config/ii/credentials"
 NETWORKS_FILE="$HOME/.config/ii/networks.conf"
 
+# A systemd --user service's $PATH is minimal (/usr/local/bin:/usr/bin) —
+# it never sources zsh's rc files, which is the only place ~/git/ii gets
+# added to PATH interactively. Resolve the ii binary explicitly instead of
+# trusting inherited PATH, so the watchdog service can find it too.
+II_BIN="$(command -v ii 2>/dev/null || true)"
+if [ -z "$II_BIN" ]; then
+    for candidate in "$HOME/git/ii/ii" "$HOME/.local/bin/ii" /usr/local/bin/ii /usr/bin/ii; do
+        if [ -x "$candidate" ]; then II_BIN="$candidate"; break; fi
+    done
+fi
+if [ -z "$II_BIN" ]; then
+    echo "✗ ii binary not found (checked \$PATH and \$HOME/git/ii/ii)"
+    exit 1
+fi
+
 # Networks/channels live in one shared file (also sourced by ii-sway), so
 # adding a channel means editing it ONCE instead of both scripts.
 if [ ! -f "$NETWORKS_FILE" ]; then
@@ -65,7 +80,7 @@ start_ii_instance() {
     # Create directory if it doesn't exist
     mkdir -p "$IRC_HOME/$name"
     
-    ii -i "$IRC_HOME/$name/" -n "$nick" -s "$host" -p "$port" &
+    "$II_BIN" -i "$IRC_HOME/$name/" -n "$nick" -s "$host" -p "$port" &
     
     # Wait for connection
     if wait_for_connection "$IRC_HOME/$name/$host"; then
