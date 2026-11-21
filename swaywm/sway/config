@@ -175,10 +175,13 @@ bindsym $mod+Shift+i exec ~/bin/ii-sway quick-chat
 bindsym $mod+Ctrl+i exec ~/bin/ii-sway compose
 bindsym $mod+Alt+i exec ~/bin/ii-sway status
 
-# Individual IRC channel monitoring
-bindsym $mod+F1 exec ~/bin/ii-sway monitor arch
+# Individual IRC channel monitoring (names match networks.conf, # optional)
+bindsym $mod+F1 exec ~/bin/ii-sway monitor archlinux
 bindsym $mod+F2 exec ~/bin/ii-sway monitor sway
-bindsym $mod+F3 exec ~/bin/ii-sway monitor f1
+bindsym $mod+F3 exec ~/bin/ii-sway monitor bash
+bindsym $mod+F4 exec ~/bin/ii-sway monitor wayland
+bindsym $mod+F5 exec ~/bin/ii-sway monitor f1
+bindsym $mod+Shift+F1 exec ~/bin/ii-sway monitor
 
 # -----------------------------------------------------------------------------
 # KEY BINDINGS - MEDIA CONTROLS

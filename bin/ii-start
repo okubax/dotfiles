@@ -4,56 +4,38 @@
 # Configuration
 IRC_HOME="$HOME/irc"
 CREDENTIALS_FILE="$HOME/.config/ii/credentials"
+NETWORKS_FILE="$HOME/.config/ii/networks.conf"
 
-# Server configurations
-declare -A SERVERS=(
-    ["lb"]="127.0.0.1:6698:your_nick"
-    ["sn"]="127.0.0.1:6697:your_nick" 
-    ["of"]="127.0.0.1:6699:your_nick"
-)
-
-# Channel configurations
-declare -A CHANNELS=(
-    ["lb"]="#archlinux #sway #bash"
-    ["sn"]="#f1"
-    ["of"]="#wayland"
-)
+# Networks/channels live in one shared file (also sourced by ii-sway), so
+# adding a channel means editing it ONCE instead of both scripts.
+if [ ! -f "$NETWORKS_FILE" ]; then
+    echo "✗ Missing $NETWORKS_FILE (defines SERVERS/CHANNELS/NETWORK_ORDER)"
+    exit 1
+fi
+# shellcheck disable=SC1090
+source "$NETWORKS_FILE"
 
 # Network-specific credentials are loaded exclusively from CREDENTIALS_FILE.
 # Do NOT hardcode passwords here — this file is version-controlled.
 # Add entries to ~/.config/ii/credentials in the format:
-#   network:nick:password   (e.g. lb:your_nick:yourpassword)
+#   network:nick:password   (e.g. lb:iconz:yourpassword)
 # or the legacy format:
 #   nick:password
 declare -A NETWORK_CREDENTIALS=()
 
 # Functions
 check_stunnel() {
-    if ! systemctl is-active --quiet stunnel; then
-        echo "Starting stunnel via systemd..."
-        sudo systemctl start stunnel || {
-            echo "Failed to start stunnel service"
-            echo "Make sure /etc/stunnel/stunnel.conf is configured correctly"
-            exit 1
-        }
-        
-        # Wait for stunnel to be ready
-        local count=0
-        while [ $count -lt 10 ]; do
-            if systemctl is-active --quiet stunnel; then
-                echo "✓ stunnel service started"
-                sleep 2  # Give it a moment to bind ports
-                return 0
-            fi
-            sleep 1
-            ((count++))
-        done
-        
-        echo "✗ stunnel service failed to start properly"
-        return 1
-    else
+    if systemctl is-active --quiet stunnel; then
         echo "✓ stunnel service already running"
+        return 0
     fi
+    # Deliberately does NOT attempt `sudo systemctl start stunnel` here: this
+    # runs from sway keybinds and the systemd watchdog, neither of which has
+    # a TTY for a password prompt, so an interactive sudo call would just
+    # hang. Enable the system unit once and it survives every boot:
+    echo "✗ stunnel service is not running"
+    echo "  One-time fix: sudo systemctl enable --now stunnel"
+    return 1
 }
 
 wait_for_connection() {
@@ -205,7 +187,7 @@ start_all() {
     
     # Start ii instances
     local started_instances=()
-    for server in "${!SERVERS[@]}"; do
+    for server in "${NETWORK_ORDER[@]}"; do
         if start_ii_instance "$server"; then
             started_instances+=("$server")
         fi
@@ -249,7 +231,7 @@ stop_all() {
     echo "Stopping ii instances..."
     
     local stopped=0
-    for server in "${!SERVERS[@]}"; do
+    for server in "${NETWORK_ORDER[@]}"; do
         local server_info="${SERVERS[$server]}"
         local host=$(echo "$server_info" | cut -d: -f1)
         local server_dir="$IRC_HOME/$server/$host"
@@ -285,11 +267,11 @@ show_multitail_command() {
         quiet_mode=true
     fi
     
-    for server in "${!SERVERS[@]}"; do
+    for server in "${NETWORK_ORDER[@]}"; do
         local server_info="${SERVERS[$server]}"
         local host=$(echo "$server_info" | cut -d: -f1)
         local channels="${CHANNELS[$server]}"
-        
+
         for channel in $channels; do
             local out_file="$IRC_HOME/$server/$host/$channel/out"
             if [ -f "$out_file" ]; then
@@ -338,11 +320,11 @@ show_status() {
     echo
     echo "Active channels:"
     local channel_count=0
-    for server in "${!SERVERS[@]}"; do
+    for server in "${NETWORK_ORDER[@]}"; do
         local server_info="${SERVERS[$server]}"
         local host=$(echo "$server_info" | cut -d: -f1)
         local channels="${CHANNELS[$server]}"
-        
+
         for channel in $channels; do
             local out_file="$IRC_HOME/$server/$host/$channel/out"
             if [ -f "$out_file" ]; then
@@ -351,10 +333,60 @@ show_status() {
             fi
         done
     done
-    
+
     if [ $channel_count -eq 0 ]; then
         echo "✗ No active channels found"
     fi
+
+    echo
+    echo "Auto-reconnect watchdog (ii-irc.service):"
+    if systemctl --user is-active --quiet ii-irc.service; then
+        echo "✓ Running"
+    else
+        echo "✗ Not running (enable with: systemctl --user enable --now ii-irc.service)"
+    fi
+}
+
+list_channels() {
+    for server in "${NETWORK_ORDER[@]}"; do
+        for channel in ${CHANNELS[$server]}; do
+            echo "$server:$channel"
+        done
+    done
+}
+
+watchdog() {
+    local interval="${WATCHDOG_INTERVAL:-30}"
+    local cycle=0
+    echo "$(date -Is) [watchdog] starting (checking every ${interval}s)"
+
+    while true; do
+        if ! systemctl is-active --quiet stunnel; then
+            # Only nag once every ~10 cycles (~5 min) instead of every pass.
+            if (( cycle % 10 == 0 )); then
+                echo "$(date -Is) [watchdog] stunnel is down"
+                notify-send "ii IRC watchdog" "stunnel isn't running — run: sudo systemctl enable --now stunnel" --urgency=critical
+            fi
+        else
+            for name in "${NETWORK_ORDER[@]}"; do
+                if ! pgrep -f "ii -i $IRC_HOME/$name/ " >/dev/null; then
+                    echo "$(date -Is) [watchdog] $name is down, reconnecting..."
+                    if start_ii_instance "$name"; then
+                        sleep 3
+                        authenticate "$name"
+                        sleep 3
+                        join_channels "$name"
+                        notify-send "ii IRC watchdog" "$name reconnected"
+                    else
+                        echo "$(date -Is) [watchdog] $name reconnect failed, will retry"
+                        notify-send "ii IRC watchdog" "$name reconnect failed, will retry" --urgency=critical
+                    fi
+                fi
+            done
+        fi
+        ((cycle++))
+        sleep "$interval"
+    done
 }
 
 # Main script logic
@@ -379,16 +411,25 @@ case "${1:-start}" in
     multitail-quiet)
         show_multitail_command --quiet
         ;;
+    list-channels)
+        list_channels
+        ;;
+    watchdog)
+        watchdog
+        ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status|multitail|multitail-quiet}"
+        echo "Usage: $0 {start|stop|restart|status|multitail|multitail-quiet|list-channels|watchdog}"
         echo
         echo "Commands:"
         echo "  start          - Start stunnel and ii instances"
-        echo "  stop           - Stop all ii instances" 
+        echo "  stop           - Stop all ii instances"
         echo "  restart        - Stop and restart everything"
         echo "  status         - Show current status"
         echo "  multitail      - Show multitail command for active channels"
         echo "  multitail-quiet - Output just the multitail command (for scripts)"
+        echo "  list-channels  - Print 'network:channel' for every configured channel"
+        echo "  watchdog       - Run forever, reconnecting any network that drops"
+        echo "                   (this is what ii-irc.service runs)"
         exit 1
         ;;
 esac

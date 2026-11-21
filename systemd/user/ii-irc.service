@@ -1,0 +1,17 @@
+[Unit]
+Description=ii IRC auto-reconnect watchdog (networks/channels in ~/.config/ii/networks.conf)
+After=network-online.target graphical-session.target
+Wants=network-online.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+# ii-start watchdog both cold-starts (nothing connected yet looks the same
+# to it as something that just dropped) and supervises forever after,
+# reconnecting+reauthenticating+rejoining any network whose ii process dies.
+ExecStart=/home/YOUR_USERNAME/bin/ii-start watchdog
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

@@ -1,62 +1,89 @@
 #!/bin/bash
 # ii-sway - Sway integration for the ii IRC client.
 # Bound in the sway config: $mod+i chat, $mod+Shift+i quick-chat,
-# $mod+Ctrl+i compose, $mod+Alt+i status, $mod+F1..F3 monitor.
+# $mod+Ctrl+i compose, $mod+Alt+i status, $mod+F1..F5 monitor a specific
+# channel, $mod+Shift+F1 monitor (pick any channel).
 # Usage: ii-sway {chat|quick-chat|compose|status|monitor [channel]}
+#
+# Networks/channels are NOT hardcoded here — they're sourced from
+# ~/.config/ii/networks.conf (shared with ii-start), so adding a channel
+# there is all it takes for quick-chat/compose/monitor to pick it up.
+
+NETWORKS_FILE="$HOME/.config/ii/networks.conf"
+if [ ! -f "$NETWORKS_FILE" ]; then
+    notify-send "ii IRC" "Missing $NETWORKS_FILE" --urgency=critical
+    exit 1
+fi
+# shellcheck disable=SC1090
+source "$NETWORKS_FILE"
+
+# channel -> network short-name, built once from the shared config.
+declare -A CHANNEL_NETWORK=()
+for net in "${NETWORK_ORDER[@]}"; do
+    for ch in ${CHANNELS[$net]}; do
+        CHANNEL_NETWORK["$ch"]="$net"
+    done
+done
+
+all_channels_menu() {
+    for net in "${NETWORK_ORDER[@]}"; do
+        for ch in ${CHANNELS[$net]}; do
+            echo "$ch"
+        done
+    done
+}
+
+# Resolves a channel given either as "#name" or bare "name" against the
+# shared config. Echoes "network channel" on success.
+resolve_channel() {
+    local want="$1"
+    for ch in "${!CHANNEL_NETWORK[@]}"; do
+        if [[ "$ch" == "$want" || "${ch#\#}" == "$want" ]]; then
+            echo "${CHANNEL_NETWORK[$ch]} $ch"
+            return 0
+        fi
+    done
+    return 1
+}
+
+launch_full_chat() {
+    local cmd
+    cmd=$(~/bin/ii-start multitail-quiet)
+    if [ $? -eq 0 ] && [ -n "$cmd" ]; then
+        exec kitty -e sh -c "$cmd"
+    else
+        notify-send "ii IRC" "No active channels found. Start ii first." --urgency=critical
+    fi
+}
 
 case "$1" in
-    "chat")
-        # Launch multitail with all active channels
-        cmd=$(~/bin/ii-start multitail-quiet)
-        if [ $? -eq 0 ] && [ -n "$cmd" ]; then
-            exec kitty -e sh -c "$cmd"
-        else
-            notify-send "ii IRC" "No active channels found. Start ii first." --urgency=critical
-        fi
+    "chat"|"quick-chat")
+        # Both launch the same dynamic multitail view, built from whichever
+        # channels are actually live right now (via ii-start multitail-quiet),
+        # rather than a separately hand-maintained file list that can drift
+        # out of sync with the real channel set.
+        launch_full_chat
         ;;
-        
-    "quick-chat")
-        # Just show the most active channels (your specific channels)
-        exec kitty -e multitail -CS ii -s 2 \
-            "$HOME/irc/lb/127.0.0.1/#archlinux/out" \
-            "$HOME/irc/lb/127.0.0.1/#sway/out" \
-            "$HOME/irc/lb/127.0.0.1/#bash/out" \
-            "$HOME/irc/sn/127.0.0.1/#f1/out" \
-            "$HOME/irc/of/127.0.0.1/#wayland/out"
-        ;;
-        
+
     "compose")
-        # Quick message interface using wofi
-        channel=$(echo -e "#archlinux\n#sway\n#bash\n#wayland\n#f1" | \
-                 wofi -H 260 --dmenu --prompt "Channel:")
-        
+        # Quick message interface using wofi, built from the shared config.
+        channel=$(all_channels_menu | wofi -H 260 --dmenu --prompt "Channel:")
+
         if [ -n "$channel" ]; then
-            message=$(echo "" | wofi -H 260 --dmenu --prompt "Message to $channel:")
+            read -r net ch <<< "$(resolve_channel "$channel")"
+            if [ -z "$net" ]; then
+                notify-send "ii IRC" "Unknown channel: $channel" --urgency=critical
+                exit 1
+            fi
+            host="${SERVERS[$net]%%:*}"
+            message=$(echo "" | wofi -H 260 --dmenu --prompt "Message to $ch:")
             if [ -n "$message" ]; then
-                # Route to correct network based on your setup
-                case "$channel" in
-                    "#archlinux"|"#sway"|"#bash")
-                        echo "$message" > "$HOME/irc/lb/127.0.0.1/$channel/in"
-                        network="Libera Chat"
-                        ;;
-                    "#wayland")
-                        echo "$message" > "$HOME/irc/of/127.0.0.1/$channel/in"
-                        network="OFTC"
-                        ;;
-                    "#f1")
-                        echo "$message" > "$HOME/irc/sn/127.0.0.1/$channel/in"
-                        network="Snoonet"
-                        ;;
-                    *)
-                        notify-send "ii IRC" "Unknown channel: $channel" --urgency=critical
-                        exit 1
-                        ;;
-                esac
-                notify-send "ii IRC" "Message sent to $channel ($network)"
+                echo "$message" > "$HOME/irc/$net/$host/$ch/in"
+                notify-send "ii IRC" "Message sent to $ch (${NETWORK_NAMES[$net]})"
             fi
         fi
         ;;
-        
+
     "status")
         # Show ii status in a notification
         status=$(~/bin/ii-start status 2>&1)
@@ -64,38 +91,35 @@ case "$1" in
         ;;
 
     "monitor")
-        # Individual channel monitoring shortcuts
-        case "$2" in
-            "arch")
-                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#archlinux/out"
-                ;;
-            "sway")
-                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#sway/out"
-                ;;
-            "bash")
-                exec kitty -e tail -f "$HOME/irc/lb/127.0.0.1/#bash/out"
-                ;;
-            "wayland")
-                exec kitty -e tail -f "$HOME/irc/of/127.0.0.1/#wayland/out"
-                ;;
-            "f1")
-                exec kitty -e tail -f "$HOME/irc/sn/127.0.0.1/#f1/out"
-                ;;
-            *)
-                echo "Available channels: arch, sway, bash, wayland, f1"
-                ;;
-        esac
+        target="$2"
+        if [ -z "$target" ]; then
+            # No channel given — offer every configured channel.
+            target=$(all_channels_menu | wofi -H 260 --dmenu --prompt "Monitor channel:")
+            [ -z "$target" ] && exit 0
+        fi
+
+        read -r net ch <<< "$(resolve_channel "$target")"
+        if [ -z "$net" ]; then
+            notify-send "ii IRC" "Unknown channel: $target" --urgency=critical
+            echo "Available channels:"
+            for n in "${NETWORK_ORDER[@]}"; do echo "  $n: ${CHANNELS[$n]}"; done
+            exit 1
+        fi
+        host="${SERVERS[$net]%%:*}"
+        exec kitty -e tail -f "$HOME/irc/$net/$host/$ch/out"
         ;;
-        
+
     *)
         echo "Usage: $0 {chat|quick-chat|compose|status|monitor [channel]}"
         echo
         echo "Commands:"
-        echo "  chat       - Launch full multitail viewer"
-        echo "  quick-chat - Launch with your active channels"
+        echo "  chat       - Launch full multitail viewer (all live channels)"
+        echo "  quick-chat - Same as chat"
         echo "  compose    - Quick message composer using wofi"
         echo "  status     - Show ii status notification"
-        echo "  monitor    - Monitor individual channel (arch|sway|bash|wayland|f1)"
+        echo "  monitor    - Monitor one channel by name (omit the name to pick"
+        echo "               from a list); currently configured:"
+        for n in "${NETWORK_ORDER[@]}"; do echo "               $n: ${CHANNELS[$n]}"; done
         exit 1
         ;;
 esac

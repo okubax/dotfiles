@@ -1,0 +1,36 @@
+# ~/.config/ii/networks.conf
+#
+# Single source of truth for ii's networks/channels/nicks. Sourced by BOTH
+# ii-start and ii-sway — add or remove a network/channel HERE ONCE and every
+# subcommand (list-channels, watchdog, quick-chat, compose, monitor) picks
+# it up automatically.
+#
+# SERVERS:       short-name -> "stunnel-local-host:port:nick"
+# CHANNELS:      short-name -> space-separated channel list
+# NETWORK_NAMES: short-name -> human-readable name (used in notifications)
+# NETWORK_ORDER: iteration order (bash assoc-array key order is otherwise
+#                undefined, which makes status output/menus non-deterministic)
+#
+# Copy this to ~/.config/ii/networks.conf and edit for your own networks —
+# the host:port pairs should match the [section] names/accept ports in
+# /etc/stunnel/stunnel.conf, not the IRC servers directly.
+
+declare -A SERVERS=(
+    ["lb"]="127.0.0.1:6698:your_nick"
+    ["sn"]="127.0.0.1:6697:your_nick"
+    ["of"]="127.0.0.1:6699:your_nick"
+)
+
+declare -A CHANNELS=(
+    ["lb"]="#archlinux #sway #bash"
+    ["sn"]="#f1"
+    ["of"]="#wayland"
+)
+
+declare -A NETWORK_NAMES=(
+    ["lb"]="Libera Chat"
+    ["sn"]="Snoonet"
+    ["of"]="OFTC"
+)
+
+NETWORK_ORDER=(lb sn of)
