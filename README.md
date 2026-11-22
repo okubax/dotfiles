@@ -40,7 +40,7 @@ Desktop and vim, Litho Dark and Verdigris Dark side by side.
 - **Calendar / Calculator**: gsimplecal, qalculate-qt
 - **Cloud Sync**: Nextcloud client
 - **IRC**: ii + stunnel + multitail (see `bin/ii-start`, `bin/ii-sway`)
-- **Email**: offlineimap (IMAP → local Maildir sync) + mutt (reads the Maildir, no IMAP of its own) + msmtp (sending). See [Email Setup](#email-setup) below.
+- **Email**: offlineimap (IMAP → local Maildir sync) + mutt (reads the Maildir, no IMAP of its own) + msmtp (sending), OAuth2 via ortie. See [Email Setup](#email-setup) below, and [the most recent writeup of this setup](https://okubax.co.uk/2026/11/17/keeping-offline-mail-sync-honest-about-oauth-tokens/) on how the pieces fit together.
 
 **Theming**
 - **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, mutt, and vim. Switch everything except vim at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`; mutt and kitty get approximated to the nearest colors each supports — true hex for kitty, nearest xterm 256-color for mutt), or set `vim` independently via its own colorscheme command.
@@ -104,13 +104,13 @@ sudo pacman -S breeze breeze-gtk breeze5 breeze-icons breeze-cursors    # GTK/Qt
 ### Optional
 ```bash
 sudo pacman -S mpd mpc ncmpcpp pipewire pipewire-pulse wireplumber   # Music / audio
-sudo pacman -S gsimplecal qalculate-qt dolphin neofetch              # Desktop utilities
+sudo pacman -S gsimplecal qalculate-qt dolphin                       # Desktop utilities
 sudo pacman -S kate                                                  # Text editor (GUI)
 sudo pacman -S qt5ct qt6ct nwg-look                                  # Theme management tools (set Qt style to breeze in qt5ct/qt6ct)
 sudo pacman -S nethogs pacman-contrib trash-cli                      # netusage / sweep helpers
 sudo pacman -S python-pillow python-numpy                            # scheme_wallpaper.py
 sudo pacman -S offlineimap mutt msmtp pass w3m urlview                # Email (see Email Setup); OAuth2 accounts also need ortie (AUR/github.com/pimalaya/ortie)
-yay -S multitail swayshot sway-audio-idle-inhibit-git                # AUR
+yay -S multitail sway-audio-idle-inhibit-git                         # AUR (swayshot ships in bin/, deployed by bootstrap.sh - no separate install)
 ```
 
 ## Commands
@@ -370,4 +370,5 @@ MIT License. Use, modify, and distribute freely.
 - [Sway Documentation](https://github.com/swaywm/sway/wiki)
 - [Waybar Configuration](https://github.com/Alexays/Waybar/wiki)
 - [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)
-- [Improved ii IRC Setup](https://okubax.co.uk/2025/06/16/improved-ii-irc-setup/): guide for setting up ii IRC client
+- [Improved ii IRC Setup](https://okubax.co.uk/2025/06/15/improved-ii-irc-setup/): guide for setting up ii IRC client
+- [Keeping Offline Mail Sync Honest About OAuth Tokens](https://okubax.co.uk/2026/11/17/keeping-offline-mail-sync-honest-about-oauth-tokens/): current offlineimap + mutt + msmtp setup, and the OAuth2 token-refresh timer in `bin/oauth-token-refresh`
