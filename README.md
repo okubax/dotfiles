@@ -374,5 +374,5 @@ MIT License. Use, modify, and distribute freely.
 - [Sway Documentation](https://github.com/swaywm/sway/wiki)
 - [Waybar Configuration](https://github.com/Alexays/Waybar/wiki)
 - [Arch Linux Installation Guide](https://wiki.archlinux.org/title/Installation_guide)
-- [Improved ii IRC Setup](https://okubax.co.uk/2025/06/15/improved-ii-irc-setup/): guide for setting up ii IRC client
+- [One Config, One Watchdog: Rebuilding My ii IRC Setup Again](https://okubax.co.uk/2026/11/21/one-config-one-watchdog-rebuilding-my-ii-irc-setup-again/): the current ii IRC setup, including `networks.conf`, `ii-sway`, and the watchdog systemd unit
 - [Keeping Offline Mail Sync Honest About OAuth Tokens](https://okubax.co.uk/2026/11/17/keeping-offline-mail-sync-honest-about-oauth-tokens/): current offlineimap + mutt + msmtp setup, and the OAuth2 token-refresh timer in `bin/oauth-token-refresh`
