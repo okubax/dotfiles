@@ -2,6 +2,10 @@
 
 A complete keyboard-driven desktop setup for Arch Linux featuring the Sway Wayland compositor, Waybar status bar, and productivity-focused applications. Theming is deliberately minimal: four original colorschemes, all built from scratch for this repo (none are ports), each with full sway/waybar/mako/wofi/swaylock/kitty/vim coverage. **[Litho](swaywm/litho/README.md)** (strictly grayscale, stark and high-contrast, poster-like), **[Vellum](swaywm/vellum/README.md)** (strictly grayscale, soft and muted, no pure black/white), **[Daguerre](swaywm/daguerre/README.md)** (strictly grayscale, a full smooth 0–255 tonal ramp, photographic), and **[Verdigris](swaywm/verdigris/README.md)** (the one full-color family, an oxidized-copper/patina palette).
 
+## Disclaimer
+
+Some of the code in this repo, scripts in particular, was written with AI assistance. Read through anything you plan to use before running it, and adjust it to fit your own setup rather than copying it blindly.
+
 ## Screenshots
 
 Desktop and vim, Litho Dark and Verdigris Dark side by side.
