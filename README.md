@@ -43,7 +43,7 @@ Desktop and vim, Litho Dark and Verdigris Dark side by side.
 - **Email**: offlineimap (IMAP → local Maildir sync) + mutt (reads the Maildir, no IMAP of its own) + msmtp (sending), OAuth2 via ortie. See [Email Setup](#email-setup) below, and [the most recent writeup of this setup](https://okubax.co.uk/2026/11/17/keeping-offline-mail-sync-honest-about-oauth-tokens/) on how the pieces fit together.
 
 **Theming**
-- **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, mutt, and vim. Switch everything except vim at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`; mutt and kitty get approximated to the nearest colors each supports — true hex for kitty, nearest xterm 256-color for mutt), or set `vim` independently via its own colorscheme command.
+- **Colorscheme**: [Verdigris](swaywm/verdigris/README.md) (default), dark and light variants, an original oxidized-copper/patina palette, applied consistently across sway, waybar, mako, wofi, swaylock, kitty, mutt, and vim. Switch everything except vim at once with `verdigris-theme dark|light|toggle` (installed to `~/bin`, see `bin/verdigris-theme`; mutt and kitty get approximated to the nearest colors each supports: true hex for kitty, nearest xterm 256-color for mutt), or set `vim` independently via its own colorscheme command.
 - **Alternative themes**, same full coverage and shape as Verdigris: three original, strictly grayscale schemes:
   - [Litho](swaywm/litho/README.md): a small set of flat plates with big jumps between them, extremes (`#000000`/`#FFFFFF`) reserved for bg/fg/accent. Stark and poster-like. `litho-theme dark|light|toggle`.
   - [Vellum](swaywm/vellum/README.md): a narrow, compressed range that never touches pure black or pure white, even for `accent`. Soft and muted. `vellum-theme dark|light|toggle`.
@@ -224,11 +224,11 @@ Follow with `./bootstrap.sh link` to create the new symlink.
 
 `offlineimap/`, `msmtp/`, and `mutt/` ship a generic **2-account example**
 (one Gmail-style OAuth2 account, one plain-username/password IMAP account)
-rather than real account wiring — fill in your own account(s) and delete
+rather than real account wiring. Fill in your own account(s) and delete
 whichever pattern you don't need.
 
 - **offlineimap** pulls mail down from IMAP into a local Maildir under
-  `~/.mail`. It never talks to mutt or msmtp directly — it's purely the
+  `~/.mail`. It never talks to mutt or msmtp directly. It's purely the
   sync step.
 - **mutt** only ever reads that local Maildir; it has no IMAP code path of
   its own and needs no OAuth2 setup. Switching between the example's two
@@ -240,7 +240,7 @@ whichever pattern you don't need.
   since the active account is already known from whichever folder-hook
   last fired.
 - **Clicking links**: `mutt/mailcap` renders HTML mail as text via w3m
-  (`auto_view text/html`) instead of a bare attachment line — crucially
+  (`auto_view text/html`) instead of a bare attachment line, crucially
   with `-o display_link_number=1`, since plain `w3m -dump` shows link text
   but drops the actual URL, which would leave nothing for the next step to
   find. `\cb` (`index`/`pager`) pipes the current message to `urlview`
@@ -249,21 +249,21 @@ whichever pattern you don't need.
 - **Mailbox shortcuts**: `\Cr` (`index`) tags every unread message in the
   current view and clears its New flag, in one step. `C`/`M` (`index`)
   add a mailbox-browser prompt (`?<toggle-mailboxes>`) on top of mutt's
-  existing copy-message/save-message — `save-message` already IS mutt's
+  existing copy-message/save-message. `save-message` already IS mutt's
   "move" (copy, then mark the original deleted), not a separate command.
 - **Performance**: `header_cache` caches every mailbox's parsed headers
   (GDBM, one file per mailbox under `~/.cache/mutt/headers/`) instead of
-  re-parsing every message on each open — matters once a Maildir reaches
-  the tens of thousands of messages. No `message_cache_dir`: that only
+  re-parsing every message on each open, which matters once a Maildir
+  reaches the tens of thousands of messages. No `message_cache_dir`: that only
   helps avoid IMAP re-fetches, and mutt never talks IMAP here. `tmpdir`
   (`~/.cache/mutt-tmp/`) keeps compose/attachment/pipe temp files out of
   plain `/tmp`, so a crash mid-compose doesn't leave stragglers you'd
-  otherwise have to go hunting for — deliberately a *separate* top-level
-  cache dir from `header_cache` above, so a cache cleaner can protect the
+  otherwise have to go hunting for. It's deliberately a *separate*
+  top-level cache dir from `header_cache` above, so a cache cleaner can protect the
   header cache while still clearing this one every time (see `bin/sweep`'s
   `CACHE_KEEP`).
 - **Colorscheme**: `mutt/colors/<family>_<variant>.muttrc`, one per
-  theme family (see Theming under Components above) — each role from that
+  theme family (see Theming under Components above), each role from that
   family's `palette.md` mapped to the nearest xterm 256-color index, since
   mutt has no truecolor support like kitty/vim. `<family>-theme` rewrites
   muttrc's `source` line on every switch, the same way it already
@@ -288,25 +288,25 @@ whichever pattern you don't need.
   overlap with it) to avoid double-storing every message on disk. Depending
   on your account's locale/branding, the real remote folder names may
   differ from the US-default `[Gmail]/...` used in the example (e.g. UK
-  accounts use `[Google Mail]/...`, with `Bin` instead of `Trash`) — a
+  accounts use `[Google Mail]/...`, with `Bin` instead of `Trash`). A
   throwaway `folderfilter = lambda f: print(repr(f))` run once will tell
   you the real names before you lock in the filter.
 - **Running it on demand**: `systemd/user/offlineimap-sync.{service,timer}`
   reruns the sync 15 minutes after the previous run *finishes*
   (`OnUnitActiveSec`, not a fixed clock time), so a long first-ever
-  backfill doesn't immediately retrigger on top of itself — but it's
+  backfill doesn't immediately retrigger on top of itself, but it's
   deliberately NOT enabled for autostart, so it doesn't run continuously
   from every login/boot. `bin/mailsync start` turns it on for the current
   session only (first sync runs immediately, then every 15 min);
   `mailsync stop` stops both the timer and, if one happens to be mid-run,
-  that sync too (safe to interrupt — offlineimap resumes cleanly next
+  that sync too (safe to interrupt: offlineimap resumes cleanly next
   time). `mailsync status` reports which. If you'd rather it really did
   run continuously from boot, `systemctl --user enable --now
   offlineimap-sync.timer` once your real `offlineimap.conf` is in place.
   The service writes its (high-volume, one
   line per synced message) output to a timestamped log file under
   `~/.local/state/offlineimap/` via offlineimap's own `-l` flag, instead of
-  the systemd journal — create that directory before first enabling it.
+  the systemd journal. Create that directory before first enabling it.
   `bin/sweep` trims that file to the last day on every run (see its
   `OFFLINEIMAP_LOG_KEEP_DAYS` setting).
 
