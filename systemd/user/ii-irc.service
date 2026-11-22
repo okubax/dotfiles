@@ -12,6 +12,10 @@ Type=simple
 ExecStart=/home/YOUR_USERNAME/bin/ii-start watchdog
 Restart=always
 RestartSec=10
+# ii-start watchdog redirects its own output to ~/.local/state/ii-irc/watchdog.log
+# (timestamped, trimmed by sweep), so nothing should reach the journal here.
+StandardOutput=null
+StandardError=null
 
 [Install]
 WantedBy=default.target

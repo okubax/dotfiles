@@ -5,6 +5,10 @@
 IRC_HOME="$HOME/irc"
 CREDENTIALS_FILE="$HOME/.config/ii/credentials"
 NETWORKS_FILE="$HOME/.config/ii/networks.conf"
+# Only used by the `watchdog` subcommand (what ii-irc.service runs) — it
+# redirects its own stdout/stderr here instead of the journal, so sweep's
+# clean_ii_irc_log() can trim it by age the same way it trims offlineimap's log.
+IRC_LOG_FILE="$HOME/.local/state/ii-irc/watchdog.log"
 
 # A systemd --user service's $PATH is minimal (/usr/local/bin:/usr/bin) —
 # it never sources zsh's rc files, which is the only place ~/git/ii gets
@@ -373,19 +377,19 @@ list_channels() {
 watchdog() {
     local interval="${WATCHDOG_INTERVAL:-30}"
     local cycle=0
-    echo "$(date -Is) [watchdog] starting (checking every ${interval}s)"
+    echo "[watchdog] starting (checking every ${interval}s)"
 
     while true; do
         if ! systemctl is-active --quiet stunnel; then
             # Only nag once every ~10 cycles (~5 min) instead of every pass.
             if (( cycle % 10 == 0 )); then
-                echo "$(date -Is) [watchdog] stunnel is down"
+                echo "[watchdog] stunnel is down"
                 notify-send "ii IRC watchdog" "stunnel isn't running — run: sudo systemctl enable --now stunnel" --urgency=critical
             fi
         else
             for name in "${NETWORK_ORDER[@]}"; do
                 if ! pgrep -f "ii -i $IRC_HOME/$name/ " >/dev/null; then
-                    echo "$(date -Is) [watchdog] $name is down, reconnecting..."
+                    echo "[watchdog] $name is down, reconnecting..."
                     if start_ii_instance "$name"; then
                         sleep 3
                         authenticate "$name"
@@ -393,7 +397,7 @@ watchdog() {
                         join_channels "$name"
                         notify-send "ii IRC watchdog" "$name reconnected"
                     else
-                        echo "$(date -Is) [watchdog] $name reconnect failed, will retry"
+                        echo "[watchdog] $name reconnect failed, will retry"
                         notify-send "ii IRC watchdog" "$name reconnect failed, will retry" --urgency=critical
                     fi
                 fi
@@ -430,6 +434,12 @@ case "${1:-start}" in
         list_channels
         ;;
     watchdog)
+        # Runs forever under ii-irc.service — keep it out of the journal and
+        # write it to its own file instead, one line at a time with its own
+        # timestamp (so sweep's clean_ii_irc_log() can trim it by age, same
+        # as it already does for the offlineimap sync log).
+        mkdir -p "$(dirname "$IRC_LOG_FILE")"
+        exec > >(awk '{ print strftime("%Y-%m-%d %H:%M:%S"), $0; fflush() }' >> "$IRC_LOG_FILE") 2>&1
         watchdog
         ;;
     *)

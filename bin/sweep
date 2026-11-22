@@ -29,6 +29,8 @@ PACCACHE_KEEP=2                            # keep N most-recent versions of inst
 JOURNAL_DEFAULT="2weeks"                   # default journal retention
 OFFLINEIMAP_LOG="$HOME/.local/state/offlineimap/sync.log"
 OFFLINEIMAP_LOG_KEEP_DAYS=1                 # trim sync.log to just the last N days
+II_IRC_LOG="$HOME/.local/state/ii-irc/watchdog.log"
+II_IRC_LOG_KEEP_DAYS=7                      # trim ii-irc's watchdog log to just the last N days
 DU=/usr/bin/du                            # bypass the du->gdu alias/function
 
 # ---------- flags ----------
@@ -131,6 +133,33 @@ clean_offlineimap_log(){
   else rm -f "$tmp"; fi
 }
 
+clean_ii_irc_log(){
+  local f="$II_IRC_LOG" tmp before after sz
+  echo "${B}ii-irc watchdog log${NC} ${DIM}(keeping last ${II_IRC_LOG_KEEP_DAYS}d, by its own line timestamps)${NC}"
+  if [ ! -f "$f" ]; then echo "   ${DIM}none yet${NC}"; return; fi
+  before=$(stat -c%s "$f" 2>/dev/null || echo 0)
+  tmp=$(mktemp "${f}.XXXXXX") || return
+  # ii-start's watchdog mode stamps every line itself ("YYYY-MM-DD HH:MM:SS msg")
+  # via an awk prefix, same format as offlineimap's log above, so the same
+  # keep/drop-by-timestamp trick applies here too.
+  awk -v cutoff="$(date -d "-${II_IRC_LOG_KEEP_DAYS} day" +%s)" '
+    function epoch(line,    ts) {
+      ts = substr(line, 1, 19)
+      if (ts !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/) return -1
+      return mktime(substr(ts,1,4)" "substr(ts,6,2)" "substr(ts,9,2)" "substr(ts,12,2)" "substr(ts,15,2)" "substr(ts,18,2))
+    }
+    { e = epoch($0); if (e >= 0) keep = (e >= cutoff); if (keep) print }
+  ' "$f" > "$tmp" 2>/dev/null
+  after=$(stat -c%s "$tmp" 2>/dev/null || echo 0)
+  sz=$((before - after)); [ "$sz" -lt 0 ] && sz=0
+  if [ "$sz" -eq 0 ]; then
+    echo "   ${DIM}nothing older than ${II_IRC_LOG_KEEP_DAYS}d${NC}"; rm -f "$tmp"; return
+  fi
+  add "$sz"; printf "   ${YEL}trim   %-20s %s${NC}\n" "watchdog.log" "$(hsize "$sz")"
+  if [ "$RUN" -eq 1 ]; then chmod --reference="$f" "$tmp" 2>/dev/null; mv -f "$tmp" "$f"
+  else rm -f "$tmp"; fi
+}
+
 clean_junk(){
   echo "${B}Editor/OS junk under ~${NC} ${DIM}(*.swp *.swo *~ .DS_Store Thumbs.db)${NC}"
   local hits sz=0 f
@@ -191,7 +220,7 @@ if [ "$RUN" -eq 1 ] && { [ "$DO_SYS" -eq 1 ] || [ "$DO_JOURNAL" -eq 1 ]; }; then
 
 if [ "$DO_HOME" -eq 1 ]; then
   echo; echo "${B}${CY}══ Home (~) ══${NC}"
-  clean_cache; clean_trash; clean_offlineimap_log; [ "$JUNK" -eq 1 ] && clean_junk
+  clean_cache; clean_trash; clean_offlineimap_log; clean_ii_irc_log; [ "$JUNK" -eq 1 ] && clean_junk
 fi
 [ "$DO_SYS" -eq 1 ] && clean_system
 [ "$DO_JOURNAL" -eq 1 ] && clean_journal
