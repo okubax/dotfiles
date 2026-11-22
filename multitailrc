@@ -1,17 +1,32 @@
-# ~/.multitailrc - used by the ii-chat* aliases (multitail -CS ii ...)
+# ~/.multitailrc - used by `ii-start multitail`/`ii-sway chat` (multitail -CS ii ...),
+# applied via the "ii" colorscheme (defaultcscheme below) to every channel's
+# `out` FIFO file, whichever network/channel it's for - nothing here is
+# per-channel, so it covers every channel in ~/.config/ii/networks.conf
+# automatically as channels are added or removed there.
+#
+# ii writes each line as "<unix-epoch> <nick> message" (a PRIVMSG) or
+# "<unix-epoch> -!- notice text" (join/part/quit/mode/etc) - NOT a
+# human-readable date, which is what the old version of this file assumed
+# (its "^....-..-.. ..:.." patterns never matched real ii output, so none
+# of its coloring ever actually fired). Verified against live log lines, e.g.:
+#   1795281263 <hiya> https://flathub.org/en/apps/io.github.nozwock.Packet
+#   1795281085 -!- Revectane(~ace@user/Revectane) has joined #archlinux
+#
 # Color scheme for ii IRC log files:
-#   cyan    - timestamps
+#   cyan    - the raw epoch timestamp
 #   magenta - nicknames
-#   green   - lines addressed to 'nion'
+#   green   - lines mentioning your_nick (replace with your actual nick(s) -
+#             see ~/.config/ii/networks.conf)
 #   yellow  - URLs
-#   blue    - joins and mode changes
+#   blue    - joins, parts/quits, and mode changes
 colorscheme:ii:ii IRC client http://www.suckless.org/wiki/tools/irc
-cs_re_s:cyan:(^....-..-.. ..:..)
-cs_re_s:magenta:^....-..-.. ..:.. <([[:alnum:]_\^\|`-]+)>
-cs_re_s:green:^....-..-.. ..:.. <([[:alnum:]_\^\|`-]+)> (nion[ ,:].*)$
+cs_re_s:cyan:^([0-9]+)
+cs_re_s:magenta:^[0-9]+ <([[:alnum:]_\^\|`-]+)>
+cs_re_s:green:^[0-9]+ <[[:alnum:]_\^\|`-]+> (.*\<(your_nick)\>.*)$
 cs_re_s:yellow:(((http|https|ftp|gopher)|mailto):(//)?[^ <>\"[:blank:]]*|(www|ftp)[0-9]?\.[-a-z0-9.]+)
-cs_re:blue:....-..-.. ..:...*has joined \#.*
-cs_re:blue:....-..-.. ..:.. .*changed mode.*
+cs_re:blue:^[0-9]+ -!- .*has joined \#.*
+cs_re:blue:^[0-9]+ -!- .*has (left|quit).*
+cs_re:blue:^[0-9]+ -!- .*changed mode.*
 
 # Window title and timestamp formats
 titlebar:%m %u@%h %f (%t) [%l]
