@@ -1,15 +1,14 @@
 # Verdigris — an original oxidized-copper colorscheme for the sway desktop
 
-An original scheme, built from scratch for this dotfiles repo — not a port
-of anything. Where Litho/Vellum/Daguerre are strictly grayscale, Verdigris
-is the one full-color family left in this repo: a desaturated teal-charcoal
-(dark) or warm parchment (light) neutral range, one warm copper/terracotta
-accent, and a small set of muted, naturalistic hues for the semantic roles
-(rust red, patina green, dull gold, dusty plum) rather than saturated
-primaries — the idea is oxidized copper on a weathered patina surface.
-**Two variants only** — `dark` and `light` — no dusk equivalent, matching
-the other three families now that this repo has been simplified down to
-four total.
+An original scheme, built from scratch for this dotfiles repo, not a port
+of anything. Where Litho is strictly grayscale, Verdigris is the one
+full-color family in this repo: a desaturated teal-charcoal (dark) or warm
+parchment (light) neutral range, one warm copper/terracotta accent, and a
+small set of muted, naturalistic hues for the semantic roles (rust red,
+patina green, dull gold, dusty plum) rather than saturated primaries, the
+idea being oxidized copper on a weathered patina surface. **Two variants
+only**, `dark` and `light`, no dusk equivalent, matching Litho now that
+this repo has been simplified down to two families total.
 
 ## Where the colors come from
 
@@ -45,7 +44,7 @@ verdigris/
   active -> dark | light   (symlink; this is what every app config points at)
 ```
 
-Same wiring as Litho/Vellum/Daguerre — `sway/config`, `mako/config`,
+Same wiring as Litho, `sway/config`, `mako/config`,
 `waybar/style.css`, `wofi/style.css` each include/`@import`
 `<theme>/active/...`; `swaylock` has no include mechanism so
 `verdigris-theme` copies the variant's config over `swaywm/swaylock/config`
@@ -64,12 +63,11 @@ every switch, same as every other family's KDE schemes.
 
 ## Coexisting with other themes
 
-Only one theme family drives sway/mako/waybar/wofi's chrome at a time —
-whichever of `litho-theme`/`vellum-theme`/`daguerre-theme`/
-`verdigris-theme` ran most recently. Each script rewrites the shared
-`swaywm/<family>/active/...` include paths to point at itself, and
-rewrites kitty's `include` and mutt's `source` line to match. vim is
-unaffected — its variants sit side by side as an ordinary flat
+Only one theme family drives sway/mako/waybar/wofi's chrome at a time,
+whichever of `litho-theme`/`verdigris-theme` ran most recently. Each script
+rewrites the shared `swaywm/<family>/active/...` include paths to point at
+itself, and rewrites kitty's `include` and mutt's `source` line to match.
+vim is unaffected, its variants sit side by side as an ordinary flat
 colorscheme option.
 
 ## Switching

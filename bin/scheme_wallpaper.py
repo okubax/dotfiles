@@ -6,19 +6,20 @@ accent, ...). A new family only has to define its palette once
 (palette.md already documents it) — those same hex values are
 copy-pasted straight in here.
 
-The only wallpaper generator in this repo, used for all four current
-theme families: Litho, Vellum, Daguerre, Verdigris.
+The only wallpaper generator in this repo, used for both current theme
+families: Litho, Verdigris.
 
-Patterns are deliberately few and each tied to one scheme's visual idea:
+Patterns are deliberately few and each tied to one scheme's visual idea
+(bands and grain are retired along with Daguerre and Vellum, but kept
+below as generic patterns in case a future family wants them):
 
   dots    — a brick-offset grid of circles, radius modulated by a soft sine
             field, drawn in a handful of flat tones. Litho's poster/ink-plate
             feel: bold shapes, few plates, no gradients.
   bands   — a diagonal gradient across the *whole* bg->fg range, warped by a
             gentle sine ripple so the tonal steps read as soft bands rather
-            than one flat ramp. Daguerre's full-tonal-range idea.
+            than one flat ramp.
   grain   — blurred random noise remapped into a narrow slice of the palette.
-            Vellum's soft, no-pure-extremes paper/graphite feel.
   patina  — blurred oxidation blotches (bg -> bg_header) with warm accent
             breaking through in smaller, sparser patches. Verdigris's
             weathered-copper feel.
@@ -55,30 +56,6 @@ PALETTES = {
         bg_header="CCCCCC", fg="000000", fg_muted="737373", border="A6A6A6",
         accent="000000", link="404040", red="0D0D0D", green="595959",
         yellow="262626", purple="8C8C8C",
-    ),
-    "vellum_dark": dict(
-        bg="2E2E2E", bg_alt="363636", bg_panel="3E3E3E", bg_panel_alt="464646",
-        bg_header="4E4E4E", fg="DCDCDC", fg_muted="8C8C8C", border="5E5E5E",
-        accent="E6E6E6", link="C6C6C6", red="D2D2D2", green="B4B4B4",
-        yellow="A2A2A2", purple="9E9E9E",
-    ),
-    "vellum_light": dict(
-        bg="E9E9E9", bg_alt="E0E0E0", bg_panel="D6D6D6", bg_panel_alt="CCCCCC",
-        bg_header="C2C2C2", fg="333333", fg_muted="7A7A7A", border="AEAEAE",
-        accent="262626", link="4E4E4E", red="404040", green="626262",
-        yellow="6E6E6E", purple="6A6A6A",
-    ),
-    "daguerre_dark": dict(
-        bg="000000", bg_alt="1A1A1A", bg_panel="333333", bg_panel_alt="4D4D4D",
-        bg_header="666666", fg="F5F5F5", fg_muted="8C8C8C", border="7A7A7A",
-        accent="FFFFFF", link="E6E6E6", red="D4D4D4", green="B0B0B0",
-        yellow="9E9E9E", purple="C2C2C2",
-    ),
-    "daguerre_light": dict(
-        bg="FFFFFF", bg_alt="E5E5E5", bg_panel="CCCCCC", bg_panel_alt="B2B2B2",
-        bg_header="999999", fg="0A0A0A", fg_muted="737373", border="858585",
-        accent="000000", link="191919", red="2B2B2B", green="4F4F4F",
-        yellow="616161", purple="3D3D3D",
     ),
     "verdigris_dark": dict(
         bg="14201E", bg_alt="1B2A27", bg_panel="223531", bg_panel_alt="2C423D",

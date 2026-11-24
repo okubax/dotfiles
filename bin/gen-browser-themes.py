@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 gen-browser-themes.py — generate userChrome.css and userContent.css
-(Firefox only) for all four theme families (Litho, Vellum, Daguerre,
-Verdigris) x two variants (dark, light), from the exact same role-based
-palette every other app in this repo already uses.
+(Firefox only) for both theme families (Litho, Verdigris) x two variants
+(dark, light), from the exact same role-based palette every other app in
+this repo already uses.
 
 Palette values are imported directly from scheme_wallpaper.py's PALETTES
 dict (both are Python, so there's no reason to hand-copy 8 x 14 hex values
@@ -32,7 +32,7 @@ scheme_wallpaper = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(scheme_wallpaper)
 PALETTES = scheme_wallpaper.PALETTES
 
-FAMILIES = ["litho", "vellum", "daguerre", "verdigris"]
+FAMILIES = ["litho", "verdigris"]
 VARIANTS = ["dark", "light"]
 
 

@@ -18,11 +18,11 @@ default_border pixel 3
 default_floating_border pixel 3
 gaps inner 9
 
-# Color scheme: one of four theme families (Litho, Vellum, Daguerre,
-# Verdigris — see swaywm/<family>/README.md) — only one drives this
-# include at a time. `active` is a symlink to dark/light within whichever
-# family is live; flip variants with `<family>-theme <variant>`, switch
-# families by running any of the four scripts.
+# Color scheme: one of two theme families (Litho, Verdigris; see
+# swaywm/<family>/README.md); only one drives this include at a time.
+# `active` is a symlink to dark/light within whichever family is live;
+# flip variants with `<family>-theme <variant>`, switch families by
+# running either script.
 include ~/dotfiles/swaywm/verdigris/active/sway.conf
 
 # -----------------------------------------------------------------------------

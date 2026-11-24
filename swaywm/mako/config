@@ -11,10 +11,10 @@ border-size=2
 border-radius=15
 default-timeout=10000
 
-# Color scheme: one of four theme families (Litho, Vellum, Daguerre,
-# Verdigris — see swaywm/<family>/README.md) — only one family
-# drives this include at a time. Flip variants with `<family>-theme
-# <variant>`; switch families by running any of the four scripts.
+# Color scheme: one of two theme families (Litho, Verdigris; see
+# swaywm/<family>/README.md); only one family drives this include at a
+# time. Flip variants with `<family>-theme <variant>`; switch families
+# by running either script.
 include=~/dotfiles/swaywm/verdigris/active/mako.conf
 
 # Show notifications above fullscreen windows

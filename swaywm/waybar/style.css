@@ -1,5 +1,5 @@
-/* Waybar styling — one of four theme families (Litho, Vellum, Daguerre,
- * Verdigris — see swaywm/<family>/README.md); only one drives this
+/* Waybar styling, one of two theme families (Litho, Verdigris; see
+ * swaywm/<family>/README.md); only one drives this
  * @import at a time, switched by `<family>-theme <variant>`.
  * Bar is transparent. Modules are grouped into clusters that share one
  * connected pill (a thin divider marks the seam between modules within a

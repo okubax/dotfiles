@@ -41,8 +41,7 @@ set wildmenu            " visual autocomplete for command menu
 set lazyredraw          " redraw only when we need to.
 set showmatch           " highlight matching [{()}]
 " Theme from ~/.vim/colors, see swaywm/<family>/README.md in this repo.
-" Other flavors also available: litho_{light,dark}, vellum_{light,dark},
-" daguerre_{light,dark}, verdigris_{light,dark}.
+" Other flavors also available: litho_{light,dark}, verdigris_{light,dark}.
 colorscheme verdigris_light
 
 "search

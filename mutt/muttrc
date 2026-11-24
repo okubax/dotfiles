@@ -89,12 +89,12 @@ macro index M "<save-message>?<toggle-mailboxes>" "move a message to a mailbox"
 # there (E will just harmlessly error — no local Trash folder — there).
 macro index,pager E "<copy-message>=Trash<enter><delete-message><sync-mailbox>" "move message to Trash (Gmail-safe delete)"
 
-# Colorscheme: matches whichever of litho/vellum/daguerre/verdigris-theme
-# ran most recently (approximated to the nearest xterm 256-color, since
-# mutt has no truecolor support like kitty/vim) — <family>-theme rewrites
-# this line on every switch, the same way it already rewrites kitty's
-# `include`. Edit by hand only if you want mutt on a different theme than
-# the rest of the desktop.
+# Colorscheme: matches whichever of litho/verdigris-theme ran most
+# recently (approximated to the nearest xterm 256-color, since mutt has
+# no truecolor support like kitty/vim). <family>-theme rewrites this line
+# on every switch, the same way it already rewrites kitty's `include`.
+# Edit by hand only if you want mutt on a different theme than the rest
+# of the desktop.
 source ~/.config/mutt/colors/litho_dark.muttrc
 
 # Default account on startup.

@@ -1,5 +1,5 @@
-/* Wofi launcher styling — one of four theme families (Litho, Vellum,
- * Daguerre, Verdigris — see swaywm/<family>/README.md); only one
+/* Wofi launcher styling, one of two theme families (Litho, Verdigris;
+ * see swaywm/<family>/README.md); only one
  * drives this @import at a time, switched by `<family>-theme <variant>`. */
 
 /* Must be an absolute path: ~/.config/wofi is a symlink, and GTK resolves

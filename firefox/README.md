@@ -1,7 +1,7 @@
-# Firefox theming — Litho / Vellum / Daguerre / Verdigris
+# Firefox theming: Litho / Verdigris
 
 Firefox chrome (toolbar, tabs, urlbar, panels, sidebar, menus) themed with
-`userChrome.css`/`userContent.css`, using the exact same four theme
+`userChrome.css`/`userContent.css`, using the exact same two theme
 families and role-based palettes as the rest of the desktop
 (`~/.cfg-tzevaot/swaywm/`). Not a WebExtension theme, since that would need
 the profile's `xpinstall.signatures.required` disabled to install
@@ -24,8 +24,6 @@ just get overwritten.
 firefox/
   litho/dark/userChrome.css, userContent.css
   litho/light/...
-  vellum/dark/... , vellum/light/...
-  daguerre/dark/... , daguerre/light/...
   verdigris/dark/... , verdigris/light/...
   active -> <family>/<variant>   (symlink; this is what the live profile imports)
 ```
@@ -56,17 +54,15 @@ recreate that line if the profile is ever rebuilt.
 
 ## Switching
 
-Same four commands as the rest of the desktop — there's no separate
+Same two commands as the rest of the desktop, there's no separate
 `firefox-theme` script, switching the desktop theme switches Firefox too:
 
 ```
 litho-theme dark|light|toggle|status
-vellum-theme dark|light|toggle|status
-daguerre-theme dark|light|toggle|status
 verdigris-theme dark|light|toggle|status
 ```
 
-**Restart Firefox to see the change** — userChrome.css isn't hot-reloaded,
+**Restart Firefox to see the change**: userChrome.css isn't hot-reloaded,
 unlike waybar/mako/sway which the scripts reload live.
 
 ## Known limits

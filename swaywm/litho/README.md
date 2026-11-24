@@ -1,12 +1,12 @@
 # Litho — a stark, high-contrast monochrome scheme for the sway desktop
 
-An original scheme, built from scratch for this dotfiles repo — not a port
-of anything. Litho is one of three strictly grayscale families in this
-repo (alongside Vellum and Daguerre), and the one built around bold
-contrast: a small set of flat gray "plates" with big jumps between them,
-and the two pure extremes (`#000000`/`#FFFFFF`) reserved for `bg`/`fg`/
-`accent`. Think ink on a lithograph plate — few tones, high contrast, no
-gradient. **Two variants only** — `dark` and `light` — no dusk equivalent.
+An original scheme, built from scratch for this dotfiles repo, not a port
+of anything. Litho is the strictly grayscale family in this repo (the
+other, Verdigris, is full color), built around bold contrast: a small set
+of flat gray "plates" with big jumps between them, and the two pure
+extremes (`#000000`/`#FFFFFF`) reserved for `bg`/`fg`/`accent`. Think ink
+on a lithograph plate: few tones, high contrast, no gradient. **Two
+variants only**, `dark` and `light`, no dusk equivalent.
 
 ## Where the colors come from
 
@@ -66,12 +66,11 @@ every switch, same as every other family's KDE schemes.
 
 ## Coexisting with other themes
 
-Only one theme family drives sway/mako/waybar/wofi's chrome at a time —
-whichever of `litho-theme`/`vellum-theme`/`daguerre-theme`/
-`verdigris-theme` ran most recently. Each script rewrites the shared
-`swaywm/<family>/active/...` include paths to point at itself, and
-rewrites kitty's `include` and mutt's `source` line to match. vim is
-unaffected — its variants sit side by side as an ordinary flat
+Only one theme family drives sway/mako/waybar/wofi's chrome at a time,
+whichever of `litho-theme`/`verdigris-theme` ran most recently. Each script
+rewrites the shared `swaywm/<family>/active/...` include paths to point at
+itself, and rewrites kitty's `include` and mutt's `source` line to match.
+vim is unaffected, its variants sit side by side as an ordinary flat
 colorscheme option.
 
 ## Switching
