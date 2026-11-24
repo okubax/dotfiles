@@ -60,14 +60,14 @@ PALETTES = {
     "verdigris_dark": dict(
         bg="14201E", bg_alt="1B2A27", bg_panel="223531", bg_panel_alt="2C423D",
         bg_header="35504A", fg="DCEDE8", fg_muted="7FA69C", border="4C6B64",
-        accent="E08D4B", link="4FB3A9", red="D9634B", green="7FB069",
-        yellow="E0B84B", purple="A97CA5",
+        accent="E08D4B", link="4FB3A9", red="E0806D", green="A7C998",
+        yellow="E0B84B", purple="B58EB2",
     ),
     "verdigris_light": dict(
         bg="F4EFE6", bg_alt="EAE2D3", bg_panel="DED2BC", bg_panel_alt="CBBFA3",
-        bg_header="B9AC8E", fg="24312B", fg_muted="5C6F66", border="8FA096",
-        accent="B85E24", link="1F7A70", red="A8402A", green="4C7A3A",
-        yellow="96751C", purple="7A4F76",
+        bg_header="B9AC8E", fg="24312B", fg_muted="4D5D56", border="8FA096",
+        accent="8C471B", link="19635B", red="9B3B27", green="2B4521",
+        yellow="6E5615", purple="754C71",
     ),
 }
 

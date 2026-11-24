@@ -6,7 +6,7 @@
 # match, same as it already does for kitty's `include`.
 
 color normal      color254 color234
-color error       color167 color234
+color error       color173 color234
 color message     color73 color234
 color attachment   color73 color234
 color markers     color59 color234
@@ -21,7 +21,7 @@ color status      color254 color238
 color prompt      color254 color238
 
 color quoted       color73 color234
-color quoted1      color107 color234
+color quoted1      color150 color234
 color quoted2      color179 color234
 color quoted3      color139 color234
 color quoted4      color109 color234
@@ -29,7 +29,7 @@ color quoted4      color109 color234
 color hdrdefault   color109 color234
 color header       color173 color234 "^(From|To|Cc|Subject|Date):"
 
-color index        color234 color167 "~F"
+color index        color234 color173 "~F"
 color index        color173 color234 "~N"
 color index        color109 color234 "~D"
 

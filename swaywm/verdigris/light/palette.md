@@ -14,14 +14,14 @@ red, patina green, dull gold, dusty plum) rather than saturated primaries.
 | bg_panel_alt | #CBBFA3 |
 | bg_header   | #B9AC8E |
 | fg          | #24312B |
-| fg_muted    | #5C6F66 |
+| fg_muted    | #4D5D56 |
 | border      | #8FA096 |
-| accent      | #B85E24 |
-| link        | #1F7A70 |
-| red         | #A8402A |
-| green       | #4C7A3A |
-| yellow      | #96751C |
-| purple      | #7A4F76 |
+| accent      | #8C471B |
+| link        | #19635B |
+| red         | #9B3B27 |
+| green       | #2B4521 |
+| yellow      | #6E5615 |
+| purple      | #754C71 |
 
 ## Terminal ANSI mapping
 

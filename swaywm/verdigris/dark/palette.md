@@ -18,10 +18,10 @@ red, patina green, dull gold, dusty plum) rather than saturated primaries.
 | border      | #4C6B64 |
 | accent      | #E08D4B |
 | link        | #4FB3A9 |
-| red         | #D9634B |
-| green       | #7FB069 |
+| red         | #E0806D |
+| green       | #A7C998 |
 | yellow      | #E0B84B |
-| purple      | #A97CA5 |
+| purple      | #B58EB2 |
 
 ## Terminal ANSI mapping
 

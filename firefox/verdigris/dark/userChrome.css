@@ -15,10 +15,10 @@
   --border: #4C6B64;
   --accent: #E08D4B;
   --link: #4FB3A9;
-  --red: #D9634B;
-  --green: #7FB069;
+  --red: #E0806D;
+  --green: #A7C998;
   --yellow: #E0B84B;
-  --purple: #A97CA5;
+  --purple: #B58EB2;
 
   /* Firefox's own lightweight-theme variables, so built-ins that read them
      (panel arrows, some tooltips, the built-in "Dark"/"Light" fallbacks)

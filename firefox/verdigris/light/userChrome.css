@@ -11,14 +11,14 @@
   --bg-panel-alt: #CBBFA3;
   --bg-header: #B9AC8E;
   --fg: #24312B;
-  --fg-muted: #5C6F66;
+  --fg-muted: #4D5D56;
   --border: #8FA096;
-  --accent: #B85E24;
-  --link: #1F7A70;
-  --red: #A8402A;
-  --green: #4C7A3A;
-  --yellow: #96751C;
-  --purple: #7A4F76;
+  --accent: #8C471B;
+  --link: #19635B;
+  --red: #9B3B27;
+  --green: #2B4521;
+  --yellow: #6E5615;
+  --purple: #754C71;
 
   /* Firefox's own lightweight-theme variables, so built-ins that read them
      (panel arrows, some tooltips, the built-in "Dark"/"Light" fallbacks)
@@ -61,7 +61,7 @@
      unreadable (near-white on light cream) on Verdigris Light specifically.
      `--tab-text-color-selected` is left alone: it already resolves
      correctly through `--toolbar-color`, which this theme does set. */
-  --tab-text-color: #5C6F66 !important;
+  --tab-text-color: #4D5D56 !important;
   --tab-text-color-hover: #24312B !important;
 }
 
